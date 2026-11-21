@@ -15,7 +15,10 @@ Case format:
      "result": int | [int, ...]    # call index(es) to output; default = last call
      "output": "serialize" | "string" | "json"}   # default "serialize"
 
-Args and kwargs may contain {"$ref": n}, replaced by the result of call n.
+"fn" names a divi5 helper, or "patterns.<name>" for a composition pattern
+(patterns.py). Args and kwargs may contain {"$ref": n}, replaced by the result
+of call n, and {"$theme": {...overrides}}, replaced by patterns.Theme(**overrides)
+(JSON lists become tuples, since Theme.card_radius is a tuple).
 Every case starts from set_builder_version("5.19.1").
 """
 import json
@@ -26,6 +29,7 @@ sys.dont_write_bytecode = True  # never write __pycache__ into the skill folder
 sys.path.insert(0, os.path.expanduser('~/.claude/skills/divi5-layouts/scripts'))
 
 import divi5  # noqa: E402
+import patterns  # noqa: E402
 
 BUILDER_VERSION = "5.19.1"
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -36,6 +40,9 @@ def resolve(value, results):
     if isinstance(value, dict):
         if set(value) == {"$ref"}:
             return results[value["$ref"]]
+        if set(value) == {"$theme"}:
+            overrides = resolve(value["$theme"], results)
+            return patterns.Theme(**{k: tuple(v) if isinstance(v, list) else v for k, v in overrides.items()})
         return {k: resolve(v, results) for k, v in value.items()}
     if isinstance(value, list):
         return [resolve(v, results) for v in value]
@@ -46,7 +53,11 @@ def run_case(case):
     divi5.set_builder_version(BUILDER_VERSION)
     results = []
     for call in case["calls"]:
-        fn = getattr(divi5, call["fn"])
+        name = call["fn"]
+        if name.startswith("patterns."):
+            fn = getattr(patterns, name[len("patterns."):])
+        else:
+            fn = getattr(divi5, name)
         args = resolve(call.get("args", []), results)
         kwargs = resolve(call.get("kwargs", {}), results)
         results.append(fn(*args, **kwargs))

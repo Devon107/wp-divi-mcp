@@ -415,5 +415,248 @@
     ],
     "result": [6, 7],
     "output": "json"
+  },
+  {
+    "name": "patterns_eyebrow",
+    "calls": [
+      {"fn": "patterns.eyebrow", "args": ["Equipo"]},
+      {"fn": "patterns.eyebrow", "args": ["Ñandú «x» & <b>"], "kwargs": {"attrs": {"module": {"meta": {"adminLabel": {"desktop": {"value": "Eyebrow"}}}}}}},
+      {"fn": "patterns.eyebrow", "args": [2026]}
+    ],
+    "result": [0, 1, 2]
+  },
+  {
+    "name": "patterns_heading_text",
+    "calls": [
+      {"fn": "patterns.heading_text", "args": ["Liderazgo"]},
+      {"fn": "patterns.heading_text", "args": ["Hero"], "kwargs": {"level": "h1"}},
+      {"fn": "patterns.heading_text", "args": ["Card"], "kwargs": {"level": "h3", "size": "22px", "color": "#ff0000", "align": "center"}},
+      {"fn": "patterns.heading_text", "args": ["Small"], "kwargs": {"level": "h4"}},
+      {"fn": "patterns.heading_text", "args": ["Over"], "kwargs": {"level": "h2", "size": "", "color": "", "align": "", "attrs": {"content": {"decoration": {"headingFont": {"h2": {"font": {"desktop": {"value": {"size": "50px"}}}}}}}}}}
+    ],
+    "result": [0, 1, 2, 3, 4]
+  },
+  {
+    "name": "patterns_body_text",
+    "calls": [
+      {"fn": "patterns.body_text", "args": ["Plain text"]},
+      {"fn": "patterns.body_text", "args": ["  \n<ul><li>One</li></ul>"]},
+      {"fn": "patterns.body_text", "args": [" <p>nbsp lead</p>"]},
+      {"fn": "patterns.body_text", "args": ["Sized"], "kwargs": {"size": "18px", "color": "#123456", "align": "right", "max_width": "480px"}},
+      {"fn": "patterns.body_text", "args": ["<p>Attrs</p>"], "kwargs": {"attrs": {"module": {"decoration": {"spacing": {"desktop": {"value": {"margin": {"top": "4px"}}}}}}}}}
+    ],
+    "result": [0, 1, 2, 3, 4]
+  },
+  {
+    "name": "patterns_section_header_basic",
+    "calls": [
+      {"fn": "patterns.section_header", "args": ["Equipo", "Liderazgo institucional"]}
+    ]
+  },
+  {
+    "name": "patterns_section_header_intro_center",
+    "calls": [
+      {"fn": "patterns.section_header", "args": ["Servicios", "Lo que hacemos"], "kwargs": {"intro": "Texto de introducción.", "level": "h1", "align": "center", "max_width": "800px"}}
+    ]
+  },
+  {
+    "name": "patterns_section_header_no_eyebrow",
+    "calls": [
+      {"fn": "patterns.section_header", "args": ["", "Only a title"], "kwargs": {"intro": "<p>Intro HTML</p>", "align": "right"}}
+    ]
+  },
+  {
+    "name": "patterns_icon_badge",
+    "calls": [
+      {"fn": "fa_icon", "args": ["&#xf0e0;"]},
+      {"fn": "patterns.icon_badge", "args": [{"$ref": 0}]},
+      {"fn": "patterns.icon_badge", "args": [{"$ref": 0}], "kwargs": {"shape": "square", "box_size": "64px", "icon_size": "28px"}},
+      {"fn": "patterns.icon_badge", "args": [{"$ref": 0}], "kwargs": {"shape": "soft"}},
+      {"fn": "patterns.icon_badge", "args": [{"$ref": 0}], "kwargs": {"shape": "other", "attrs": {"icon": {"advanced": {"color": {"desktop": {"value": "#000000"}}}}}}}
+    ],
+    "result": [1, 2, 3, 4]
+  },
+  {
+    "name": "patterns_number_badge",
+    "calls": [
+      {"fn": "patterns.number_badge", "args": ["01"]},
+      {"fn": "patterns.number_badge", "args": [3], "kwargs": {"box_size": "40px"}},
+      {"fn": "patterns.number_badge", "args": [2.5], "kwargs": {"attrs": {"module": {"decoration": {"background": {"desktop": {"value": {"color": "#000000"}}}}}}}}
+    ],
+    "result": [0, 1, 2]
+  },
+  {
+    "name": "patterns_pill_link",
+    "calls": [
+      {"fn": "patterns.pill_link", "args": ["Contactar", "https://example.com/contacto"]},
+      {"fn": "patterns.pill_link", "args": ["Outline", "#form"], "kwargs": {"variant": "outline"}},
+      {"fn": "patterns.pill_link", "args": ["Text", "/more"], "kwargs": {"variant": "text"}},
+      {"fn": "patterns.pill_link", "args": ["Text hover", "/more"], "kwargs": {"variant": "text", "fg": "#111111", "hover_fg": "#222222", "new_window": true}},
+      {"fn": "patterns.pill_link", "args": ["Dark", "/dark"], "kwargs": {"on_dark": true}},
+      {"fn": "patterns.pill_link", "args": ["Dark outline", "/dark"], "kwargs": {"variant": "outline", "on_dark": true}},
+      {"fn": "patterns.pill_link", "args": ["No icon", "/x"], "kwargs": {"icon_value": false}},
+      {"fn": "patterns.pill_link", "args": ["Custom icon", ""], "kwargs": {"icon_value": {"unicode": "&#xf105;", "type": "fa", "weight": "400"}}},
+      {"fn": "patterns.pill_link", "args": ["Colors", "/c"], "kwargs": {"bg": "#010101", "fg": "#020202", "hover_bg": "#030303", "hover_fg": "#040404"}},
+      {"fn": "patterns.pill_link", "args": ["Dark override", "/c"], "kwargs": {"on_dark": true, "bg": "#0a0a0a", "hover_fg": "#0b0b0b"}},
+      {"fn": "patterns.pill_link", "args": ["Outline colors", "/c"], "kwargs": {"variant": "outline", "fg": "#0c0c0c", "bg": "#0d0d0d", "hover_bg": "#0e0e0e", "hover_fg": "#0f0f0f"}},
+      {"fn": "patterns.pill_link", "args": ["Icon color", "/i"], "kwargs": {"icon_color": "#ff0000"}},
+      {"fn": "patterns.pill_link", "args": ["Icon hover color", "/i"], "kwargs": {"icon_hover_color": "#00ff00"}},
+      {"fn": "patterns.pill_link", "args": ["Icon both", "/i"], "kwargs": {"variant": "text", "icon_color": "#ff0000", "icon_hover_color": "#00ff00"}},
+      {"fn": "patterns.pill_link", "args": ["Ghost", "/g"], "kwargs": {"variant": "ghost", "attrs": {"module": {"decoration": {"sizing": {"desktop": {"value": {"width": "100%"}}}}}}}}
+    ],
+    "result": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+  },
+  {
+    "name": "patterns_icon_card",
+    "calls": [
+      {"fn": "fa_icon", "args": ["&#xf0e0;"]},
+      {"fn": "patterns.icon_card", "args": [{"$ref": 0}, "Correo"]},
+      {"fn": "patterns.icon_card", "args": [{"$ref": 0}, "Full"], "kwargs": {"body": "Body text", "link_label": "Leer más", "link_url": "/leer", "width": "1_3", "tablet": "1_2", "phone": "1_1"}},
+      {"fn": "patterns.icon_card", "args": [{"$ref": 0}, "Label only"], "kwargs": {"link_label": "No url"}},
+      {"fn": "patterns.icon_card", "args": [{"$ref": 0}, "Badge bg"], "kwargs": {"badge_bg": "#000000"}},
+      {"fn": "patterns.icon_card", "args": [{"$ref": 0}, "Badge fg"], "kwargs": {"badge_fg": "#ffffff", "attrs": {"module": {"meta": {"adminLabel": {"desktop": {"value": "Card"}}}}}}},
+      {"fn": "patterns.icon_card", "args": [{"$ref": 0}, "Both"], "kwargs": {"badge_bg": "#111111", "badge_fg": "#eeeeee"}}
+    ],
+    "result": [1, 2, 3, 4, 5, 6]
+  },
+  {
+    "name": "patterns_media_card",
+    "calls": [
+      {"fn": "patterns.media_card", "args": ["https://example.com/a.jpg", "Media"]},
+      {"fn": "patterns.media_card", "args": ["https://example.com/b.jpg", "Full"], "kwargs": {"body": "<p>HTML body</p>", "alt": "Alt text", "link_label": "Ver", "link_url": "/ver", "width": "1_2"}},
+      {"fn": "patterns.media_card", "args": ["https://example.com/c.jpg", "No link"], "kwargs": {"link_url": "/only-url"}}
+    ],
+    "result": [0, 1, 2]
+  },
+  {
+    "name": "patterns_person_card",
+    "calls": [
+      {"fn": "patterns.person_card", "args": ["Ana Pérez", "Directora"]},
+      {"fn": "patterns.person_card", "args": ["Luis", "CTO"], "kwargs": {"photo": "https://example.com/luis.jpg", "bio": "Bio text", "width": "1_3"}},
+      {"fn": "patterns.person_card", "args": ["Eva", "COO"], "kwargs": {"icon_value": {"unicode": "&#xf2bd;", "type": "fa", "weight": "400"}}}
+    ],
+    "result": [0, 1, 2]
+  },
+  {
+    "name": "patterns_testimonial_card",
+    "calls": [
+      {"fn": "patterns.testimonial_card", "args": ["Excelente servicio.", "Marta"]},
+      {"fn": "patterns.testimonial_card", "args": ["<p>Great</p>", "John"], "kwargs": {"role": "CEO, Acme", "photo": "https://example.com/j.jpg", "width": "1_2", "phone": "1_1"}}
+    ],
+    "result": [0, 1]
+  },
+  {
+    "name": "patterns_numbered_card",
+    "calls": [
+      {"fn": "fa_icon", "args": ["&#xf00c;"]},
+      {"fn": "patterns.numbered_card", "args": ["01", "Requisito uno"]},
+      {"fn": "patterns.numbered_card", "args": [2, "Requisito dos"], "kwargs": {"icon_value": {"$ref": 0}, "title": "Título"}}
+    ],
+    "result": [1, 2]
+  },
+  {
+    "name": "patterns_step_card",
+    "calls": [
+      {"fn": "patterns.step_card", "args": ["1", "Paso uno"]},
+      {"fn": "patterns.step_card", "args": ["2", "Paso dos"], "kwargs": {"body": "Detalle", "link_label": "Más", "link_url": "/mas", "width": "1_2", "attrs": {"module": {"decoration": {"layout": {"tablet": {"value": {"rowGap": "8px"}}}}}}}}
+    ],
+    "result": [0, 1]
+  },
+  {
+    "name": "patterns_stat_card",
+    "calls": [
+      {"fn": "patterns.stat_card", "args": ["120+", "Clientes"]},
+      {"fn": "patterns.stat_card", "args": [98.6, "Por ciento"], "kwargs": {"width": "1_4"}}
+    ],
+    "result": [0, 1]
+  },
+  {
+    "name": "patterns_cards_in_rows",
+    "calls": [
+      {"fn": "fa_icon", "args": ["&#xf0e0;"]},
+      {"fn": "patterns.icon_card", "args": [{"$ref": 0}, "A"], "kwargs": {"width": "1_2"}},
+      {"fn": "patterns.stat_card", "args": ["5", "B"], "kwargs": {"width": "1_2"}},
+      {"fn": "row", "args": [{"$ref": 1}, {"$ref": 2}]},
+      {"fn": "patterns.person_card", "args": ["C", "D"]},
+      {"fn": "patterns.testimonial_card", "args": ["Q", "E"]},
+      {"fn": "patterns.step_card", "args": ["3", "F"]},
+      {"fn": "grid_row", "args": [{"$ref": 4}, {"$ref": 5}, {"$ref": 6}], "kwargs": {"cols": 3}},
+      {"fn": "section", "args": [{"$ref": 3}, {"$ref": 7}]}
+    ]
+  },
+  {
+    "name": "patterns_custom_theme_text",
+    "calls": [
+      {"fn": "color_var", "args": ["gcid-heading"]},
+      {"fn": "color_var", "args": ["gcid-accent"], "kwargs": {"opacity": 0.8}},
+      {"fn": "patterns.eyebrow", "args": ["Custom"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}}},
+      {"fn": "patterns.heading_text", "args": ["H1"], "kwargs": {"level": "h1", "theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}}},
+      {"fn": "patterns.heading_text", "args": ["H2"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}}},
+      {"fn": "patterns.heading_text", "args": ["H3"], "kwargs": {"level": "h3", "theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "align": "center"}},
+      {"fn": "patterns.heading_text", "args": ["H5"], "kwargs": {"level": "h5", "theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}}},
+      {"fn": "patterns.body_text", "args": ["Body"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}}},
+      {"fn": "patterns.number_badge", "args": ["07"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}}},
+      {"fn": "fa_icon", "args": ["&#xf0e0;"]},
+      {"fn": "patterns.icon_badge", "args": [{"$ref": 9}], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "shape": "soft"}},
+      {"fn": "patterns.icon_badge", "args": [{"$ref": 9}], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}}}
+    ],
+    "result": [2, 3, 4, 5, 6, 7, 8, 10, 11]
+  },
+  {
+    "name": "patterns_custom_theme_section_header",
+    "calls": [
+      {"fn": "color_var", "args": ["gcid-heading"]},
+      {"fn": "color_var", "args": ["gcid-accent"], "kwargs": {"opacity": 0.8}},
+      {"fn": "patterns.section_header", "args": ["Eyebrow", "Title"], "kwargs": {"intro": "Intro", "theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "align": "center"}}
+    ]
+  },
+  {
+    "name": "patterns_custom_theme_pill_links",
+    "calls": [
+      {"fn": "color_var", "args": ["gcid-heading"]},
+      {"fn": "color_var", "args": ["gcid-accent"], "kwargs": {"opacity": 0.8}},
+      {"fn": "patterns.pill_link", "args": ["Primary", "/p"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}}},
+      {"fn": "patterns.pill_link", "args": ["Primary dark", "/p"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "on_dark": true}},
+      {"fn": "patterns.pill_link", "args": ["Outline", "/o"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "variant": "outline"}},
+      {"fn": "patterns.pill_link", "args": ["Outline dark", "/o"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "variant": "outline", "on_dark": true}},
+      {"fn": "patterns.pill_link", "args": ["Text", "/t"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "variant": "text"}},
+      {"fn": "patterns.pill_link", "args": ["Text dark", "/t"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "variant": "text", "on_dark": true}},
+      {"fn": "patterns.pill_link", "args": ["Dark icon", "/d"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "on_dark": true, "icon_color": "#ffffff", "icon_hover_color": {"$ref": 0}}}
+    ],
+    "result": [2, 3, 4, 5, 6, 7, 8]
+  },
+  {
+    "name": "patterns_custom_theme_cards",
+    "calls": [
+      {"fn": "color_var", "args": ["gcid-heading"]},
+      {"fn": "color_var", "args": ["gcid-accent"], "kwargs": {"opacity": 0.8}},
+      {"fn": "fa_icon", "args": ["&#xf0e0;"]},
+      {"fn": "patterns.icon_card", "args": [{"$ref": 2}, "Icon"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "body": "Body", "link_label": "Go", "link_url": "/go"}},
+      {"fn": "patterns.media_card", "args": ["https://example.com/m.jpg", "Media"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "body": "Body", "link_label": "Go", "link_url": "/go"}},
+      {"fn": "patterns.person_card", "args": ["Name", "Role"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "bio": "Bio"}},
+      {"fn": "patterns.testimonial_card", "args": ["Quote", "Name"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "role": "Role"}},
+      {"fn": "patterns.numbered_card", "args": ["01", "Body"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "icon_value": {"$ref": 2}, "title": "Title"}},
+      {"fn": "patterns.step_card", "args": ["1", "Step"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}, "body": "Body", "link_label": "Go", "link_url": "/go"}},
+      {"fn": "patterns.stat_card", "args": ["42", "Label"], "kwargs": {"theme": {"$theme": {"heading": {"$ref": 0}, "body": "#222222", "muted": "#777777", "accent": {"$ref": 1}, "border": "#dddddd", "card_bg": "#fafafa", "badge_bg": "#ffeecc", "badge_fg": "#aa5500", "button_bg": "#0043ff", "button_fg": "#ffffff", "button_hover_bg": "#001a66", "button_hover_fg": "#ffeecc", "heading_font": "Red Hat Display", "body_font": "Inter", "eyebrow_font": "Red Hat Mono", "eyebrow_weight": "600", "heading_weight": "800", "card_top_border": "#ffb600", "card_top_border_width": "6px", "card_hover_css": "transform: translateY(-4px);", "h1_size": "56px", "h2_size": "40px", "h3_size": "20px", "body_size": "17px", "card_radius": "16px", "card_padding": "32px", "card_gap": "24px", "pill_radius": "8px"}}}}
+    ],
+    "result": [3, 4, 5, 6, 7, 8, 9]
+  },
+  {
+    "name": "patterns_tuple_radius_theme",
+    "calls": [
+      {"fn": "fa_icon", "args": ["&#xf0e0;"]},
+      {"fn": "patterns.icon_badge", "args": [{"$ref": 0}], "kwargs": {"theme": {"$theme": {"card_radius": ["2px", "4px", "6px", "8px"], "card_bg": "", "border": "", "card_padding": "", "card_top_border": "#000000"}}, "shape": "soft"}},
+      {"fn": "patterns.icon_card", "args": [{"$ref": 0}, "Tuple radius"], "kwargs": {"theme": {"$theme": {"card_radius": ["2px", "4px", "6px", "8px"], "card_bg": "", "border": "", "card_padding": "", "card_top_border": "#000000"}}}},
+      {"fn": "patterns.stat_card", "args": ["9", "Empty tokens"], "kwargs": {"theme": {"$theme": {}}}}
+    ],
+    "result": [1, 2, 3]
+  },
+  {
+    "name": "layout_export_post_id_zero",
+    "calls": [
+      {"fn": "text", "args": ["<p>x</p>"]},
+      {"fn": "layout_export", "args": [[{"$ref": 0}]], "kwargs": {"post_id": 0, "presets": {}}}
+    ],
+    "output": "json"
   }
 ]
