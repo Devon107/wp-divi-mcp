@@ -190,11 +190,16 @@ class Tokens {
 	/**
 	 * Extract the token: ?key= first, else Authorization: Bearer.
 	 *
+	 * Only the query string is read, never get_param(): that would also take a
+	 * "key" member from the JSON/form body, which then shadows ?key= and stays
+	 * in the payload handed to the Server.
+	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return string Trimmed token, '' when absent.
 	 */
 	private static function token_from( WP_REST_Request $request ): string {
-		$key = $request->get_param( 'key' );
+		$query = $request->get_query_params();
+		$key   = $query['key'] ?? null;
 		if ( is_string( $key ) && '' !== trim( $key ) ) {
 			return trim( $key );
 		}

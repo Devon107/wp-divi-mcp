@@ -236,6 +236,36 @@ class TokensTest extends WP_UnitTestCase {
 		$this->assertSame( 401, $err->get_error_data()['status'] );
 	}
 
+	public function test_body_key_is_not_a_token_source() {
+		$created = Tokens::create( 'a', $this->editor_id, 'full', null );
+		$payload = $this->rpc( 'ping' ) + array( 'key' => $created['token'] );
+
+		// A valid token only in the JSON body is ignored.
+		$this->assertWPError( Tokens::authenticate( $this->request( null, null, $payload ) ) );
+		$this->assert_rpc_error( $this->send( null, $payload ), 401, -32001 );
+
+		// A bogus body key does not shadow a valid ?key=.
+		$bogus = $this->rpc( 'ping' ) + array( 'key' => str_repeat( 'f', 64 ) );
+		$this->assertSame( 200, $this->send( $created['token'], $bogus )->get_status() );
+	}
+
+	public function test_key_stripped_from_request_after_auth() {
+		$created          = Tokens::create( 'a', $this->editor_id, 'full', null );
+		$_GET['key']      = $created['token'];
+		$_REQUEST['key']  = $created['token'];
+		$request          = $this->request( $created['token'] );
+		try {
+			$ctx = \WPDM\Mcp\Transport::authenticate( $request );
+			$this->assertInstanceOf( Context::class, $ctx );
+			$this->assertArrayNotHasKey( 'key', $request->get_query_params() );
+			$this->assertNull( $request->get_param( 'key' ) );
+			$this->assertArrayNotHasKey( 'key', $_GET );
+			$this->assertArrayNotHasKey( 'key', $_REQUEST );
+		} finally {
+			unset( $_GET['key'], $_REQUEST['key'] );
+		}
+	}
+
 	public function test_context_carries_connection_without_hash() {
 		$created = Tokens::create( 'a', $this->editor_id, 'read', null );
 
