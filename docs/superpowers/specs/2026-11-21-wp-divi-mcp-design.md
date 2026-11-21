@@ -1,7 +1,7 @@
 # WP Divi MCP — design
 
 Date: 2026-11-21
-Status: draft, waiting for approval
+Status: draft, builder questions answered, waiting for approval
 
 ## Intent
 
@@ -51,6 +51,8 @@ Audience: the owner only (private use on client and work sites). Not published o
 - PHP 7.4+, WordPress 6.2+. Client sites are often behind on versions.
 - Divi 5 optional: WordPress tools work on any site; Divi tools only appear when Divi 5's
   `GlobalData` class is present.
+- Divi target: 5.19 (current). Older Divi 5 releases are not a target; the validator still reads
+  the installed Divi's module definitions at runtime, so minor version differences are tolerated.
 - The site must be publicly reachable over HTTPS. claude.ai connectors call the server from
   Anthropic's cloud, so `localhost` sites only work with Claude Code / Desktop.
 - Some hosts (WP Engine among them) strip or rewrite the `Authorization` header, so auth cannot
@@ -220,10 +222,13 @@ A JSON tree mirroring the Python library, so the skill's knowledge carries over 
 
 ### Port of the Python library
 
-- `Builder.php`, `Patterns.php`, `Validator.php` are direct ports. Behaviour is pinned by golden
-  tests: a Python script in `tests/golden/` builds a set of layouts with the skill's library and
-  saves the serialized markup; PHPUnit builds the same trees in PHP and compares byte for byte
-  (attribute encoding and escaping are where ports usually drift).
+- **The PHP plugin becomes the source of truth** (owner's decision). The Python skill is frozen:
+  it is not developed further, but its files on this computer
+  (`~/.claude/skills/divi5-layouts/`) stay exactly where they are and are not deleted or modified.
+- `Builder.php`, `Patterns.php`, `Validator.php` are direct ports. Golden tests are a one-time
+  migration check: a script builds a fixed set of layouts with the Python library, the output is
+  committed as fixtures, and PHPUnit compares the PHP output byte for byte. The Python library is
+  not copied into the repo and CI does not run Python; after the port the fixtures are the spec.
 - Validator parity: same ERROR/WARNING set on the same fixtures, including the contrast and hover
   checks and thin-button warning.
 - Defaults follow the skill: composition over blurb/testimonial/person/button; `pill_link` padding
@@ -237,7 +242,11 @@ A JSON tree mirroring the Python library, so the skill's knowledge carries over 
   `divi://modules/{name}` (116 files, ~850 KB total, read on demand), `divi://schema/layout`.
 - Prompts: `build_divi_page` (purpose, sections, language, brand) and `match_existing_site`
   (page id to copy styles from).
-- The plugin's `knowledge/` folder is generated from the skill by a script, so both stay in sync.
+- The plugin's `knowledge/` folder is copied from the skill once and maintained in the plugin from
+  then on. The module reference and catalog are regenerated from **Divi 5.19** (current release;
+  the skill's references come from 5.11 and are outdated): `generate_catalog.py` logic is ported to
+  a dev script in `tools/` that reads a Divi theme folder. Real attribute shapes are checked against
+  a fresh 5.19 Portability export supplied by the owner.
 
 ### Backups and safety
 
@@ -279,3 +288,19 @@ A JSON tree mirroring the Python library, so the skill's knowledge carries over 
 - Trash-only deletes; no plugin/theme/user management.
 - Backups in a private post type instead of local files.
 - Applying to a published page needs an explicit confirm flag.
+- `?key=` ends up in host/proxy access logs. Accepted: claude.ai connectors cannot send custom
+  headers and OAuth is a non-goal. Mitigation: tokens are revocable, per-connection, logged, and
+  can expire. Revisit with OAuth if a log leak becomes a real concern.
+- Divi integration goes through Divi's own REST routes called in-process with `rest_do_request()`
+  (no HTTP round-trip, public contract) instead of internal PHP classes, except for globals where
+  `GlobalData` is the only option (as in the companion plugin). This survives Divi updates better.
+- Validator reads module definitions from the installed Divi (`module.json` files) when available
+  and falls back to the bundled catalog. `builder_version` defaults to the installed Divi version.
+- Globals writes and Theme Builder layout writes are backed up too: a snapshot of the globals
+  option / template layout is stored in `wpdm_backup` before the change and restorable.
+- Existing companion plugin: the new plugin replaces it. On activation it detects the companion
+  and shows a notice to deactivate it (both nonce filters are idempotent, so running together is
+  harmless). Old local JSON backups from the Python MCP are not migrated; `divi_validate_layout`
+  and `divi_apply_layout` accept Portability JSON, so one can be re-applied by hand if needed.
+- End-to-end testing on `immedexdev`: the owner uploads the release zip and creates a test
+  connection; drafts only, deleted afterwards.
