@@ -5,6 +5,7 @@
  * @package WPDM
  */
 
+use WPDM\Auth\Tokens;
 use WPDM\Mcp\Context;
 use WPDM\Mcp\Registry;
 use WPDM\Mcp\Tool;
@@ -41,6 +42,12 @@ class TransportTest extends WP_UnitTestCase {
 	/** @var int */
 	private $admin_id;
 
+	/** @var string Token sent as ?key= by send(); '' sends none. */
+	private $key = '';
+
+	/** @var string Connection id of $key. */
+	private $conn_id = '';
+
 	public function set_up() {
 		parent::set_up();
 
@@ -48,14 +55,9 @@ class TransportTest extends WP_UnitTestCase {
 		$GLOBALS['wp_rest_server'] = null;
 
 		$this->admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
-		$admin_id       = $this->admin_id;
-
-		add_filter(
-			'wpdm_test_context',
-			static function () use ( $admin_id ) {
-				return new Context( $admin_id, array( 'id' => 'conn-1' ) );
-			}
-		);
+		$created        = $this->connect( $this->admin_id );
+		$this->key      = $created['token'];
+		$this->conn_id  = $created['id'];
 		// The test site runs on plain http: don't enforce https unless a test asks for it.
 		add_filter( 'wpdm_require_https', '__return_false' );
 		add_filter(
@@ -75,6 +77,17 @@ class TransportTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Create a real connection token (test helper).
+	 *
+	 * @param int    $user_id User.
+	 * @param string $mode    read|full.
+	 * @return array id, token, url.
+	 */
+	private function connect( int $user_id, string $mode = 'full' ): array {
+		return Tokens::create( 'test', $user_id, $mode, null );
+	}
+
+	/**
 	 * @param array|string $payload Array is JSON-encoded; string is sent verbatim.
 	 * @param array        $headers Extra request headers.
 	 * @param string       $method  HTTP method.
@@ -83,6 +96,9 @@ class TransportTest extends WP_UnitTestCase {
 	private function send( $payload = null, array $headers = array(), string $method = 'POST' ): WP_REST_Response {
 		$request = new WP_REST_Request( $method, self::ROUTE );
 		$request->set_header( 'Content-Type', 'application/json' );
+		if ( '' !== $this->key ) {
+			$request->set_query_params( array( 'key' => $this->key ) );
+		}
 		foreach ( $headers as $name => $value ) {
 			$request->set_header( $name, $value );
 		}
@@ -123,7 +139,7 @@ class TransportTest extends WP_UnitTestCase {
 		$this->assertArrayHasKey( 'Mcp-Session-Id', $headers );
 		$sid = $headers['Mcp-Session-Id'];
 		$this->assertMatchesRegularExpression( '/^[a-f0-9]{32}$/', $sid );
-		$this->assertSame( 'conn-1', get_transient( 'wpdm_sess_' . $sid ) );
+		$this->assertSame( $this->conn_id, get_transient( 'wpdm_sess_' . $sid ) );
 
 		// Raw JSON-RPC, not wrapped in a WP envelope.
 		$data = $res->get_data();
@@ -238,6 +254,73 @@ class TransportTest extends WP_UnitTestCase {
 		$this->assert_rpc_error( $after, 404, -32001 );
 	}
 
+	public function test_delete_requires_auth() {
+		$sid       = $this->initialize()->get_headers()['Mcp-Session-Id'];
+		$this->key = '';
+
+		$res = $this->send( null, array( 'Mcp-Session-Id' => $sid ), 'DELETE' );
+		$this->assert_rpc_error( $res, 401, -32001 );
+		$this->assertNotFalse( get_transient( 'wpdm_sess_' . $sid ) );
+	}
+
+	public function test_delete_session_of_other_connection_404() {
+		$sid       = $this->initialize()->get_headers()['Mcp-Session-Id'];
+		$this->key = $this->connect( $this->admin_id )['token'];
+
+		$res = $this->send( null, array( 'Mcp-Session-Id' => $sid ), 'DELETE' );
+		$this->assert_rpc_error( $res, 404, -32001 );
+		$this->assertSame( $this->conn_id, get_transient( 'wpdm_sess_' . $sid ) );
+	}
+
+	public function test_session_of_other_connection_404() {
+		$sid       = $this->initialize()->get_headers()['Mcp-Session-Id'];
+		$this->key = $this->connect( $this->admin_id )['token'];
+
+		$res = $this->send( $this->rpc( 'ping' ), array( 'Mcp-Session-Id' => $sid ) );
+		$this->assert_rpc_error( $res, 404, -32001 );
+		$this->assertSame( 'Session not found', $res->get_data()['error']['message'] );
+	}
+
+	public function test_session_ttl_refreshed_on_use() {
+		$sid = $this->initialize()->get_headers()['Mcp-Session-Id'];
+		update_option( '_transient_timeout_wpdm_sess_' . $sid, time() + 10 );
+
+		$this->assertSame( 200, $this->send( $this->rpc( 'ping' ), array( 'Mcp-Session-Id' => $sid ) )->get_status() );
+		$this->assertGreaterThan( time() + 11 * HOUR_IN_SECONDS, (int) get_option( '_transient_timeout_wpdm_sess_' . $sid ) );
+		$this->assertSame( $this->conn_id, get_transient( 'wpdm_sess_' . $sid ) );
+	}
+
+	public function test_failed_initialize_creates_no_session() {
+		global $wpdb;
+		$before = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE '\\_transient\\_wpdm\\_sess\\_%'" );
+
+		$res = $this->send( array( 'jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize', 'params' => 'nope' ) );
+
+		$this->assertSame( 200, $res->get_status() );
+		$this->assertArrayHasKey( 'error', $res->get_data() );
+		$this->assertArrayNotHasKey( 'Mcp-Session-Id', $res->get_headers() );
+		$after = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE '\\_transient\\_wpdm\\_sess\\_%'" );
+		$this->assertSame( $before, $after );
+	}
+
+	public function test_failed_initialize_in_batch_creates_no_session() {
+		$res = $this->send(
+			array(
+				array( 'jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize', 'params' => 'nope' ),
+				$this->rpc( 'ping', array(), 2 ),
+			)
+		);
+		$this->assertSame( 200, $res->get_status() );
+		$this->assertArrayNotHasKey( 'Mcp-Session-Id', $res->get_headers() );
+	}
+
+	public function test_invalid_token_returns_401() {
+		$this->key = str_repeat( 'e', 64 );
+		$res       = $this->send( $this->rpc( 'ping' ) );
+		$this->assert_rpc_error( $res, 401, -32001 );
+		$this->assertSame( 'Bearer', $res->get_headers()['WWW-Authenticate'] );
+	}
+
 	public function test_delete_unknown_session_404() {
 		$res = $this->send( null, array( 'Mcp-Session-Id' => str_repeat( 'b', 32 ) ), 'DELETE' );
 		$this->assert_rpc_error( $res, 404, -32001 );
@@ -306,7 +389,7 @@ class TransportTest extends WP_UnitTestCase {
 
 	public function test_disabled_wins_over_auth() {
 		update_option( 'wpdm_disabled', true );
-		remove_all_filters( 'wpdm_test_context' );
+		$this->key = '';
 		$this->assert_rpc_error( $this->send( $this->rpc( 'ping' ) ), 503, -32000 );
 	}
 
@@ -330,7 +413,7 @@ class TransportTest extends WP_UnitTestCase {
 	}
 
 	public function test_unauthenticated_returns_401() {
-		remove_all_filters( 'wpdm_test_context' );
+		$this->key = '';
 
 		$res = $this->send( $this->rpc( 'ping' ) );
 		$this->assert_rpc_error( $res, 401, -32001 );
@@ -338,12 +421,12 @@ class TransportTest extends WP_UnitTestCase {
 	}
 
 	public function test_method_checks_run_before_auth() {
-		remove_all_filters( 'wpdm_test_context' );
+		$this->key = '';
 		$this->assertSame( 405, $this->send( null, array(), 'GET' )->get_status() );
 	}
 
 	public function test_auth_runs_before_json_parsing() {
-		remove_all_filters( 'wpdm_test_context' );
+		$this->key = '';
 		$this->assert_rpc_error( $this->send( '{bad' ), 401, -32001 );
 	}
 
@@ -380,7 +463,7 @@ class TransportTest extends WP_UnitTestCase {
 	public function test_rest_query_params_do_not_reshape_response() {
 		$request = new WP_REST_Request( 'POST', self::ROUTE );
 		$request->set_header( 'Content-Type', 'application/json' );
-		$request->set_query_params( array( '_fields' => 'id' ) );
+		$request->set_query_params( array( '_fields' => 'id', 'key' => $this->key ) );
 		$request->set_body( wp_json_encode( $this->rpc( 'ping' ) ) );
 
 		$res = rest_get_server()->dispatch( $request );

@@ -11,6 +11,7 @@ use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
+use WPDM\Auth\Tokens;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -34,6 +35,9 @@ class Transport {
 	const ERR_PARSE        = -32700;
 	const ERR_SERVER       = -32000;
 	const ERR_UNAUTHORIZED = -32001; // Also "Session not found".
+	const ERR_RATE_LIMITED = -32002;
+
+	const SESSION_TTL = 12 * HOUR_IN_SECONDS;
 
 	/**
 	 * Register the REST route. Hooked to rest_api_init.
@@ -107,18 +111,24 @@ class Transport {
 			$response->header( 'Allow', 'POST, DELETE' );
 			return $response;
 		}
-		if ( 'DELETE' === $method ) {
-			return self::end_session( self::session_header( $request ) );
-		}
 
 		$ctx = self::authenticate( $request );
 		if ( is_wp_error( $ctx ) ) {
-			$status   = (int) ( $ctx->get_error_data()['status'] ?? 401 );
-			$response = self::error( $status, self::ERR_UNAUTHORIZED, $ctx->get_error_message() );
-			if ( 401 === $status ) {
-				$response->header( 'WWW-Authenticate', 'Bearer' );
+			$data   = $ctx->get_error_data();
+			$status = (int) ( is_array( $data ) && isset( $data['status'] ) ? $data['status'] : 401 );
+			if ( 429 === $status ) {
+				$response = self::error( 429, self::ERR_RATE_LIMITED, 'Too many failed attempts' );
+				$response->header( 'Retry-After', '60' );
+				return $response;
 			}
+			$response = self::error( 401, self::ERR_UNAUTHORIZED, 'Unauthorized' );
+			$response->header( 'WWW-Authenticate', 'Bearer' );
 			return $response;
+		}
+		$connection_id = (string) ( $ctx->connection['id'] ?? '' );
+
+		if ( 'DELETE' === $method ) {
+			return self::end_session( self::session_header( $request ), $connection_id );
 		}
 
 		$decoded = json_decode( $body, true );
@@ -135,31 +145,28 @@ class Transport {
 
 		// Session handling. A (re-)initialize starts a fresh session, so a stale
 		// header on it is ignored rather than rejected.
+		// Sessions are bound to the connection that created them; another
+		// connection's session id is indistinguishable from an unknown one.
 		$session_id     = null;
 		$new_session_id = null;
-		if ( self::has_initialize( $messages ) ) {
+		$init_ids       = self::initialize_ids( $messages );
+		if ( array() !== $init_ids ) {
 			$new_session_id = bin2hex( random_bytes( 16 ) );
 			$session_id     = $new_session_id;
 		} else {
 			$header = self::session_header( $request );
 			if ( '' !== $header ) {
-				if ( ! self::session_exists( $header ) ) {
+				if ( ! self::session_owned_by( $header, $connection_id ) ) {
 					return self::error( 404, self::ERR_UNAUTHORIZED, 'Session not found' );
 				}
 				$session_id = $header;
+				// Sliding expiry: each valid use extends the session.
+				set_transient( self::SESSION_PREFIX . $session_id, $connection_id, self::SESSION_TTL );
 			}
 		}
 
 		$ctx->session_id = $session_id;
 		wp_set_current_user( $ctx->user_id );
-
-		if ( null !== $new_session_id ) {
-			set_transient(
-				self::SESSION_PREFIX . $new_session_id,
-				(string) ( $ctx->connection['id'] ?? '' ),
-				12 * HOUR_IN_SECONDS
-			);
-		}
 
 		try {
 			$server = self::build_server();
@@ -173,6 +180,15 @@ class Transport {
 			return self::error( 500, Server::ERR_INTERNAL, 'Internal error' );
 		}
 
+		// Persist a new session only once initialize actually succeeded.
+		if ( null !== $new_session_id ) {
+			if ( self::initialize_succeeded( $is_batch ? (array) $out : array( $out ), $init_ids ) ) {
+				set_transient( self::SESSION_PREFIX . $new_session_id, $connection_id, self::SESSION_TTL );
+			} else {
+				$session_id = null;
+			}
+		}
+
 		// Only notifications / responses: acknowledge with an empty 202.
 		$response = new WP_REST_Response( $out, null === $out ? 202 : 200 );
 		if ( null !== $session_id ) {
@@ -182,17 +198,26 @@ class Transport {
 	}
 
 	/**
-	 * Resolve the caller. Single seam: Task 4 replaces the body with token auth.
+	 * Resolve the caller from its connection token.
+	 *
+	 * The token is removed from the request (and the superglobals) once read,
+	 * so nothing downstream (tools, log hooks) can see or record it.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return Context|WP_Error
 	 */
 	public static function authenticate( WP_REST_Request $request ) {
-		$ctx = apply_filters( 'wpdm_test_context', null, $request );
-		if ( $ctx instanceof Context ) {
-			return $ctx;
+		$result = Tokens::authenticate( $request );
+
+		$query = $request->get_query_params();
+		unset( $query['key'] );
+		$request->set_query_params( $query );
+		unset( $_GET['key'], $_REQUEST['key'] );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
-		return new WP_Error( 'wpdm_unauthorized', 'Unauthorized', array( 'status' => 401 ) );
+		return $result['context'];
 	}
 
 	/**
@@ -230,14 +255,32 @@ class Transport {
 	}
 
 	/**
-	 * Whether any message is an initialize request.
+	 * Ids of the initialize requests among the messages.
 	 *
 	 * @param array $messages Decoded messages.
-	 * @return bool
+	 * @return array
 	 */
-	private static function has_initialize( array $messages ): bool {
+	private static function initialize_ids( array $messages ): array {
+		$ids = array();
 		foreach ( $messages as $message ) {
 			if ( is_array( $message ) && 'initialize' === ( $message['method'] ?? null ) && array_key_exists( 'id', $message ) ) {
+				$ids[] = $message['id'];
+			}
+		}
+		return $ids;
+	}
+
+	/**
+	 * Whether a response to one of the initialize requests carries a result.
+	 *
+	 * @param array $responses Responses (nulls ignored).
+	 * @param array $init_ids  Ids of initialize requests.
+	 * @return bool
+	 */
+	private static function initialize_succeeded( array $responses, array $init_ids ): bool {
+		foreach ( $responses as $response ) {
+			if ( is_array( $response ) && array_key_exists( 'result', $response )
+				&& in_array( $response['id'] ?? null, $init_ids, true ) ) {
 				return true;
 			}
 		}
@@ -254,22 +297,29 @@ class Transport {
 	}
 
 	/**
-	 * @param string $id Session id from the client.
+	 * Whether the session exists and belongs to the connection.
+	 *
+	 * @param string $id            Session id from the client.
+	 * @param string $connection_id Authenticated connection id.
 	 * @return bool
 	 */
-	private static function session_exists( string $id ): bool {
-		return 1 === preg_match( '/^[a-f0-9]{32}$/', $id )
-			&& false !== get_transient( self::SESSION_PREFIX . $id );
+	private static function session_owned_by( string $id, string $connection_id ): bool {
+		if ( '' === $connection_id || 1 !== preg_match( '/^[a-f0-9]{32}$/', $id ) ) {
+			return false;
+		}
+		$owner = get_transient( self::SESSION_PREFIX . $id );
+		return is_string( $owner ) && hash_equals( $owner, $connection_id );
 	}
 
 	/**
-	 * Handle DELETE: terminate a session.
+	 * Handle DELETE: terminate a session of this connection.
 	 *
-	 * @param string $id Session id header.
+	 * @param string $id            Session id header.
+	 * @param string $connection_id Authenticated connection id.
 	 * @return WP_REST_Response
 	 */
-	private static function end_session( string $id ): WP_REST_Response {
-		if ( ! self::session_exists( $id ) ) {
+	private static function end_session( string $id, string $connection_id ): WP_REST_Response {
+		if ( ! self::session_owned_by( $id, $connection_id ) ) {
 			return self::error( 404, self::ERR_UNAUTHORIZED, 'Session not found' );
 		}
 		delete_transient( self::SESSION_PREFIX . $id );
