@@ -1,7 +1,7 @@
 # WP Divi MCP — design
 
 Date: 2026-11-21
-Status: draft, builder questions answered, waiting for approval
+Status: approved 2026-11-21
 
 ## Intent
 
