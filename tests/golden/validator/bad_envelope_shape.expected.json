@@ -1,0 +1,9 @@
+{
+ "errors": [
+  "context must be 'et_builder' for page/layout imports (got 'et_builder_layouts')",
+  "'data' must be a non-empty object {post_id: post_content}"
+ ],
+ "warnings": [],
+ "info": [],
+ "counts": {}
+}

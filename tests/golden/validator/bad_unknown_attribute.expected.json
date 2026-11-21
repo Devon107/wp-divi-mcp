@@ -1,0 +1,22 @@
+{
+ "errors": [],
+ "warnings": [
+  "data[1] line 4 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)",
+  "data[1] line 4 divi/text: 'content.style' — elements only hold innerContent/advanced/decoration/meta",
+  "data[1] line 4 divi/text: unknown top-level attribute 'colour' (known: content, module)",
+  "data[1] line 4 divi/text: unknown top-level attribute 'zeta' (known: content, module)",
+  "data[1] line 5 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)",
+  "data[1] line 5 divi/text: unknown decoration group 'content.decoration.glow'",
+  "data[1] line 5 divi/text: unknown decoration group 'content.decoration.sparkle'",
+  "data[1] line 6 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)",
+  "data[1] line 6 divi/text: no builderVersion (Divi will run legacy migrations on it)"
+ ],
+ "info": [],
+ "counts": {
+  "divi/placeholder": 1,
+  "divi/section": 1,
+  "divi/row": 1,
+  "divi/column": 1,
+  "divi/text": 3
+ }
+}

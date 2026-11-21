@@ -1,0 +1,16 @@
+{
+ "errors": [],
+ "warnings": [],
+ "info": [
+  "1 image URL(s) are not embedded; they will load from their current host (use write_layout(..., embed_images=True) to import them into the media library)"
+ ],
+ "counts": {
+  "divi/placeholder": 1,
+  "divi/section": 1,
+  "divi/row": 1,
+  "divi/column": 1,
+  "divi/text": 2,
+  "divi/link": 1,
+  "divi/image": 1
+ }
+}

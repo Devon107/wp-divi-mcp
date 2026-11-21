@@ -1,0 +1,35 @@
+{
+ "errors": [
+  "data[1] line 2 divi/text: modules go inside a column or group, not divi/section",
+  "data[1] line 4 divi/text: modules go inside a column or group, not divi/row",
+  "data[1] line 6 divi/section: sections must be top-level (parent is divi/column)",
+  "data[1] line 7 divi/accordion-item: child module must be inside divi/accordion, not divi/column",
+  "data[1] line 9 divi/text: divi/accordion does not accept divi/text as a child",
+  "data[1] line 12 divi/fullwidth-header: fullwidth modules go directly inside a fullwidth section, not divi/column",
+  "data[1] line 13 divi/placeholder: divi/placeholder must be the outermost block",
+  "data[1] line 21 divi/fullwidth-image: parent section needs module.advanced.type.desktop.value = 'fullwidth'"
+ ],
+ "warnings": [
+  "data[1] line 2 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)",
+  "data[1] line 4 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)",
+  "data[1] line 6 divi/section: empty divi/section (self-closing) — fine if intended, otherwise it has lost its content",
+  "data[1] line 9 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)",
+  "data[1] line 11 divi/accordion: container module is self-closing (it will have no items)",
+  "data[1] line 14 divi/row: empty divi/row (self-closing) — fine if intended, otherwise it has lost its content",
+  "data[1] line 17 divi/column: empty divi/column (self-closing) — fine if intended, otherwise it has lost its content",
+  "data[1] line 18 divi/global-layout: global-layout points to a Divi Library item on the source site; it will not exist on another site"
+ ],
+ "info": [],
+ "counts": {
+  "divi/placeholder": 2,
+  "divi/section": 4,
+  "divi/text": 3,
+  "divi/row": 2,
+  "divi/column": 2,
+  "divi/accordion-item": 1,
+  "divi/accordion": 2,
+  "divi/fullwidth-header": 1,
+  "divi/global-layout": 1,
+  "divi/fullwidth-image": 2
+ }
+}

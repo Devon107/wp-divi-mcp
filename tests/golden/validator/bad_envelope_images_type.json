@@ -1,0 +1,13 @@
+{
+ "context": "et_builder",
+ "data": {
+  "1": "  "
+ },
+ "images": "abc",
+ "global_colors": {
+  "gcid-x": {
+   "color": "#fff"
+  }
+ },
+ "global_variables": "ab"
+}

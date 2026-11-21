@@ -1,0 +1,22 @@
+{
+ "errors": [
+  "data[1] line 5 divi/row: closes divi/row but divi/column is open",
+  "data[1] line 6 divi/group: closes divi/group but divi/row is open",
+  "data[1] line 7 divi/section: closes divi/section but divi/placeholder is open",
+  "data[1] line 7 divi/placeholder: closing tag without opener",
+  "data[1] line 7 divi/placeholder: closing tag without opener",
+  "data[1]: divi/row is never closed",
+  "data[1]: divi/section is never closed"
+ ],
+ "warnings": [
+  "data[1] line 4 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)"
+ ],
+ "info": [],
+ "counts": {
+  "divi/placeholder": 1,
+  "divi/section": 2,
+  "divi/row": 2,
+  "divi/column": 1,
+  "divi/text": 1
+ }
+}

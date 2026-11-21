@@ -1,0 +1,14 @@
+{
+ "errors": [],
+ "warnings": [],
+ "info": [
+  "data[1] line 4 divi/button: button without explicit padding renders thin; prefer link() / patterns.pill_link"
+ ],
+ "counts": {
+  "divi/placeholder": 1,
+  "divi/section": 1,
+  "divi/row": 1,
+  "divi/column": 1,
+  "divi/button": 2
+ }
+}

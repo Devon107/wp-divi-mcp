@@ -1,0 +1,40 @@
+{
+ "errors": [
+  "data[1] line 5 divi/text: raw '--' inside attributes (must be \\u002d\\u002d) — breaks the HTML comment",
+  "data[1] line 7 divi/text: attributes are not valid JSON (Illegal trailing comma before end of object: line 1 column 80 (char 79))",
+  "data[1] line 8 divi/text: attributes are not valid JSON (Invalid \\escape: line 1 column 50 (char 49))"
+ ],
+ "warnings": [
+  "data[1]: content is not wrapped in <!-- wp:divi/placeholder --> (Divi 5 exports always are)",
+  "data[1]: stray text between blocks inside divi/column: 'stray words here'",
+  "data[1] line 6 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)",
+  "data[1] line 7 divi/text: no builderVersion (Divi will run legacy migrations on it)",
+  "data[1] line 7 divi/text: text module without content.innerContent.desktop.value",
+  "data[1] line 8 divi/text: no builderVersion (Divi will run legacy migrations on it)",
+  "data[1] line 8 divi/text: text module without content.innerContent.desktop.value",
+  "data[1] line 9 divi/text: text module without content.innerContent.desktop.value",
+  "data[1] line 10 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)",
+  "data[1] line 10 divi/text.content.decoration.font.font.tablet: breakpoint object without 'value'/'hover'/'sticky' (got keys ['color', 'size', 'style', 'weight'])",
+  "data[1] line 10 divi/text: empty background image url on desktop (remove the key or set an image)",
+  "data[1] line 11 divi/button: button without button.innerContent.desktop.value.text",
+  "data[1] line 12 divi/image: image without image.innerContent.desktop.value.src",
+  "data[1] line 15 divi/group: empty divi/group (self-closing) — fine if intended, otherwise it has lost its content",
+  "data[1] line 16 divi/accordion: container module is self-closing (it will have no items)",
+  "data[1]: text after the last block: \"trailing \\u2028 text 'q'\""
+ ],
+ "info": [
+  "data[1] line 11 divi/button: button without explicit padding renders thin; prefer link() / patterns.pill_link",
+  "data[1] line 13 divi/image: image has no alt text",
+  "2 image URL(s) are not embedded; they will load from their current host (use write_layout(..., embed_images=True) to import them into the media library)"
+ ],
+ "counts": {
+  "divi/section": 1,
+  "divi/row": 1,
+  "divi/column": 1,
+  "divi/text": 6,
+  "divi/button": 1,
+  "divi/image": 3,
+  "divi/group": 1,
+  "divi/accordion": 1
+ }
+}

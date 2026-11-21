@@ -1,0 +1,27 @@
+{
+ "context": "et_builder",
+ "data": {
+  "1": "<!-- wp:divi/placeholder --><!-- wp:divi/section {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/row {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/column {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"<p>Hi</p>\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"$variable({\\\"type\\\":\\\"color\\\",\\\"value\\\":{\\\"name\\\":\\\"gcid-brand-zeta\\\",\\\"settings\\\":{}}})$\"}}}}}}},\"module\":{\"decoration\":{\"background\":{\"desktop\":{\"value\":{\"color\":\"$variable({\\\"type\\\":\\\"color\\\",\\\"value\\\":{\\\"name\\\":\\\"gcid-brand-alpha\\\",\\\"settings\\\":{}}})$\"}}}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"$variable({\\\"type\\\":\\\"content\\\",\\\"value\\\":{\\\"name\\\":\\\"gvid-headline\\\",\\\"settings\\\":{}}})$\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"$variable({\\\"type\\\":\\\"color\\\",\\\"value\\\":{\\\"name\\\":\\\"gcid-primary-color\\\",\\\"settings\\\":{}}})$\"}}}}}}},\"module\":{\"decoration\":{\"background\":{\"desktop\":{\"value\":{\"color\":\"$variable({\\\"type\\\":\\\"color\\\",\\\"value\\\":{\\\"name\\\":\\\"gcid-shipped\\\",\\\"settings\\\":{}}})$\"}}}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"$variable({\\\"type\\\":\\\"content\\\",\\\"value\\\":{\\\"name\\\":\\\"post_title\\\",\\\"settings\\\":{}}})$\"}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"$variable({\\\"type\\\":\\\"content\\\",\\\"value\\\":{\\\"name\\\":\\\"gvid-shipped\\\",\\\"settings\\\":{}}})$\"}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"<p>$variable({\\\"type\\\":\\\"color\\\",\\\"value\\\":{\\\"nome\\\":\\\"x\\\"}})$ and $variable({\\\"type\\\":\\\"color\\\",\\\"value\\\":\\\"x\\\"})$ and $variable({bad json})$</p>\"}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- /wp:divi/column -->\n<!-- /wp:divi/row -->\n<!-- /wp:divi/section --><!-- /wp:divi/placeholder -->"
+ },
+ "presets": null,
+ "global_colors": [
+  [
+   "gcid-shipped",
+   {
+    "color": "#123456",
+    "status": "active",
+    "label": "Shipped"
+   }
+  ]
+ ],
+ "global_variables": [
+  {
+   "id": "gvid-shipped",
+   "label": "Shipped",
+   "value": "Hello",
+   "type": "content"
+  }
+ ],
+ "images": [],
+ "thumbnails": []
+}

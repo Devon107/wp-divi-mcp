@@ -1,0 +1,18 @@
+{
+ "errors": [],
+ "warnings": [
+  "data[1] line 4 divi/link: button/link background (#0b1f3a) is the same as its container's — it won't be visible",
+  "data[1] line 5 divi/button: button/link background (#0b1f3a) is the same as its container's — it won't be visible"
+ ],
+ "info": [
+  "data[1] line 5 divi/button: button without explicit padding renders thin; prefer link() / patterns.pill_link"
+ ],
+ "counts": {
+  "divi/placeholder": 1,
+  "divi/section": 1,
+  "divi/row": 1,
+  "divi/column": 1,
+  "divi/link": 2,
+  "divi/button": 1
+ }
+}

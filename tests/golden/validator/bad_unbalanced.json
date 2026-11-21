@@ -1,0 +1,11 @@
+{
+ "context": "et_builder",
+ "data": {
+  "1": "<!-- wp:divi/placeholder --><!-- wp:divi/section {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/row {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/column {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"<p>a</p>\"}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- /wp:divi/row -->\n<!-- /wp:divi/group -->\n<!-- /wp:divi/section --><!-- /wp:divi/section --><!-- /wp:divi/placeholder --><!-- /wp:divi/placeholder -->\n<!-- wp:divi/section {\"builderVersion\":\"5.19.1\"} --><!-- wp:divi/row {\"builderVersion\":\"5.19.1\"} -->"
+ },
+ "presets": null,
+ "global_colors": [],
+ "global_variables": [],
+ "images": [],
+ "thumbnails": []
+}

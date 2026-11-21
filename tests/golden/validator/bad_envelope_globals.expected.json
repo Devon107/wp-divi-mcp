@@ -1,0 +1,35 @@
+{
+ "errors": [
+  "context must be 'et_builder' for page/layout imports (got None)",
+  "global color gcid-nocolor has no 'color'",
+  "global_colors entries must be [\"gcid-...\", {color, status, label}]: ['bad-id', {'color': '#000'}]",
+  "global_colors entries must be [\"gcid-...\", {color, status, label}]: gcid-string",
+  "global_colors entries must be [\"gcid-...\", {color, status, label}]: ['gcid-a', 'b', 'c']",
+  "global_colors entries must be [\"gcid-...\", {color, status, label}]: {'x': 1}",
+  "global_colors entries must be [\"gcid-...\", {color, status, label}]: [1, {'color': True, \"it's\": None, 'n': 1.5}]",
+  "global variable gvid-partial missing 'label'",
+  "global variable gvid-partial missing 'value'",
+  "global variable gvid-partial missing 'type'",
+  "global_variables entries must be objects with id 'gvid-...': {'id': 'other'}",
+  "global_variables entries must be objects with id 'gvid-...': ['gvid-x']",
+  "global_variables entries must be objects with id 'gvid-...': gvid-str",
+  "images[https://example.com/b.png] needs 'encoded' (base64) and 'url'",
+  "images[https://example.com/c.png] needs 'encoded' (base64) and 'url'",
+  "data[2]: empty post content",
+  "data[3] must be a string of block markup"
+ ],
+ "warnings": [
+  "the Visual Builder imports only the first entry of 'data'",
+  "data[1] line 4 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)",
+  "data[4]: content is not wrapped in <!-- wp:divi/placeholder --> (Divi 5 exports always are)",
+  "data[4]: text after the last block: '<p>no placeholder</p>'"
+ ],
+ "info": [],
+ "counts": {
+  "divi/placeholder": 1,
+  "divi/section": 1,
+  "divi/row": 1,
+  "divi/column": 1,
+  "divi/text": 1
+ }
+}

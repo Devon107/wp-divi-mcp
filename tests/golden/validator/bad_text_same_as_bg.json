@@ -1,0 +1,20 @@
+{
+ "context": "et_builder",
+ "data": {
+  "1": "<!-- wp:divi/placeholder --><!-- wp:divi/section {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/row {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/column {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/link {\"content\":{\"innerContent\":{\"desktop\":{\"value\":{\"text\":\"Invisible\",\"linkUrl\":\"#\",\"linkTarget\":\"off\"}}},\"decoration\":{\"font\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"#FFF FFF\"}}}}}},\"module\":{\"decoration\":{\"background\":{\"desktop\":{\"value\":{\"color\":\"#ffffff\"}}}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/link {\"content\":{\"innerContent\":{\"desktop\":{\"value\":{\"text\":\"Global\",\"linkUrl\":\"#\",\"linkTarget\":\"off\"}}},\"decoration\":{\"font\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"#ffffff\"}}}}}},\"module\":{\"decoration\":{\"background\":{\"desktop\":{\"value\":{\"color\":\"$variable({\\\"type\\\":\\\"color\\\",\\\"value\\\":{\\\"name\\\":\\\"gcid-brand-white\\\",\\\"settings\\\":{}}})$\"}}}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/link {\"content\":{\"innerContent\":{\"desktop\":{\"value\":{\"text\":\"Tinted\",\"linkUrl\":\"#\",\"linkTarget\":\"off\"}}},\"decoration\":{\"font\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"#ffffff\"}}}}}},\"module\":{\"decoration\":{\"background\":{\"desktop\":{\"value\":{\"color\":\"$variable({\\\"type\\\":\\\"color\\\",\\\"value\\\":{\\\"name\\\":\\\"gcid-brand-white\\\",\\\"settings\\\":{\\\"opacity\\\":50}}})$\"}}}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/link {\"content\":{\"innerContent\":{\"desktop\":{\"value\":{\"text\":\"Icon same\",\"linkUrl\":\"#\",\"linkTarget\":\"off\"}}},\"decoration\":{\"font\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"#e4572e\"}}}}}},\"icon\":{\"innerContent\":{\"desktop\":{\"value\":{\"unicode\":\"&#x39;\",\"type\":\"divi\",\"weight\":\"400\"}}},\"advanced\":{\"color\":{\"desktop\":{\"value\":\"#e4572e\"}}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/link {\"content\":{\"innerContent\":{\"desktop\":{\"value\":{\"text\":\"Icon no hover\",\"linkUrl\":\"#\",\"linkTarget\":\"off\"}}},\"decoration\":{\"font\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"#e4572e\"},\"hover\":{\"color\":\"#0b1f3a\"}}}}}},\"icon\":{\"innerContent\":{\"desktop\":{\"value\":{\"unicode\":\"&#x39;\",\"type\":\"divi\",\"weight\":\"400\"}}},\"advanced\":{\"color\":{\"desktop\":{\"value\":\"#123456\"}}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- /wp:divi/column -->\n<!-- /wp:divi/row -->\n<!-- /wp:divi/section --><!-- /wp:divi/placeholder -->"
+ },
+ "presets": null,
+ "global_colors": [
+  [
+   "gcid-brand-white",
+   {
+    "color": "#FFFFFF",
+    "status": "active",
+    "label": "White"
+   }
+  ]
+ ],
+ "global_variables": [],
+ "images": [],
+ "thumbnails": []
+}

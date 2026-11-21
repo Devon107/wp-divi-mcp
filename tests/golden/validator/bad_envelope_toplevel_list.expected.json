@@ -1,0 +1,10 @@
+{
+ "errors": [
+  "top level must be a JSON object",
+  "context must be 'et_builder' for page/layout imports (got None)",
+  "'data' must be a non-empty object {post_id: post_content}"
+ ],
+ "warnings": [],
+ "info": [],
+ "counts": {}
+}

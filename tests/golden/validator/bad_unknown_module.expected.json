@@ -1,0 +1,20 @@
+{
+ "errors": [
+  "data[1] line 4 divi/fancy-widget: unknown Divi block name (not in Divi 5.11.0 catalog)"
+ ],
+ "warnings": [
+  "data[1] line 5 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)",
+  "data[1] line 6 core/paragraph: non-Divi block; the Visual Builder may not edit it",
+  "data[1] line 7 core/paragraph: non-Divi block; the Visual Builder may not edit it"
+ ],
+ "info": [],
+ "counts": {
+  "divi/placeholder": 1,
+  "divi/section": 1,
+  "divi/row": 1,
+  "divi/column": 1,
+  "divi/fancy-widget": 1,
+  "divi/text": 1,
+  "core/paragraph": 2
+ }
+}

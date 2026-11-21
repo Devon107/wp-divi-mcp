@@ -1,0 +1,24 @@
+{
+ "errors": [
+  "data[1] line 8 divi/text: malformed $variable(...)$ reference: $variable({\"type\":\"color\",\"value\":{\"nome\":\"x\"}})$",
+  "data[1] line 8 divi/text: malformed $variable(...)$ reference: $variable({\"type\":\"color\",\"value\":\"x\"})$",
+  "data[1] line 8 divi/text: malformed $variable(...)$ reference: $variable({bad json})$"
+ ],
+ "warnings": [
+  "data[1] line 4 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)",
+  "data[1] line 8 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)",
+  "global color gcid-brand-alpha is referenced but not included in global_colors — it must already exist on the target site",
+  "global color gcid-brand-zeta is referenced but not included in global_colors — it must already exist on the target site",
+  "global variable gvid-headline is referenced but not included in global_variables"
+ ],
+ "info": [
+  "dynamic content 'post_title' is used; if it points to a post/page ID it only resolves on the source site"
+ ],
+ "counts": {
+  "divi/placeholder": 1,
+  "divi/section": 1,
+  "divi/row": 1,
+  "divi/column": 1,
+  "divi/text": 5
+ }
+}

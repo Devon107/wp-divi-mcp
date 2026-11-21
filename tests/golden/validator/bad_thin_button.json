@@ -1,0 +1,11 @@
+{
+ "context": "et_builder",
+ "data": {
+  "1": "<!-- wp:divi/placeholder --><!-- wp:divi/section {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/row {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/column {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/button {\"button\":{\"innerContent\":{\"desktop\":{\"value\":{\"text\":\"Buy\"}}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/button {\"button\":{\"innerContent\":{\"desktop\":{\"value\":{\"text\":\"Padded\"}}},\"decoration\":{\"spacing\":{\"desktop\":{\"value\":{\"padding\":{\"top\":\"14px\",\"right\":\"28px\",\"bottom\":\"14px\",\"left\":\"28px\",\"syncVertical\":\"on\",\"syncHorizontal\":\"on\"}}}}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- /wp:divi/column -->\n<!-- /wp:divi/row -->\n<!-- /wp:divi/section --><!-- /wp:divi/placeholder -->"
+ },
+ "presets": null,
+ "global_colors": [],
+ "global_variables": [],
+ "images": [],
+ "thumbnails": []
+}
