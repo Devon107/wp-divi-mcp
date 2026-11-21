@@ -5,5 +5,12 @@
 	"config": {
 		"WP_DEBUG": true,
 		"SCRIPT_DEBUG": true
+	},
+	"env": {
+		"development": {
+			"config": {
+				"WP_DIVI_MCP_ALLOW_HTTP": true
+			}
+		}
 	}
 }

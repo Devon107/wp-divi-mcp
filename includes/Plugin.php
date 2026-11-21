@@ -50,7 +50,8 @@ final class Plugin {
 			return;
 		}
 		$this->booted = true;
-		// Hooks are registered here by later tasks.
+		add_action( 'rest_api_init', array( Mcp\Transport::class, 'register' ) );
+		// Further hooks are registered here by later tasks.
 	}
 
 	private function __construct() {}
