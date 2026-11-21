@@ -1,0 +1,419 @@
+[
+  {
+    "name": "rv_hover_sticky",
+    "calls": [
+      {"fn": "rv", "args": ["d", "t", "p"], "kwargs": {"hover": "h", "sticky": "s", "phoneWide": "pw", "widescreen": "ws", "ultraWide": null}},
+      {"fn": "rv", "args": [null, null, {"color": "red"}], "kwargs": {"hover": {"color": "blue"}}},
+      {"fn": "rv", "args": [], "kwargs": {"sticky": true}},
+      {"fn": "rv", "args": [], "kwargs": {}},
+      {"fn": "block", "args": ["divi/text", {"a": {"$ref": 0}, "b": {"$ref": 1}, "c": {"$ref": 2}, "d": {"$ref": 3}}]}
+    ]
+  },
+  {
+    "name": "box_radius",
+    "calls": [
+      {"fn": "box", "args": ["80px", "", "80px", ""]},
+      {"fn": "box", "args": ["1px", "2px", "3px", "2px"]},
+      {"fn": "box", "args": []},
+      {"fn": "radius", "args": ["8px"]},
+      {"fn": "radius", "args": ["1px", "2px", "3px", "4px"]},
+      {"fn": "block", "args": ["divi/text", {"a": {"$ref": 0}, "b": {"$ref": 1}, "c": {"$ref": 2}, "d": {"$ref": 3}, "e": {"$ref": 4}}]}
+    ]
+  },
+  {
+    "name": "color_content_vars",
+    "calls": [
+      {"fn": "color_var", "args": ["gcid-primary-color"]},
+      {"fn": "color_var", "args": ["gcid-secondary"], "kwargs": {"opacity": 0.5}},
+      {"fn": "color_var", "args": ["gcid-ñ\"<x>/\\"], "kwargs": {"opacity": "50%"}},
+      {"fn": "content_var", "args": ["gvid-abc123"]},
+      {"fn": "block", "args": ["divi/text", {"a": {"$ref": 0}, "b": {"$ref": 1}, "c": {"$ref": 2}, "d": {"$ref": 3}}]}
+    ]
+  },
+  {
+    "name": "merge_deep",
+    "calls": [
+      {"fn": "merge", "args": [{"a": {"b": 1, "c": [1, 2]}, "x": "keep"}, null, {}, {"a": {"c": [3], "d": {}}, "x": {"now": "dict"}}, {"a": {"d": {}}, "e": true}]},
+      {"fn": "merge", "args": []},
+      {"fn": "block", "args": ["divi/text", {"m": {"$ref": 0}, "empty": {"$ref": 1}}]}
+    ]
+  },
+  {
+    "name": "deco_module_deco",
+    "calls": [
+      {"fn": "rv", "args": [{"size": "32px"}]},
+      {"fn": "deco", "args": ["title"], "kwargs": {"font": {"font": {"$ref": 0}}}},
+      {"fn": "module_deco", "args": [], "kwargs": {"spacing": {"desktop": {"value": {"padding": {"top": "10px"}}}}, "background": {"desktop": {"value": {"color": "#fff"}}}}},
+      {"fn": "deco", "args": [], "kwargs": {}},
+      {"fn": "module_deco", "args": [], "kwargs": {}},
+      {"fn": "block", "args": ["divi/text", {"a": {"$ref": 1}, "b": {"$ref": 2}, "c": {"$ref": 3}, "d": {"$ref": 4}}]}
+    ]
+  },
+  {
+    "name": "font_groups",
+    "calls": [
+      {"fn": "font", "args": ["title"], "kwargs": {"desktop": {"size": "32px", "weight": "700"}, "tablet": {"size": "24px"}, "phone": {"size": "20px"}, "hover": {"color": "#000"}}},
+      {"fn": "font", "args": [], "kwargs": {"desktop": {"color": "#00f"}, "group": "bodyFont", "sub": "link"}},
+      {"fn": "font", "args": ["content"], "kwargs": {"desktop": {"size": "40px"}, "group": "headingFont", "sub": "h2"}},
+      {"fn": "font", "args": [], "kwargs": {}},
+      {"fn": "block", "args": ["divi/text", {"a": {"$ref": 0}, "b": {"$ref": 1}, "c": {"$ref": 2}, "d": {"$ref": 3}}]}
+    ]
+  },
+  {
+    "name": "html_attrs_admin_label",
+    "calls": [
+      {"fn": "html_attrs", "args": ["hero", "a b"]},
+      {"fn": "html_attrs", "args": [], "kwargs": {"css_class": "only-class"}},
+      {"fn": "html_attrs", "args": []},
+      {"fn": "admin_label", "args": ["Hero «1»"]},
+      {"fn": "block", "args": ["divi/text", {"a": {"$ref": 0}, "b": {"$ref": 1}, "c": {"$ref": 2}, "d": {"$ref": 3}}]}
+    ]
+  },
+  {
+    "name": "custom_css",
+    "calls": [
+      {"fn": "custom_css", "args": [], "kwargs": {"main": "color:red;", "before": "content:'';", "after": "content:\"\";", "free_form": "selector{a:b}", "hover_main": "transform:translateY(-4px);", "tablet_main": "padding:0;", "phone_main": "display:none;", "title": "font-weight:700;"}},
+      {"fn": "custom_css", "args": [], "kwargs": {"hover_main": "opacity:.5;"}},
+      {"fn": "custom_css", "args": [], "kwargs": {}},
+      {"fn": "block", "args": ["divi/text", {"a": {"$ref": 0}, "b": {"$ref": 1}, "c": {"$ref": 2}}]}
+    ]
+  },
+  {
+    "name": "flex_grid_layout_attrs",
+    "calls": [
+      {"fn": "flex", "args": [], "kwargs": {"direction": "column", "justify": "center", "align": "center", "gap": "10px", "row_gap": "5px", "wrap": true, "display": "flex"}},
+      {"fn": "flex", "args": [], "kwargs": {"wrap": false, "column_gap": "0px"}},
+      {"fn": "flex", "args": [], "kwargs": {"wrap": "wrap-reverse", "gap": 0}},
+      {"fn": "flex", "args": [], "kwargs": {}},
+      {"fn": "grid", "args": [], "kwargs": {"columns": 3, "gap": "20px", "align": "center", "justify": "start"}},
+      {"fn": "grid", "args": [], "kwargs": {"template": "42px 1fr", "columns": 2, "row_gap": "4px", "column_gap": "8px"}},
+      {"fn": "grid", "args": [], "kwargs": {}},
+      {"fn": "layout_attrs", "args": [{"$ref": 0}, {"$ref": 4}, {"flexDirection": "column"}], "kwargs": {"element": "content"}},
+      {"fn": "layout_attrs", "args": []},
+      {"fn": "block", "args": ["divi/group", {"f1": {"$ref": 1}, "f2": {"$ref": 2}, "f3": {"$ref": 3}, "g2": {"$ref": 5}, "g3": {"$ref": 6}, "l1": {"$ref": 7}, "l2": {"$ref": 8}}, []]}
+    ]
+  },
+  {
+    "name": "card_variants",
+    "calls": [
+      {"fn": "card", "args": [], "kwargs": {"background": "#fff", "border_color": "#eee", "radius_": "16px", "padding": "24px", "shadow": {"vertical": "10px", "blur": "28px", "color": "rgba(0,0,0,.08)"}, "hover_shadow": {"blur": "40px", "style": "preset2"}, "hover_border_color": "#000"}},
+      {"fn": "box", "args": ["10px", "20px", "10px", "20px"]},
+      {"fn": "card", "args": [], "kwargs": {"radius_": ["4px", "4px", "22px", "22px"], "padding": {"$ref": 1}, "border_color": "#ddd", "border_width": "2px", "element": "content"}},
+      {"fn": "card", "args": [], "kwargs": {"hover_border_color": "#f00", "hover_shadow": {"blur": "8px"}}},
+      {"fn": "card", "args": [], "kwargs": {}},
+      {"fn": "block", "args": ["divi/column", {"a": {"$ref": 0}, "b": {"$ref": 2}, "c": {"$ref": 3}, "d": {"$ref": 4}}, []]}
+    ]
+  },
+  {
+    "name": "section_row_column_text",
+    "calls": [
+      {"fn": "text", "args": ["<p>Hi</p>"]},
+      {"fn": "column", "args": [{"$ref": 0}]},
+      {"fn": "row", "args": [{"$ref": 1}]},
+      {"fn": "box", "args": ["80px", "", "80px", ""]},
+      {"fn": "rv", "args": [{"padding": {"$ref": 3}}]},
+      {"fn": "module_deco", "args": [], "kwargs": {"spacing": {"$ref": 4}}},
+      {"fn": "section", "args": [{"$ref": 2}, null], "kwargs": {"attrs": {"$ref": 5}, "css_id": "top"}}
+    ]
+  },
+  {
+    "name": "section_fullwidth_and_empty",
+    "calls": [
+      {"fn": "section", "args": [], "kwargs": {"kind": "fullwidth"}},
+      {"fn": "section", "args": []},
+      {"fn": "section", "args": [], "kwargs": {"kind": "fullwidth", "css_id": "anchor", "attrs": {"module": {"advanced": {"type": {"desktop": {"value": "regular"}}}}}}}
+    ],
+    "result": [0, 1, 2]
+  },
+  {
+    "name": "row_uneven_columns",
+    "calls": [
+      {"fn": "text", "args": ["<p>A</p>"]},
+      {"fn": "column", "args": [{"$ref": 0}], "kwargs": {"width": "1_2"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_4", "tablet": "1_2"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1/4", "phone": "1_2", "attrs": {"module": {"advanced": {"type": {"desktop": {"value": "custom"}}}}}}},
+      {"fn": "row", "args": [{"$ref": 1}, {"$ref": 2}, {"$ref": 3}], "kwargs": {"gap": "24px", "max_width": "1200px", "width": "90%"}}
+    ]
+  },
+  {
+    "name": "row_wrap_on",
+    "calls": [
+      {"fn": "column", "args": [], "kwargs": {"width": "1_3"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_3"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_3", "tablet": "1_1"}},
+      {"fn": "row", "args": [{"$ref": 0}, {"$ref": 1}, {"$ref": 2}], "kwargs": {"wrap_on": ["phone"], "gap": "30px"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_2"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_2"}},
+      {"fn": "row", "args": [{"$ref": 4}, {"$ref": 5}], "kwargs": {"wrap_on": []}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_2"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_2"}},
+      {"fn": "row", "args": [{"$ref": 7}, {"$ref": 8}], "kwargs": {"wrap_on": ["tablet"]}}
+    ],
+    "result": [3, 6, 9]
+  },
+  {
+    "name": "row_multiline_and_fifths",
+    "calls": [
+      {"fn": "column", "args": [], "kwargs": {"width": "1_4"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_4"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_4"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_4"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_4"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_4"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_4"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_4"}},
+      {"fn": "row", "args": [{"$ref": 0}, {"$ref": 1}, {"$ref": 2}, {"$ref": 3}, {"$ref": 4}, {"$ref": 5}, {"$ref": 6}, {"$ref": 7}]},
+      {"fn": "column", "args": [], "kwargs": {"width": "3_5", "tablet": "2_5"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "2_5"}},
+      {"fn": "row", "args": [{"$ref": 9}, {"$ref": 10}]},
+      {"fn": "column", "args": [], "kwargs": {"width": "2_4"}},
+      {"fn": "column", "args": [], "kwargs": {"width": "1_2"}},
+      {"fn": "row", "args": [{"$ref": 12}, {"$ref": 13}]}
+    ],
+    "result": [8, 11, 14]
+  },
+  {
+    "name": "grid_row_variants",
+    "calls": [
+      {"fn": "column", "args": []},
+      {"fn": "column", "args": []},
+      {"fn": "column", "args": []},
+      {"fn": "column", "args": [], "kwargs": {"attrs": {"module": {"decoration": {"sizing": {"desktop": {"value": {"flexType": "12_24"}}}}}}}},
+      {"fn": "grid_row", "args": [{"$ref": 0}, {"$ref": 1}, {"$ref": 2}, {"$ref": 3}], "kwargs": {"cols": 3, "tablet": 2, "phone": 1, "max_width": "1100px", "width": "80%"}},
+      {"fn": "column", "args": []},
+      {"fn": "column", "args": []},
+      {"fn": "grid_row", "args": [{"$ref": 5}, {"$ref": 6}], "kwargs": {"template": "2fr 1fr", "phone": 1, "gap": "40px"}},
+      {"fn": "column", "args": []},
+      {"fn": "grid_row", "args": [{"$ref": 8}], "kwargs": {"cols": 7, "tablet": 0, "phone": 0, "attrs": {"module": {"meta": {"adminLabel": {"desktop": {"value": "Grid"}}}}}}},
+      {"fn": "column", "args": []},
+      {"fn": "grid_row", "args": [{"$ref": 10}], "kwargs": {"template": "1fr", "phone": null}}
+    ],
+    "result": [4, 7, 9, 11]
+  },
+  {
+    "name": "group_variants",
+    "calls": [
+      {"fn": "text", "args": ["<p>In group</p>"]},
+      {"fn": "group", "args": [{"$ref": 0}], "kwargs": {"direction": "row", "gap": "12px", "align": "center", "justify": "space-between", "wrap": true, "width": "50%", "tablet": {"flexDirection": "column"}, "phone": {"rowGap": "4px"}}},
+      {"fn": "grid", "args": [], "kwargs": {"template": "42px 1fr", "gap": "16px"}},
+      {"fn": "group", "args": [], "kwargs": {"layout": {"$ref": 2}, "direction": "row", "attrs": {"module": {"meta": {"adminLabel": {"desktop": {"value": "G"}}}}}}},
+      {"fn": "group", "args": []},
+      {"fn": "group", "args": [], "kwargs": {"phone": {"flexDirection": "column"}}},
+      {"fn": "group", "args": [{"$ref": 1}, {"$ref": 3}, {"$ref": 4}, {"$ref": 5}]}
+    ]
+  },
+  {
+    "name": "text_heading_unicode",
+    "calls": [
+      {"fn": "text", "args": ["<p>Ñandú — «citas» & <b>x</b> -- 😀 \\ \"q\"</p>"]},
+      {"fn": "heading", "args": ["Ñandú — «citas» & <b>x</b> -- 😀 \\ \"q\""], "kwargs": {"level": "h1"}},
+      {"fn": "heading", "args": ["Plain"], "kwargs": {"attrs": {"title": {"decoration": {"font": {"font": {"desktop": {"value": {"color": "#111"}}}}}}}}}
+    ],
+    "result": [0, 1, 2]
+  },
+  {
+    "name": "button_image",
+    "calls": [
+      {"fn": "button", "args": ["Buy now"], "kwargs": {"url": "https://example.com/?a=1&b=2", "new_window": true}},
+      {"fn": "button", "args": ["Plain"]},
+      {"fn": "image", "args": ["https://example.com/a.jpg"], "kwargs": {"alt": "Alt", "title": "Title", "url": "https://example.com", "attachment_id": 42, "width": 640, "height": "480"}},
+      {"fn": "image", "args": ["https://example.com/b.png"], "kwargs": {"attrs": {"module": {"meta": {"adminLabel": {"desktop": {"value": "Img"}}}}}}}
+    ],
+    "result": [0, 1, 2, 3]
+  },
+  {
+    "name": "blurb_link_icon",
+    "calls": [
+      {"fn": "fa_icon", "args": ["&#xf0e0;"]},
+      {"fn": "blurb", "args": ["Mail"], "kwargs": {"body_html": "<p>Write us</p>", "icon": {"$ref": 0}, "url": "mailto:a@b.c"}},
+      {"fn": "blurb", "args": ["Photo"], "kwargs": {"image_src": "https://example.com/p.webp"}},
+      {"fn": "divi_icon", "args": ["&#x24;"]},
+      {"fn": "link", "args": ["Read more"], "kwargs": {"url": "/more", "icon": {"$ref": 3}, "icon_position": "before", "new_window": true}},
+      {"fn": "link", "args": ["Next"], "kwargs": {"icon": {"$ref": 0}}},
+      {"fn": "link", "args": ["Bare"]},
+      {"fn": "fa_icon", "args": ["&#xf004;", "400"]},
+      {"fn": "icon", "args": [{"$ref": 7}], "kwargs": {"size": "32px", "color": "#f00", "url": "https://example.com"}},
+      {"fn": "icon", "args": [{"$ref": 3}]}
+    ],
+    "result": [1, 2, 4, 5, 6, 8, 9]
+  },
+  {
+    "name": "breadcrumbs_variants",
+    "calls": [
+      {"fn": "breadcrumbs", "args": []},
+      {"fn": "breadcrumbs", "args": [], "kwargs": {"home_text": "Inicio", "separator": "/", "home_url": "/", "color": "#333", "link_color": "#00f", "hover_color": "#f00", "size": "14px"}},
+      {"fn": "breadcrumbs", "args": [], "kwargs": {"link_color": "#0f0"}}
+    ],
+    "result": [0, 1, 2]
+  },
+  {
+    "name": "code_toggle_accordion",
+    "calls": [
+      {"fn": "code", "args": ["<style>.a{b:c}</style><!-- x --> & <script>var a = 1 > 0;</script>"]},
+      {"fn": "toggle", "args": ["Q?", "<p>A</p>"], "kwargs": {"open_": true, "level": "h4"}},
+      {"fn": "toggle", "args": ["Closed", "<p>B</p>"]},
+      {"fn": "accordion_item", "args": ["One", "<p>1</p>"], "kwargs": {"open_": true}},
+      {"fn": "accordion_item", "args": ["Two", "<p>2</p>"]},
+      {"fn": "accordion", "args": [{"$ref": 3}, {"$ref": 4}]},
+      {"fn": "accordion", "args": []}
+    ],
+    "result": [0, 1, 2, 5, 6]
+  },
+  {
+    "name": "number_counter_numbers",
+    "calls": [
+      {"fn": "number_counter", "args": [1.5, "Rate"], "kwargs": {"percent_sign": true}},
+      {"fn": "number_counter", "args": [0, "Zero"]},
+      {"fn": "number_counter", "args": [-2, "Neg"]},
+      {"fn": "number_counter", "args": [2.0, "Two"]},
+      {"fn": "number_counter", "args": ["98", "Str"]}
+    ],
+    "result": [0, 1, 2, 3, 4]
+  },
+  {
+    "name": "divider_cta",
+    "calls": [
+      {"fn": "divider", "args": [], "kwargs": {"color": "#ccc", "weight": "2px"}},
+      {"fn": "divider", "args": []},
+      {"fn": "cta", "args": ["Join"], "kwargs": {"body_html": "<p>Now</p>", "button_label": "Go", "button_url": "/go"}},
+      {"fn": "cta", "args": ["Label only"], "kwargs": {"button_label": "Go"}},
+      {"fn": "cta", "args": ["Title only"]}
+    ],
+    "result": [0, 1, 2, 3, 4]
+  },
+  {
+    "name": "testimonial_team_member",
+    "calls": [
+      {"fn": "testimonial", "args": ["Ana", "<p>Great</p>"], "kwargs": {"job_title": "CEO", "company": "ACME", "company_url": "https://acme.test", "portrait": "https://example.com/ana.jpg"}},
+      {"fn": "testimonial", "args": ["Bob", "<p>Ok</p>"], "kwargs": {"company": "Solo"}},
+      {"fn": "team_member", "args": ["Eva"], "kwargs": {"position": "CTO", "body_html": "<p>Bio</p>", "image_url": "https://example.com/eva.webp", "social": {"linkedinUrl": "https://linkedin.com/in/eva", "twitterUrl": "https://x.com/eva"}}},
+      {"fn": "team_member", "args": ["Min"]}
+    ],
+    "result": [0, 1, 2, 3]
+  },
+  {
+    "name": "contact_form_fields",
+    "calls": [
+      {"fn": "contact_field", "args": ["name", "Name"], "kwargs": {"half": true}},
+      {"fn": "contact_field", "args": ["email", "Email"], "kwargs": {"type_": "email", "half": true}},
+      {"fn": "contact_field", "args": ["message", "Message"], "kwargs": {"type_": "text", "required": false}},
+      {"fn": "contact_form", "args": [{"$ref": 0}, {"$ref": 1}, {"$ref": 2}], "kwargs": {"email": "a@b.test", "title": "Contact", "submit": "Send", "success": "Thanks!", "unique_key": "https://example.com/contact"}},
+      {"fn": "contact_form", "args": [], "kwargs": {"unique_key": "Ñandú form"}}
+    ],
+    "result": [3, 4]
+  },
+  {
+    "name": "timeline_items",
+    "calls": [
+      {"fn": "fa_icon", "args": ["&#xf135;"]},
+      {"fn": "timeline_item", "args": ["2020", "Start"], "kwargs": {"body_html": "<p>Began</p>", "icon": {"$ref": 0}}},
+      {"fn": "timeline_item", "args": ["2021", "Next"]},
+      {"fn": "timeline", "args": [{"$ref": 1}, {"$ref": 2}], "kwargs": {"direction": "horizontal", "position": "left"}},
+      {"fn": "timeline", "args": []}
+    ],
+    "result": [3, 4]
+  },
+  {
+    "name": "icon_list_social",
+    "calls": [
+      {"fn": "icon_list_item", "args": ["One"]},
+      {"fn": "divi_icon", "args": ["&#x4e;"]},
+      {"fn": "icon_list_item", "args": ["Two"], "kwargs": {"icon": {"$ref": 1}}},
+      {"fn": "icon_list", "args": [{"$ref": 0}, {"$ref": 2}], "kwargs": {"color": "#0a0", "size": "18px"}},
+      {"fn": "icon_list", "args": []},
+      {"fn": "social_network", "args": ["facebook", "https://facebook.com/x"]},
+      {"fn": "social_network", "args": ["twitter", "https://x.com/y"], "kwargs": {"label": "X"}},
+      {"fn": "social_follow", "args": [{"$ref": 5}, {"$ref": 6}]},
+      {"fn": "social_follow", "args": []}
+    ],
+    "result": [3, 4, 7, 8]
+  },
+  {
+    "name": "block_generic",
+    "calls": [
+      {"fn": "block", "args": ["divi/text", {"builderVersion": "5.0.0", "x": 1}]},
+      {"fn": "block", "args": ["divi/placeholder", null, []], "kwargs": {"builder_version": false}},
+      {"fn": "block", "args": ["divi/divider", null, null, false]},
+      {"fn": "block", "args": ["divi/section", {}, []]},
+      {"fn": "block", "args": ["divi/group", null, [{"$ref": 0}, null, {"$ref": 2}]]}
+    ],
+    "result": [0, 1, 2, 3, 4]
+  },
+  {
+    "name": "scalar_values",
+    "calls": [
+      {"fn": "block", "args": ["divi/text", {
+        "zero": 0, "one_half": 1.5, "neg": -2, "two_float": 2.0, "tiny": 1e-7, "small": 0.0001, "big": 1e16, "almost_big": 1234567890123456.0,
+        "huge": 1.5e300, "neg_zero": -0.0, "pi": 3.141592653589793, "tenth": 0.1, "third": 0.3333333333333333, "neg_tiny": -2.5e-5,
+        "t": true, "f": false, "n": null,
+        "empty_obj": {}, "empty_list": [],
+        "nested": [[1, [2, {"a": []}]], {"b": [{}]}, [], [[]]],
+        "str": "Ñandú — «citas» & <b>x</b> -- 😀 \\ \"q\"",
+        "ctrl": "\b\f\n\r\t\u0001\u001f\u007f ---",
+        "k<&>\"--": "key escaping",
+        "": "empty key"
+      }]}
+    ]
+  },
+  {
+    "name": "set_builder_version",
+    "calls": [
+      {"fn": "set_builder_version", "args": ["5.14.0"]},
+      {"fn": "text", "args": ["<p>v</p>"]}
+    ]
+  },
+  {
+    "name": "global_color_variable",
+    "calls": [
+      {"fn": "global_color", "args": ["gcid-primary", "#ff0000", "Primary"]},
+      {"fn": "global_variable", "args": ["gvid-base", "16px", "Base size"]},
+      {"fn": "global_variable", "args": ["gvid-tagline", "Hola «mundo»", "Tagline"], "kwargs": {"var_type": "strings"}},
+      {"fn": "block", "args": ["divi/text", {"gc": {"$ref": 0}, "gv": [{"$ref": 1}, {"$ref": 2}]}]}
+    ]
+  },
+  {
+    "name": "post_content_page",
+    "calls": [
+      {"fn": "heading", "args": ["Hello"], "kwargs": {"level": "h1"}},
+      {"fn": "text", "args": ["<p>Intro</p>"]},
+      {"fn": "column", "args": [{"$ref": 0}, {"$ref": 1}]},
+      {"fn": "row", "args": [{"$ref": 2}]},
+      {"fn": "section", "args": [{"$ref": 3}]},
+      {"fn": "post_content", "args": [[{"$ref": 4}]]}
+    ],
+    "output": "string"
+  },
+  {
+    "name": "find_image_urls",
+    "calls": [
+      {"fn": "image", "args": ["https://example.com/a.jpg"]},
+      {"fn": "image", "args": ["https://example.com/B.JPEG?w=100&h=50"]},
+      {"fn": "image", "args": ["https://example.com/a.jpg"]},
+      {"fn": "image", "args": ["/relative/c.png"]},
+      {"fn": "team_member", "args": ["Eva"], "kwargs": {"image_url": "http://cdn.test/eva.webp"}},
+      {"fn": "testimonial", "args": ["Ana", "<p>x</p>"], "kwargs": {"portrait": "https://cdn.test/ana.avif"}},
+      {"fn": "icon", "args": [{"unicode": "&#xf004;", "type": "fa", "weight": "900"}], "kwargs": {"url": "https://example.com/page"}},
+      {"fn": "block", "args": ["divi/text", {"deep": [{"src": "https://x.test/l.svg"}, {"url": "https://x.test/g.gif"}, {"src": 5}]}]},
+      {"fn": "column", "args": [{"$ref": 0}, {"$ref": 1}, {"$ref": 2}, {"$ref": 3}, {"$ref": 4}, {"$ref": 5}, {"$ref": 6}]},
+      {"fn": "row", "args": [{"$ref": 8}]},
+      {"fn": "section", "args": [{"$ref": 9}]},
+      {"fn": "find_image_urls", "args": [[{"$ref": 10}, {"$ref": 7}]]}
+    ],
+    "output": "json"
+  },
+  {
+    "name": "layout_export_envelope",
+    "calls": [
+      {"fn": "text", "args": ["<p>Ñandú</p>"]},
+      {"fn": "column", "args": [{"$ref": 0}]},
+      {"fn": "row", "args": [{"$ref": 1}]},
+      {"fn": "section", "args": [{"$ref": 2}]},
+      {"fn": "global_color", "args": ["gcid-primary", "#ff0000", "Primary"]},
+      {"fn": "global_variable", "args": ["gvid-base", "16px", "Base"]},
+      {"fn": "layout_export", "args": [[{"$ref": 3}]], "kwargs": {"post_id": 7, "global_colors": [{"$ref": 4}], "global_variables": [{"$ref": 5}], "custom_css": ".a{b:c}", "presets": {"module": {}}}},
+      {"fn": "layout_export", "args": [{"$ref": 3}]}
+    ],
+    "result": [6, 7],
+    "output": "json"
+  }
+]
