@@ -42,9 +42,7 @@ jobs:
         run: |
           composer install --no-interaction --prefer-dist
           npm ci
-      - name: Start wp-env (PHP 8.2)
-        run: |
-          echo '{ "phpVersion": "8.2" }' > .wp-env.override.json
-          npx wp-env start
+      - name: Start wp-env (PHP 8.2, from .wp-env.json)
+        run: npx wp-env start
       - name: Run tests (Divi group excluded)
         run: bin/test
