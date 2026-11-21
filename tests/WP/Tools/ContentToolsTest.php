@@ -8,6 +8,7 @@
  * @package WPDM
  */
 
+use WPDM\Divi\Backups;
 use WPDM\Mcp\Context;
 use WPDM\Mcp\Registry;
 use WPDM\Mcp\Server;
@@ -487,17 +488,43 @@ class ContentToolsTest extends WP_UnitTestCase {
 		$this->assertNotSame( '', $message );
 		$this->assertSame( $original, get_post( $id )->post_content );
 
-		// force is not available yet (Task 12 replaces this).
-		$message = $this->fails( $this->admin, 'update_post', array( 'id' => $id, 'content' => '<p>clobber</p>', 'force' => true ) );
-		$this->assertSame( 'force is not available until backups are implemented', $message );
-		$this->assertSame( 'force_unavailable', $this->error_code( $this->admin, 'update_post', array( 'id' => $id, 'content' => 'x', 'force' => true ) ) );
+		$this->assertSame( 'divi_content_protected', $this->error_code( $this->admin, 'update_post', array( 'id' => $id, 'content' => 'x' ) ) );
+		$this->assertSame( 'divi_content_protected', $this->error_code( $this->admin, 'update_post', array( 'id' => $id, 'content' => 'x', 'force' => false ) ) );
 		$this->assertSame( $original, get_post( $id )->post_content );
+		$this->assertSame( array(), Backups::list( $id ), 'a refused update makes no backup' );
 
 		// Non-content edits without force are still fine.
 		$data = $this->ok( $this->admin, 'update_post', array( 'id' => $id, 'title' => 'Renamed' ) );
 		$this->assertSame( 'Renamed', $data['title'] );
 		$this->assertTrue( $data['divi'] );
 		$this->assertSame( $original, get_post( $id )->post_content );
+	}
+
+	public function test_update_divi_post_with_force_backs_up() {
+		$original = '<!-- wp:divi/section {"module":{"meta":{"adminLabel":{"desktop":{"value":"A \\"q\\" C:\\\\x"}}}}} --><!-- /wp:divi/section -->';
+		wp_set_current_user( $this->admin ); // Without unfiltered_html, kses would re-serialize the block markup.
+		$id = $this->make_divi_page( array( 'post_content' => wp_slash( $original ) ) );
+		$this->assertSame( $original, get_post( $id )->post_content );
+
+		$data = $this->ok( $this->admin, 'update_post', array( 'id' => $id, 'content' => '<p>clobber</p>', 'force' => true ) );
+
+		$this->assertSame( '<p>clobber</p>', get_post( $id )->post_content );
+		$this->assertIsInt( $data['backup_id'] );
+		$backup = Backups::get( $data['backup_id'] );
+		$this->assertSame( 'post_content', $backup['kind'] );
+		$this->assertSame( $id, $backup['source_id'] );
+		$this->assertSame( 'Test connection', $backup['connection'] );
+		$this->assertSame( $original, $backup['content'], 'backup is byte-exact' );
+		$this->assertSame( array( $data['backup_id'] ), wp_list_pluck( Backups::list( $id, 'post_content' ), 'id' ) );
+
+		// force without content: no backup, no backup_id.
+		$data = $this->ok( $this->admin, 'update_post', array( 'id' => $id, 'title' => 'T', 'force' => true ) );
+		$this->assertArrayNotHasKey( 'backup_id', $data );
+		$this->assertCount( 1, Backups::list( $id ) );
+
+		// A user who cannot edit the post gets no backup either.
+		$this->fails( $this->author, 'update_post', array( 'id' => $id, 'content' => 'x', 'force' => true ) );
+		$this->assertCount( 1, Backups::list( $id ) );
 	}
 
 	public function test_update_detects_divi_by_block_markup_without_meta() {

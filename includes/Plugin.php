@@ -54,6 +54,8 @@ final class Plugin {
 		Log\ActivityLog::register();
 		Admin\SettingsPage::register();
 		add_filter( 'wpdm_registry', array( Tools\WordPress\Registrar::class, 'add' ) );
+		Divi\Backups::register();
+		Divi\Nonces::register();
 		// Further hooks are registered here by later tasks.
 	}
 

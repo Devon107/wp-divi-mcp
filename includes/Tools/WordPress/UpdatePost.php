@@ -7,6 +7,7 @@
 
 namespace WPDM\Tools\WordPress;
 
+use WPDM\Divi\Backups;
 use WPDM\Mcp\Context;
 use WPDM\Mcp\Tool;
 use WPDM\Mcp\ToolError;
@@ -23,7 +24,7 @@ final class UpdatePost extends Tool {
 	}
 
 	public function description(): string {
-		return 'Update a post or page by ID. Only the fields you pass change; terms listed per taxonomy replace that taxonomy\'s terms, meta null deletes a key. Overwrites existing values. Content of a Divi post cannot be replaced here: use the Divi layout tools instead.';
+		return 'Update a post or page by ID. Only the fields you pass change; terms listed per taxonomy replace that taxonomy\'s terms, meta null deletes a key. Overwrites existing values. Content of a Divi post is protected: use the Divi layout tools, or pass force=true to replace it anyway (the current content is backed up first and backup_id is returned).';
 	}
 
 	public function input_schema(): array {
@@ -45,7 +46,7 @@ final class UpdatePost extends Tool {
 				array(
 					'force' => array(
 						'type'        => 'boolean',
-						'description' => 'Overwrite the content of a Divi post anyway. Not available until backups are implemented.',
+						'description' => 'Replace the content of a Divi post anyway. The current content is backed up first; the result includes backup_id.',
 					),
 				)
 			),
@@ -77,18 +78,31 @@ final class UpdatePost extends Tool {
 			throw new ToolError( 'Post ' . $post->ID . ' is a "' . $post->post_type . '"; the post type cannot be changed.', 'invalid_argument' );
 		}
 
-		if ( PostFormatter::is_divi( $post ) ) {
-			if ( ! empty( $args['force'] ) ) {
-				// Task 12 replaces this with a backup followed by the write.
-				throw new ToolError( 'force is not available until backups are implemented', 'force_unavailable' );
+		$backup_needed = false;
+		if ( isset( $args['content'] ) && PostFormatter::is_divi( $post ) ) {
+			if ( empty( $args['force'] ) ) {
+				throw new ToolError( 'This post is built with Divi; its content cannot be replaced here. Use divi_apply_layout to change the design, or pass force=true to overwrite it after a backup.', 'divi_content_protected' );
 			}
-			if ( isset( $args['content'] ) ) {
-				throw new ToolError( 'This post is built with Divi; its content cannot be replaced here. Use divi_apply_layout to change the design.', 'divi_content_protected' );
-			}
+			$backup_needed = true;
 		}
 
 		$type = PostSupport::post_type( $post->post_type );
 		$plan = PostSupport::plan( $type, $args, $post );
+
+		// Back up only once every check has passed, right before the write.
+		$backup_id = null;
+		if ( $backup_needed ) {
+			$backup_id = Backups::save(
+				'post_content',
+				$post->ID,
+				$post->post_content,
+				array(
+					'post_title'  => $post->post_title,
+					'post_status' => $post->post_status,
+				),
+				(string) ( $ctx->connection['label'] ?? '' )
+			);
+		}
 
 		if ( $plan['post'] ) {
 			$postarr = array_merge( $plan['post'], array( 'ID' => $post->ID ) );
@@ -99,6 +113,10 @@ final class UpdatePost extends Tool {
 		}
 		PostSupport::apply( $post->ID, $plan, false );
 
-		return PostFormatter::full( get_post( $post->ID ), true );
+		$out = PostFormatter::full( get_post( $post->ID ), true );
+		if ( null !== $backup_id ) {
+			$out['backup_id'] = $backup_id;
+		}
+		return $out;
 	}
 }
