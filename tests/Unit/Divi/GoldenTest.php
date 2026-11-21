@@ -1,15 +1,19 @@
 <?php
 /**
- * Golden tests: the PHP port of divi5.py must reproduce the Python output byte for byte.
+ * Golden tests: the PHP port of divi5.py / patterns.py must reproduce the Python output
+ * byte for byte.
  *
  * tests/golden/cases.json lists helper calls; tests/golden/build_fixtures.py ran them
  * through the Python library and wrote tests/golden/fixtures/. This test runs the same
- * calls through WPDM\Divi\D5 with a tiny interpreter and compares the output.
+ * calls through WPDM\Divi\D5 (and WPDM\Divi\Patterns for "patterns.<name>") with a tiny
+ * interpreter and compares the output. {"$theme": {...}} builds a WPDM\Divi\Theme.
  *
  * @package WPDM
  */
 
 use WPDM\Divi\D5;
+use WPDM\Divi\Patterns;
+use WPDM\Divi\Theme;
 use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 class GoldenTest extends TestCase {
@@ -67,12 +71,34 @@ class GoldenTest extends TestCase {
 			$this->assertIsString( $value );
 			$this->assertSame( $expected, $value );
 		} else {
-			// JSON outputs are compared structurally (decoded on both sides).
-			$this->assertSame(
-				json_decode( $expected, true ),
-				json_decode( (string) json_encode( $value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ), true )
-			);
+			// JSON outputs are compared as canonical text: both sides are decoded as objects
+			// (so {} and [] stay distinct and key order is kept) and re-encoded the same way,
+			// which only normalizes number spelling and string escapes.
+			$this->assertSame( self::canonical_json( $expected ), self::canonical_json( (string) json_encode( $value ) ) );
 		}
+	}
+
+	/**
+	 * The JSON comparison must tell {} from [] and see key order.
+	 */
+	public function test_canonical_json_pins_objects_and_order() {
+		$this->assertNotSame( self::canonical_json( '{"a":{}}' ), self::canonical_json( '{"a":[]}' ) );
+		$this->assertNotSame( self::canonical_json( '{"a":1,"b":2}' ), self::canonical_json( '{"b":2,"a":1}' ) );
+		$this->assertSame( self::canonical_json( '{"a":1.0,"b":"\u00f1"}' ), self::canonical_json( '{"a": 1.0, "b": "ñ"}' ) );
+	}
+
+	/**
+	 * Decode JSON keeping objects as stdClass, then re-encode canonically.
+	 *
+	 * @param string $json JSON text.
+	 * @return string
+	 */
+	private static function canonical_json( $json ) {
+		$decoded = json_decode( $json );
+		if ( null === $decoded && 'null' !== trim( $json ) ) {
+			throw new RuntimeException( 'Invalid JSON: ' . json_last_error_msg() );
+		}
+		return (string) json_encode( $decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION );
 	}
 
 	/**
@@ -116,9 +142,10 @@ class GoldenTest extends TestCase {
 	}
 
 	/**
-	 * Call D5::$fn mapping Python args/kwargs onto the PHP signature:
-	 * kwargs that name a positional parameter fill that slot, the rest go into the
-	 * trailing options array (or, for variadic helpers, a trailing array argument).
+	 * Call D5::$fn (or Patterns::<name> for "patterns.<name>") mapping Python
+	 * args/kwargs onto the PHP signature: kwargs that name a positional parameter
+	 * fill that slot, the rest go into the trailing options array (or, for variadic
+	 * helpers, a trailing array argument).
 	 *
 	 * @param string $fn     Helper name.
 	 * @param array  $args   Positional args.
@@ -126,8 +153,13 @@ class GoldenTest extends TestCase {
 	 * @return mixed
 	 */
 	private function call( $fn, array $args, array $kwargs ) {
-		$this->assertTrue( method_exists( D5::class, $fn ), "D5::{$fn}() is missing" );
-		$method = new ReflectionMethod( D5::class, $fn );
+		$class = D5::class;
+		if ( 0 === strpos( $fn, 'patterns.' ) ) {
+			$class = Patterns::class;
+			$fn    = substr( $fn, strlen( 'patterns.' ) );
+		}
+		$this->assertTrue( method_exists( $class, $fn ), "{$class}::{$fn}() is missing" );
+		$method = new ReflectionMethod( $class, $fn );
 		$params = $method->getParameters();
 		$last   = $params ? $params[ count( $params ) - 1 ] : null;
 
@@ -136,7 +168,7 @@ class GoldenTest extends TestCase {
 			if ( $kwargs ) {
 				$call[] = $kwargs;
 			}
-			return call_user_func_array( array( D5::class, $fn ), $call );
+			return call_user_func_array( array( $class, $fn ), $call );
 		}
 
 		$opts_param = ( $last && in_array( $last->getName(), self::OPTS_PARAMS, true ) ) ? $last : null;
@@ -162,11 +194,12 @@ class GoldenTest extends TestCase {
 		} else {
 			$this->assertSame( array(), $kwargs, "Unexpected kwargs for {$fn}()" );
 		}
-		return call_user_func_array( array( D5::class, $fn ), $call );
+		return call_user_func_array( array( $class, $fn ), $call );
 	}
 
 	/**
-	 * Resolve {"$ref": n} and convert decoded JSON to the D5 conventions:
+	 * Resolve {"$ref": n} and {"$theme": {...}} (Theme::from_array of the resolved
+	 * overrides) and convert decoded JSON to the D5 conventions:
 	 * non-empty objects become associative arrays, empty objects stay stdClass,
 	 * and objects whose keys would collapse into a PHP list stay stdClass.
 	 *
@@ -179,6 +212,13 @@ class GoldenTest extends TestCase {
 			$vars = get_object_vars( $value );
 			if ( array( '$ref' ) === array_keys( $vars ) ) {
 				return $results[ $vars['$ref'] ];
+			}
+			if ( array( '$theme' ) === array_keys( $vars ) ) {
+				$overrides = array();
+				foreach ( get_object_vars( $vars['$theme'] ) as $key => $item ) {
+					$overrides[ $key ] = $this->resolve( $item, $results );
+				}
+				return Theme::from_array( $overrides );
 			}
 			if ( ! $vars ) {
 				return new stdClass();

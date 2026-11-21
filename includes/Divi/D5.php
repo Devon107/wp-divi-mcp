@@ -2291,10 +2291,11 @@ class D5 {
 	/**
 	 * Python truthiness.
 	 *
+	 * @internal Shared with Patterns; not part of the builder API.
 	 * @param mixed $value Value.
 	 * @return bool
 	 */
-	private static function truthy( $value ) {
+	public static function truthy( $value ) {
 		if ( '0' === $value ) {
 			return true;
 		}
@@ -2326,10 +2327,11 @@ class D5 {
 	/**
 	 * Python str() for scalars.
 	 *
+	 * @internal Shared with Patterns; not part of the builder API.
 	 * @param mixed $value Value.
 	 * @return string
 	 */
-	private static function py_str( $value ) {
+	public static function py_str( $value ) {
 		if ( is_string( $value ) ) {
 			return $value;
 		}
