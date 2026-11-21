@@ -37,4 +37,7 @@ spl_autoload_register(
 	}
 );
 
+register_activation_hook( WPDM_FILE, array( \WPDM\Plugin::class, 'activate' ) );
+register_deactivation_hook( WPDM_FILE, array( \WPDM\Plugin::class, 'deactivate' ) );
+
 \WPDM\Plugin::instance()->boot();

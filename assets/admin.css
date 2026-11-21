@@ -1,0 +1,8 @@
+.wpdm-wrap .wpdm-table { margin-top: 8px; }
+.wpdm-wrap .wpdm-table td, .wpdm-wrap .wpdm-table th { vertical-align: middle; }
+.wpdm-wrap .wpdm-table form { margin: 0; }
+.wpdm-wrap .wpdm-new { padding: 4px 16px 12px; }
+.wpdm-wrap .wpdm-copy { display: flex; gap: 8px; align-items: center; }
+.wpdm-wrap .wpdm-copy input { flex: 1; min-width: 0; }
+.wpdm-wrap .wpdm-ok { color: #1a7f37; font-weight: 600; }
+.wpdm-wrap .wpdm-fail { color: #b32d2e; font-weight: 600; }

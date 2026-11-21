@@ -51,7 +51,27 @@ final class Plugin {
 		}
 		$this->booted = true;
 		add_action( 'rest_api_init', array( Mcp\Transport::class, 'register' ) );
+		Log\ActivityLog::register();
+		Admin\SettingsPage::register();
 		// Further hooks are registered here by later tasks.
+	}
+
+	/**
+	 * Activation: create the log table and schedule the daily prune.
+	 *
+	 * @return void
+	 */
+	public static function activate(): void {
+		Log\ActivityLog::install();
+	}
+
+	/**
+	 * Deactivation: stop the daily prune. Data is kept.
+	 *
+	 * @return void
+	 */
+	public static function deactivate(): void {
+		Log\ActivityLog::unschedule_prune();
 	}
 
 	private function __construct() {}
