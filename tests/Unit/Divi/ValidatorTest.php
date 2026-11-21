@@ -11,6 +11,7 @@
  * @package WPDM
  */
 
+use WPDM\Divi\BlockScanner;
 use WPDM\Divi\Catalog;
 use WPDM\Divi\PyJson;
 use WPDM\Divi\PyJsonError;
@@ -275,5 +276,137 @@ class ValidatorTest extends TestCase {
 		$this->assertSame( "/\x08é\u{1d11e}", $value['s'] );
 		$this->assertSame( array(), $value['e'] );
 		$this->assertEquals( new PyList(), $value['l'] );
+	}
+
+	/**
+	 * One block inside placeholder > section > row > column, as an export.
+	 *
+	 * @param string $block Block comment.
+	 * @return array
+	 */
+	private static function doc_with_block( $block ) {
+		$bv = '{"builderVersion":"5.19.1"}';
+		return array(
+			'context' => 'et_builder',
+			'data'    => array(
+				'1' => "<!-- wp:divi/placeholder --><!-- wp:divi/section {$bv} -->\n<!-- wp:divi/row {$bv} -->\n<!-- wp:divi/column {$bv} -->\n"
+					. $block . "\n<!-- /wp:divi/column -->\n<!-- /wp:divi/row -->\n<!-- /wp:divi/section --><!-- /wp:divi/placeholder -->",
+			),
+		);
+	}
+
+	/**
+	 * Review finding: the lazy `\{.*?\}` regex hit pcre.backtrack_limit on large
+	 * attributes and the whole page failed with "could not be scanned". Expected
+	 * reports were produced by validate.py on the same inputs (built identically in
+	 * Python: 1,500,432 and 602,386 bytes of content).
+	 */
+	public function test_large_block_attrs_validate_like_python() {
+		$counts = array(
+			'divi/placeholder' => 1,
+			'divi/section'     => 1,
+			'divi/row'         => 1,
+			'divi/column'      => 1,
+		);
+
+		$image = array(
+			'content'        => array( 'innerContent' => array( 'desktop' => array( 'value' => '<img src="data:image/png;base64,' . str_repeat( 'A', 1500000 ) . '" alt="x">' ) ) ),
+			'builderVersion' => '5.19.1',
+		);
+		$doc   = self::doc_with_block( '<!-- wp:divi/text ' . json_encode( $image, JSON_UNESCAPED_SLASHES ) . ' /-->' );
+		$this->assertSame( 1500432, strlen( $doc['data']['1'] ) );
+		$report = Validator::validate_doc( $doc, self::bundled() );
+		$this->assertSame( array(), $report->errors );
+		$this->assertSame( array( "data[1] line 4 divi/text: raw '<' or '>' inside attributes (Divi escapes them as \\u003c / \\u003e)" ), $report->warnings );
+		$this->assertSame( array(), $report->info );
+		$this->assertSame( $counts + array( 'divi/text' => 1 ), $report->counts );
+
+		$css    = array(
+			'content'        => array( 'innerContent' => array( 'desktop' => array( 'value' => str_repeat( '.a{color:red} ', 43000 ) ) ) ),
+			'builderVersion' => '5.19.1',
+		);
+		$doc    = self::doc_with_block( '<!-- wp:divi/code ' . json_encode( $css, JSON_UNESCAPED_SLASHES ) . ' /-->' );
+		$this->assertSame( 602386, strlen( $doc['data']['1'] ) );
+		$report = Validator::validate_doc( $doc, self::bundled() );
+		$this->assertSame( array(), $report->errors );
+		$this->assertSame( array(), $report->warnings );
+		$this->assertSame( array(), $report->info );
+		$this->assertSame( $counts + array( 'divi/code' => 1 ), $report->counts );
+	}
+
+	/**
+	 * validate.py's BLOCK_RE, as a PHP regex (reference for BlockScanner).
+	 *
+	 * @param string $content Content.
+	 * @return array
+	 */
+	private static function regex_scan( $content ) {
+		$ws    = '[' . \WPDM\Divi\Py::WS . ']';
+		$re    = '/<!--' . $ws . '+(\/)?wp:([a-z][a-z0-9_-]*\/[a-z][a-z0-9_-]*|[a-z][a-z0-9_-]*)(' . $ws . '+\{.*?\})?' . $ws . '+(\/)?-->/su';
+		$limit = ini_get( 'pcre.backtrack_limit' );
+		ini_set( 'pcre.backtrack_limit', '100000000' ); // phpcs:ignore WordPress.PHP.IniSet.Risky
+		$found = preg_match_all( $re, $content, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE | PREG_UNMATCHED_AS_NULL );
+		ini_set( 'pcre.backtrack_limit', $limit ); // phpcs:ignore WordPress.PHP.IniSet.Risky
+		if ( false === $found ) {
+			throw new RuntimeException( 'reference regex failed: ' . preg_last_error() );
+		}
+		$out = array();
+		foreach ( $matches as $m ) {
+			$out[] = array(
+				'start'  => $m[0][1],
+				'end'    => $m[0][1] + strlen( $m[0][0] ),
+				'closer' => isset( $m[1] ) && null !== $m[1][0],
+				'name'   => $m[2][0],
+				'raw'    => isset( $m[3] ) ? $m[3][0] : null,
+				'void'   => isset( $m[4] ) && null !== $m[4][0],
+			);
+		}
+		return $out;
+	}
+
+	/**
+	 * @return array<string, array{0: string}>
+	 */
+	public function scanner_input_provider() {
+		$out = array();
+		foreach ( glob( self::dir() . '/*.json' ) as $file ) {
+			if ( '.expected.json' === substr( $file, -14 ) ) {
+				continue;
+			}
+			$doc = json_decode( (string) file_get_contents( $file ), true );
+			foreach ( isset( $doc['data'] ) && is_array( $doc['data'] ) ? $doc['data'] : array() as $id => $content ) {
+				if ( is_array( $content ) ) {
+					$content = isset( $content['post_content'] ) ? $content['post_content'] : '';
+				}
+				if ( is_string( $content ) ) {
+					$out[ basename( $file, '.json' ) . "[{$id}]" ] = array( $content );
+				}
+			}
+		}
+		$tricky = array(
+			'attrs span other comments' => '<!-- wp:a {"x": 1 --> text <!-- wp:b --> more } -->',
+			'brace without tail'        => '<!-- wp:a {"x": 1} x --> <!-- wp:b {} /-->',
+			'unterminated opener'       => '<!-- wp:a {"x":1 <!-- wp:b /--> <!-- /wp:c -->',
+			'unicode whitespace'        => "<!--\u{3000}wp:divi/x\u{a0}{\"a\":\"\u{2028}\"}\u{2029}/-->",
+			'no space'                  => '<!--wp:a --> <!-- wp:a--> <!-- wp: --> <!-- wp:A -->',
+			'bad second segment'        => '<!-- wp:a/1 --> <!-- wp:a/ --> <!-- wp:a/b/c --> <!-- wp:a-b_9/c-d -->',
+			'closer and void'           => '<!-- /wp:a/b /--> <!-- / wp:a --> <!-- wp:a //-->',
+			'brace then slash tail'     => '<!-- wp:a {"}":"} /x"} /--><!-- wp:b {}-->',
+			'nested openers'            => '<!-- <!-- wp:a --> <!--- wp:b -->',
+			'empty'                     => '',
+		);
+		foreach ( $tricky as $name => $content ) {
+			$out[ $name ] = array( $content );
+		}
+		return $out;
+	}
+
+	/**
+	 * @dataProvider scanner_input_provider
+	 *
+	 * @param string $content Markup.
+	 */
+	public function test_block_scanner_matches_regex( $content ) {
+		$this->assertSame( self::regex_scan( $content ), BlockScanner::scan( $content ) );
 	}
 }

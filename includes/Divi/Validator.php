@@ -21,7 +21,8 @@
  *
  * Pure PHP, no WordPress dependency at runtime (Catalog::load() is the only
  * WordPress-aware part, and it is guarded). Block markup is scanned with
- * validate.py's own regular expression, not parse_blocks().
+ * BlockScanner, which reproduces validate.py's BLOCK_RE matches without PCRE
+ * (not parse_blocks()).
  *
  * @package WPDM
  */
@@ -294,13 +295,7 @@ final class Validator {
 			$rep->warn( "{$label}: content is not wrapped in <!-- wp:divi/placeholder --> (Divi 5 exports always are)" );
 		}
 
-		$ws    = '[' . Py::WS . ']';
-		$re    = '/<!--' . $ws . '+(\/)?wp:([a-z][a-z0-9_-]*\/[a-z][a-z0-9_-]*|[a-z][a-z0-9_-]*)(' . $ws . '+\{.*?\})?' . $ws . '+(\/)?-->/su';
-		$found = preg_match_all( $re, $content, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE | PREG_UNMATCHED_AS_NULL );
-		if ( false === $found ) {
-			$rep->err( "{$label}: block markup could not be scanned (PCRE error " . preg_last_error() . ')' );
-			return array( array(), array() );
-		}
+		$matches = BlockScanner::scan( $content );
 
 		$stack    = array(); // List of [name, attrs].
 		$counts   = array();
@@ -313,16 +308,16 @@ final class Validator {
 		$line_at  = 0;
 
 		foreach ( $matches as $m ) {
-			$start   = $m[0][1];
+			$start   = $m['start'];
 			$between = Py::strip( substr( $content, $last_end, $start - $last_end ) );
 			if ( '' !== $between && $stack ) {
 				$rep->warn( "{$label}: stray text between blocks inside " . end( $stack )[0] . ': ' . Py::repr( Py::slice( $between, 60 ) ) );
 			}
-			$last_end = $start + strlen( $m[0][0] );
-			$closer   = isset( $m[1] ) && null !== $m[1][0];
-			$name     = $m[2][0];
-			$raw      = isset( $m[3] ) ? $m[3][0] : null;
-			$void     = isset( $m[4] ) && null !== $m[4][0];
+			$last_end = $m['end'];
+			$closer   = $m['closer'];
+			$name     = $m['name'];
+			$raw      = $m['raw'];
+			$void     = $m['void'];
 			if ( false === strpos( $name, '/' ) ) {
 				$name = 'core/' . $name;
 			}
