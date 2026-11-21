@@ -1,0 +1,19 @@
+{
+    "name": "wp-divi-mcp/wp-divi-mcp",
+    "description": "WordPress plugin with a built-in MCP server to manage a WordPress/Divi 5 site.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=7.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6",
+        "yoast/phpunit-polyfills": "^2"
+    },
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "7.4.33"
+        }
+    }
+}
