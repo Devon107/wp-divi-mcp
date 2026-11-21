@@ -49,12 +49,12 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 			'level'                        => 'Heading tag: "h1".."h6".',
 			'url'                          => 'Link URL.',
 			'new_window'                   => 'Open the link in a new tab.',
-			'icon'                         => 'Icon: {"fa": "&#xf0e0;"} or {"divi_icon": "&#xe00b;"}.',
-			'icon_value'                   => 'Icon: {"fa": "&#xf19d;"} (Font Awesome, optional "weight") or {"divi_icon": "&#xe00b;"}.',
+			'icon'                         => 'Icon: {"$fa": "&#xf0e0;"} or {"$divi_icon": "&#xe00b;"}.',
+			'icon_value'                   => 'Icon: {"$fa": "&#xf19d;"} (Font Awesome, optional "weight") or {"$divi_icon": "&#xe00b;"}.',
 			'body_html'                    => 'Body HTML.',
 			'title'                        => 'Title text.',
 			'label'                        => 'Label text.',
-			'color'                        => 'Color (hex or {"color_var": "gcid-..."}).',
+			'color'                        => 'Color (hex or {"$color_var": "gcid-..."}).',
 			'size'                         => 'Size (CSS length, e.g. "16px").',
 			'align'                        => 'Alignment.',
 			'justify'                      => 'justify-content: start | center | end | space-between | space-around.',
@@ -99,7 +99,7 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 			'group.align'                  => 'align-items: flex-start | center | flex-end | stretch.',
 			'group.wrap'                   => array( 'Flex wrap: true, false or a CSS value.', $bools ),
 			'group.width'                  => 'Group width (CSS), e.g. "100%".',
-			'group.layout'                 => array( 'Full layout value instead of the shortcuts: {"flex": {...}} or {"grid": {...}}.', $obj ),
+			'group.layout'                 => array( 'Full layout value instead of the shortcuts: {"$flex": {...}} or {"$grid": {...}}.', $obj ),
 			'group.tablet'                 => array( 'Tablet layout override, e.g. {"flexDirection": "column"}.', $obj ),
 			'group.phone'                  => array( 'Phone layout override.', $obj ),
 			// Modules.
@@ -222,7 +222,7 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 			'card.border_color'            => 'Border color (adds a border).',
 			'card.border_width'            => 'Border width.',
 			'card.radius'                  => array( 'Radius: "16px" or 4 values [TL, TR, BR, BL].', array( 'anyOf' => array( $str, array( 'type' => 'array' ) ) ) ),
-			'card.padding'                 => array( 'Padding: "24px" or a box ({"box": [...]}).', array( 'anyOf' => array( $str, $obj ) ) ),
+			'card.padding'                 => array( 'Padding: "24px" or a box ({"$box": [...]}).', array( 'anyOf' => array( $str, $obj ) ) ),
 			'card.shadow'                  => array( 'Box shadow keys, e.g. {"vertical": "10px", "blur": "28px", "color": "rgba(0,0,0,.1)"}.', $obj ),
 			'card.hover_shadow'            => array( 'Hover box shadow keys.', $obj ),
 			'card.hover_border_color'      => 'Hover border color.',
@@ -486,7 +486,7 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 		}
 		$values = array(
 			'rv'          => array(
-				'Responsive value -> {"desktop": {"value": ..., "hover"?: ...}, "tablet"?: {"value": ...}, ...}. Most Divi attribute leaves need it.',
+				'Responsive value: {"$rv": {"desktop": "16px", "tablet": "14px"}} -> {"desktop": {"value": "16px"}, "tablet": {"value": "14px"}}. Most Divi attribute leaves need it.',
 				array(
 					'type'                 => 'object',
 					'additionalProperties' => false,
@@ -534,7 +534,7 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 				array(),
 			),
 			'color_var'   => array(
-				'Reference to a global color: "gcid-..." (optional sibling "opacity") or {"id": "gcid-...", "opacity": n}.',
+				'Reference to a global color: {"$color_var": "gcid-..."} (optional sibling "opacity") or {"$color_var": {"id": "gcid-...", "opacity": n}}.',
 				array(
 					'anyOf' => array(
 						array(
@@ -560,7 +560,7 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 				),
 			),
 			'content_var' => array(
-				'Reference to a global variable (number, text, font, link...): "gvid-...".',
+				'Reference to a global variable (number, text, font, link...): {"$content_var": "gvid-..."}.',
 				array(
 					'type'    => 'string',
 					'pattern' => '^gvid-',
@@ -568,7 +568,7 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 				array(),
 			),
 			'fa'          => array(
-				'Font Awesome icon value, e.g. {"fa": "&#xf19d;"} or {"fa": "&#xf0e0;", "weight": "400"}.',
+				'Font Awesome icon value, e.g. {"$fa": "&#xf19d;"} or {"$fa": "&#xf0e0;", "weight": "400"}.',
 				array( 'type' => 'string' ),
 				array(
 					'weight' => array(
@@ -578,12 +578,21 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 				),
 			),
 			'divi_icon'   => array(
-				'Divi icon font value, e.g. {"divi_icon": "&#xe00b;"}.',
+				'Divi icon font value, e.g. {"$divi_icon": "&#xe00b;"}.',
 				array( 'type' => 'string' ),
 				array(),
 			),
+			'merge'       => array(
+				'Deep-merge objects left to right (later wins; lists are replaced), e.g. {"$merge": [{"$font": {...}}, {"$module_deco": {...}}]} as a whole attrs object.',
+				array(
+					'type'     => 'array',
+					'minItems' => 1,
+					'items'    => $any,
+				),
+				array(),
+			),
 			'module_deco' => array(
-				'{"module": {"decoration": {groups}}}: decoration groups such as background, border, spacing, sizing, layout, boxShadow, font (values usually rv).',
+				'{"module": {"decoration": {groups}}}: decoration groups such as background, border, spacing, sizing, layout, boxShadow, font (values usually $rv).',
 				array(
 					'type'                 => 'object',
 					'additionalProperties' => $any,
@@ -613,18 +622,18 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 			$defs[ 'value_' . $name ]      = array(
 				'description'          => $desc,
 				'type'                 => 'object',
-				'required'             => array( $name ),
+				'required'             => array( '$' . $name ),
 				'additionalProperties' => false,
-				'properties'           => array_merge( array( $name => $arg ), $siblings ),
+				'properties'           => array_merge( array( '$' . $name => $arg ), $siblings ),
 			);
 			$value_refs[]                  = array( '$ref' => '#/$defs/value_' . $name );
 		}
 		$defs['value_literal'] = array(
-			'description'          => 'Literal value: returned as is, nothing inside is resolved. Use it for an object whose key collides with a helper name, e.g. {"literal": {"font": {"font": {...}}}}.',
+			'description'          => 'Literal value: X is returned as is and nothing inside it is resolved (only needed to pass a "$..." key through).',
 			'type'                 => 'object',
-			'required'             => array( 'literal' ),
+			'required'             => array( '$literal' ),
 			'additionalProperties' => false,
-			'properties'           => array( 'literal' => new \stdClass() ),
+			'properties'           => array( '$literal' => new \stdClass() ),
 		);
 		$value_refs[]          = array( '$ref' => '#/$defs/value_literal' );
 
@@ -674,15 +683,15 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 					'items' => array( '$ref' => '#/$defs/node' ),
 				),
 				'attrs'    => array(
-					'description' => 'Divi attributes deep-merged into the block (raw Divi 5 shape, e.g. {"module": {"decoration": {...}}}). Value helpers are resolved anywhere inside, and may produce the whole object (e.g. {"module_deco": {...}}).',
+					'description' => 'Divi attributes deep-merged into the block (raw Divi 5 shape, e.g. {"module": {"decoration": {...}}}). Value helpers are resolved anywhere inside, and may produce the whole object (e.g. {"$module_deco": {...}}).',
 					'type'        => 'object',
 				),
 				'value'    => array(
-					'description' => 'Any JSON value. An object is a value helper call when exactly one of its keys is a helper name (rv, box, radius, color_var, content_var, fa, divi_icon, font, flex, grid, card, module_deco) and its other keys are that helper\'s siblings (fa: weight; color_var: opacity); otherwise it is a plain object whose values are resolved recursively. {"literal": X} yields X untouched.',
+					'description' => 'Any JSON value. Value helper keys start with "$" ($rv, $box, $radius, $color_var, $content_var, $fa, $divi_icon, $font, $flex, $grid, $card, $module_deco, $merge): an object is a helper call when exactly one of its keys is a $helper and its other keys are that helper\'s siblings ($fa: weight; $color_var: opacity). Keys without "$" are always plain data, so attrs copied from real Divi exports (decoration.font.font, border radius...) pass through; their values are still resolved recursively. {"$literal": X} yields X untouched.',
 					'anyOf'       => array_merge( $value_refs, array( array( 'type' => array( 'string', 'number', 'boolean', 'null', 'array', 'object' ) ) ) ),
 				),
 				'string'   => array(
-					'description' => 'A string (or number), or a helper that resolves to one ({"color_var": ...}, {"content_var": ...}).',
+					'description' => 'A string (or number), or a helper that resolves to one ({"$color_var": ...}, {"$content_var": ...}).',
 					'anyOf'       => array(
 						array( 'type' => array( 'string', 'number' ) ),
 						array( '$ref' => '#/$defs/value_color_var' ),
@@ -691,11 +700,11 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 					),
 				),
 				'object'   => array(
-					'description' => 'An object (value helpers allowed inside, or a helper producing it: rv, flex, grid, box, font...).',
+					'description' => 'An object (value helpers allowed inside, or a helper producing it: $rv, $flex, $grid, $box, $font, $merge...).',
 					'type'        => 'object',
 				),
 				'icon'     => array(
-					'description' => 'Icon value: {"fa": "&#xf19d;", "weight"?: "900"} or {"divi_icon": "&#xe00b;"}.',
+					'description' => 'Icon value: {"$fa": "&#xf19d;", "weight"?: "900"} or {"$divi_icon": "&#xe00b;"}.',
 					'anyOf'       => array(
 						array( '$ref' => '#/$defs/value_fa' ),
 						array( '$ref' => '#/$defs/value_divi_icon' ),
@@ -704,7 +713,7 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 					),
 				),
 				'theme'    => array(
-					'description'          => 'Design tokens for the patterns (Theme). Values may be plain colors or {"color_var": ...} / {"content_var": ...}. In a pattern\'s args.theme: tokens for that pattern only, merged over the top-level theme.',
+					'description'          => 'Design tokens for the patterns (Theme). Values may be plain colors or {"$color_var": ...} / {"$content_var": ...}. In a pattern\'s args.theme: tokens for that pattern only, merged over the top-level theme.',
 					'type'                 => 'object',
 					'additionalProperties' => false,
 					'properties'           => $theme_props,
@@ -717,7 +726,7 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 			'$schema'              => 'https://json-schema.org/draft/2020-12/schema',
 			'$id'                  => 'divi://schema/layout',
 			'title'                => 'Divi 5 layout tree',
-			'description'          => 'A page as a JSON tree mirroring the D5 builder and the composition patterns. Nesting: blocks are sections; a section holds rows (row = flex columns whose widths fill the row, grid_row = any number of cards in equal tracks); a row/grid_row holds columns or card patterns (icon_card, media_card, person_card, testimonial_card, numbered_card, step_card, stat_card return a column: put them directly in the row, never inside a column or group); columns and groups hold modules, groups and the other patterns. Args use the PHP/Python parameter names. Prefer composition (group/icon/text/link and patterns) over blurb/testimonial/team_member/button.',
+			'description'          => 'A page as a JSON tree mirroring the D5 builder and the composition patterns. Nesting: blocks are sections; a section holds rows (row = flex columns whose widths fill the row, grid_row = any number of cards in equal tracks); a row/grid_row holds columns or card patterns (icon_card, media_card, person_card, testimonial_card, numbered_card, step_card, stat_card return a column: put them directly in the row, never inside a column or group); columns and groups hold modules, groups and the other patterns. Args use the PHP/Python parameter names. Value helpers ({"$rv": ...}, {"$color_var": ...}, {"$fa": ...}...) are resolved anywhere in args/attrs; keys without "$" are plain Divi data. Prefer composition (group/icon/text/link and patterns) over blurb/testimonial/team_member/button.',
 			'type'                 => 'object',
 			'required'             => array( 'blocks' ),
 			'additionalProperties' => false,

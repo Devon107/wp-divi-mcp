@@ -22,10 +22,12 @@ namespace WPDM\Divi;
  *   `theme` is passed to every pattern; `args.theme` builds a Theme merged over it.
  * - `{"block": "divi/<name>", "attrs"?: {...}, "children"?: [node]}` calls D5::block().
  *
- * Value helpers are resolved anywhere inside args/attrs (see VALUE_HELPERS): an object is a
- * helper call when exactly one of its keys is a helper name and every other key is one of
- * that helper's sibling keys (`fa` + `weight`, `color_var` + `opacity`). `{"literal": X}`
- * yields X untouched.
+ * Value helpers are resolved anywhere inside args/attrs (see VALUE_HELPERS). Their keys carry
+ * a `$` prefix (`{"$rv": ...}`, `{"$fa": "&#xf19d;", "weight": "400"}`) so they never collide
+ * with real Divi attribute keys (`decoration.font.font`, `border.*.radius`...), which are always
+ * plain data. An object is a helper call when exactly one of its keys is a `$helper` and every
+ * other key is one of that helper's sibling keys (`$fa` + `weight`, `$color_var` + `opacity`).
+ * `{"$literal": X}` yields X untouched.
  *
  * Structure: top-level blocks are sections, rows go directly in sections, columns (and the
  * card patterns, which return columns) go directly in a row / grid_row. Errors are
@@ -72,7 +74,12 @@ class LayoutTree {
 	);
 
 	/**
-	 * Value helpers resolved inside args/attrs => D5 method.
+	 * Prefix of value helper keys in the tree.
+	 */
+	const PREFIX = '$';
+
+	/**
+	 * Value helpers resolved inside args/attrs (written with PREFIX: "$rv") => D5 method.
 	 */
 	const VALUE_HELPERS = array(
 		'rv'          => 'rv',
@@ -87,6 +94,7 @@ class LayoutTree {
 		'grid'        => 'grid',
 		'card'        => 'card',
 		'module_deco' => 'module_deco',
+		'merge'       => 'merge',
 	);
 
 	/**
@@ -253,7 +261,7 @@ class LayoutTree {
 	}
 
 	/**
-	 * Value helper names.
+	 * Value helper names, without the "$" prefix.
 	 *
 	 * @return string[]
 	 */
@@ -577,16 +585,15 @@ class LayoutTree {
 	 * @param string[]|null $allowed Allowed keys (null = no check).
 	 * @param string        $path    Path of the args object.
 	 * @param string        $label   Kind.
-	 * @param string        $hint    Extra hint.
 	 * @return void
 	 */
-	private static function check_keys( array $args, $allowed, $path, $label, $hint = '' ) {
+	private static function check_keys( array $args, $allowed, $path, $label ) {
 		if ( null === $allowed ) {
 			return;
 		}
 		foreach ( $args as $key => $unused ) {
 			if ( ! in_array( (string) $key, $allowed, true ) ) {
-				throw new LayoutError( $path, "unknown arg '{$key}' for {$label}." . self::suggest( (string) $key, $allowed ) . ' Allowed args: ' . implode( ', ', $allowed ) . '.' . $hint );
+				throw new LayoutError( $path, "unknown arg '{$key}' for {$label}." . self::suggest( (string) $key, $allowed ) . ' Allowed args: ' . implode( ', ', $allowed ) . '.' );
 			}
 		}
 	}
@@ -607,6 +614,7 @@ class LayoutTree {
 			$inner = isset( $props['args']['properties'] ) ? $props['args']['properties'] : null;
 		} else {
 			$key   = substr( $def, strpos( $def, '_' ) + 1 );
+			$key   = 0 === strpos( $def, 'value_' ) ? self::PREFIX . $key : $key;
 			$inner = isset( $props[ $key ]['properties'] ) ? $props[ $key ]['properties'] : null;
 		}
 		return null === $inner ? null : array_map( 'strval', array_keys( $inner ) );
@@ -671,12 +679,15 @@ class LayoutTree {
 			}
 			return $out;
 		}
-		if ( 1 === count( $value ) && array_key_exists( 'literal', $value ) ) {
-			return $value['literal'];
+		if ( array_key_exists( '$literal', $value ) ) {
+			if ( 1 !== count( $value ) ) {
+				throw new LayoutError( "{$path}.\$literal", '{"$literal": X} must be the only key of its object; found keys ' . implode( ', ', array_keys( $value ) ) );
+			}
+			return $value['$literal'];
 		}
-		$helper = self::detect_helper( $value );
+		$helper = self::detect_helper( $value, $path );
 		if ( null !== $helper ) {
-			return $this->value_helper( $helper, $value, "{$path}.{$helper}" );
+			return $this->value_helper( $helper, $value, $path . '.' . self::PREFIX . $helper );
 		}
 		$out = array();
 		foreach ( $value as $key => $item ) {
@@ -686,38 +697,49 @@ class LayoutTree {
 	}
 
 	/**
-	 * Name of the value helper this object calls, or null for a plain object.
+	 * Name (without "$") of the value helper this object calls, or null for a plain object.
 	 *
-	 * @param array $object Object.
+	 * @param array  $object Object.
+	 * @param string $path   Path of the object (for an unknown "$name").
 	 * @return string|null
 	 */
-	private static function detect_helper( array $object ) {
+	private static function detect_helper( array $object, $path ) {
 		$keys  = array_map( 'strval', array_keys( $object ) );
-		$found = array_values( array_intersect( $keys, array_keys( self::VALUE_HELPERS ) ) );
+		$known = array();
+		foreach ( self::value_helpers() as $name ) {
+			$known[] = self::PREFIX . $name;
+		}
+		foreach ( $keys as $key ) {
+			if ( 0 === strpos( $key, self::PREFIX ) && ! in_array( $key, $known, true ) && '$literal' !== $key ) {
+				throw new LayoutError( "{$path}.{$key}", "unknown value helper '{$key}'." . self::suggest( $key, $known ) . ' Value helpers: ' . implode( ', ', $known ) . ', $literal' );
+			}
+		}
+		$found = array_values( array_intersect( $keys, $known ) );
 		if ( 1 !== count( $found ) ) {
 			return null;
 		}
-		$siblings = isset( self::VALUE_SIBLINGS[ $found[0] ] ) ? self::VALUE_SIBLINGS[ $found[0] ] : array();
+		$helper   = substr( $found[0], strlen( self::PREFIX ) );
+		$siblings = isset( self::VALUE_SIBLINGS[ $helper ] ) ? self::VALUE_SIBLINGS[ $helper ] : array();
 		foreach ( $keys as $key ) {
 			if ( $key !== $found[0] && ! in_array( $key, $siblings, true ) ) {
 				return null;
 			}
 		}
-		return $found[0];
+		return $helper;
 	}
 
 	/**
 	 * Call a value helper.
 	 *
-	 * @param string $helper Helper.
-	 * @param array  $object The helper object (helper key + siblings).
+	 * @param string $helper Helper (without "$").
+	 * @param array  $object The helper object ("$helper" key + siblings).
 	 * @param string $path   Path of the helper key.
 	 * @return mixed
 	 */
 	private function value_helper( $helper, array $object, $path ) {
 		$method = new \ReflectionMethod( D5::class, self::VALUE_HELPERS[ $helper ] );
-		$arg    = $object[ $helper ];
-		$hint   = ' If this object is a literal Divi attribute rather than a ' . $helper . ' helper (e.g. decoration.font.font), wrap it as {"literal": {...}} (nothing inside a literal is resolved: write {"desktop": {"value": ...}} instead of rv).';
+		$arg    = $object[ self::PREFIX . $helper ];
+		$label  = self::PREFIX . $helper;
 
 		switch ( $helper ) {
 			case 'rv':
@@ -730,8 +752,21 @@ class LayoutTree {
 					throw new LayoutError( $path, self::shape( $helper ) . '; found ' . self::describe( $arg ) );
 				}
 				$arg = self::is_empty( $arg ) ? array() : self::to_array( $arg );
-				self::check_keys( $arg, 'module_deco' === $helper ? null : self::allowed_args( 'value_' . $helper ), $path, $helper, $hint );
-				$call = self::bind( $method, $this->resolve_args( $arg, $path ), $path, $helper, null );
+				self::check_keys( $arg, 'module_deco' === $helper ? null : self::allowed_args( 'value_' . $helper ), $path, $label );
+				$call = self::bind( $method, $this->resolve_args( $arg, $path ), $path, $label, null );
+				break;
+
+			case 'merge':
+				$arg = $this->resolve( $arg, $path );
+				if ( ! self::is_list_value( $arg ) || array() === $arg ) {
+					throw new LayoutError( $path, self::shape( $helper ) . '; found ' . self::describe( $arg ) );
+				}
+				foreach ( $arg as $i => $item ) {
+					if ( null !== $item && ! self::is_object_value( $item ) ) {
+						throw new LayoutError( "{$path}[{$i}]", self::shape( $helper ) . '; item ' . $i . ' is ' . self::describe( $item ) );
+					}
+				}
+				$call = $arg;
 				break;
 
 			case 'box':
@@ -753,7 +788,7 @@ class LayoutTree {
 						$call[] = $arg[ $i ];
 					}
 				} elseif ( self::is_object_value( $arg ) && ! self::is_empty( $arg ) ) {
-					$call = self::bind( $method, self::to_array( $arg ), $path, $helper, null );
+					$call = self::bind( $method, self::to_array( $arg ), $path, $label, null );
 				} else {
 					throw new LayoutError( $path, self::shape( $helper ) . '; found ' . self::describe( $arg ) );
 				}
@@ -767,7 +802,7 @@ class LayoutTree {
 					}
 					$call = $arg;
 				} elseif ( self::is_object_value( $arg ) && ! self::is_empty( $arg ) ) {
-					$call = self::bind( $method, self::to_array( $arg ), $path, $helper, null );
+					$call = self::bind( $method, self::to_array( $arg ), $path, $label, null );
 				} elseif ( is_string( $arg ) || is_int( $arg ) || is_float( $arg ) ) {
 					$call = array( $arg );
 				} else {
@@ -780,7 +815,7 @@ class LayoutTree {
 				$opacity = array_key_exists( 'opacity', $object ) ? $this->resolve( $object['opacity'], $path ) : null;
 				if ( self::is_object_value( $arg ) && ! self::is_empty( $arg ) ) {
 					$arg = self::to_array( $arg );
-					self::check_keys( $arg, array( 'id', 'opacity' ), $path, $helper );
+					self::check_keys( $arg, array( 'id', 'opacity' ), $path, $label );
 					$opacity = array_key_exists( 'opacity', $arg ) ? $arg['opacity'] : $opacity;
 					$arg     = array_key_exists( 'id', $arg ) ? $arg['id'] : null;
 				}
@@ -816,18 +851,19 @@ class LayoutTree {
 	 */
 	private static function shape( $helper ) {
 		$shapes = array(
-			'rv'          => 'rv expects an object like {"desktop": value, "tablet"?: value, "phone"?: value, "hover"?: value, "sticky"?: value}',
-			'box'         => 'box expects a list of 1 to 4 values in CSS order (["24px"], ["24px", "16px"], [top, right, bottom, left]) or {"top", "right", "bottom", "left"}',
-			'radius'      => 'radius expects one value ("16px", or a list of 1 or 4 values: [top_left, top_right, bottom_right, bottom_left]) or {"top_left", ...}',
-			'color_var'   => 'color_var expects a global color id string like "gcid-primary-color" (optional sibling "opacity") or {"id": "gcid-...", "opacity"?: n}',
-			'content_var' => 'content_var expects a global variable id string like "gvid-abc123"',
-			'fa'          => 'fa expects a Font Awesome entity string like "&#xf19d;" (optional sibling "weight", default "900")',
-			'divi_icon'   => 'divi_icon expects a Divi icon entity string like "&#xe00b;"',
-			'font'        => 'font expects an object like {"element"?: "title", "desktop": {...}, "group"?: "font"}',
-			'flex'        => 'flex expects an object of flex options, e.g. {"direction": "column", "gap": "12px"}',
-			'grid'        => 'grid expects an object of grid options, e.g. {"columns": 3, "gap": "20px"}',
-			'card'        => 'card expects an object of card options, e.g. {"background": "#fff", "radius": "16px"}',
-			'module_deco' => 'module_deco expects an object of decoration groups, e.g. {"sizing": {"rv": {"desktop": {"maxWidth": "700px"}}}}',
+			'rv'          => '$rv expects an object like {"desktop": value, "tablet"?: value, "phone"?: value, "hover"?: value, "sticky"?: value}',
+			'box'         => '$box expects a list of 1 to 4 values in CSS order (["24px"], ["24px", "16px"], [top, right, bottom, left]) or {"top", "right", "bottom", "left"}',
+			'radius'      => '$radius expects one value ("16px", or a list of 1 or 4 values: [top_left, top_right, bottom_right, bottom_left]) or {"top_left", ...}',
+			'color_var'   => '$color_var expects a global color id string like "gcid-primary-color" (optional sibling "opacity") or {"id": "gcid-...", "opacity"?: n}',
+			'content_var' => '$content_var expects a global variable id string like "gvid-abc123"',
+			'fa'          => '$fa expects a Font Awesome entity string like "&#xf19d;" (optional sibling "weight", default "900")',
+			'divi_icon'   => '$divi_icon expects a Divi icon entity string like "&#xe00b;"',
+			'font'        => '$font expects an object like {"element"?: "title", "desktop": {...}, "group"?: "font"}',
+			'flex'        => '$flex expects an object of flex options, e.g. {"direction": "column", "gap": "12px"}',
+			'grid'        => '$grid expects an object of grid options, e.g. {"columns": 3, "gap": "20px"}',
+			'card'        => '$card expects an object of card options, e.g. {"background": "#fff", "radius": "16px"}',
+			'module_deco' => '$module_deco expects an object of decoration groups, e.g. {"sizing": {"$rv": {"desktop": {"maxWidth": "700px"}}}}',
+			'merge'       => '$merge expects a non-empty list of objects to deep-merge left to right, e.g. [{"$font": {...}}, {"$module_deco": {...}}]',
 		);
 		return $shapes[ $helper ];
 	}
@@ -846,8 +882,8 @@ class LayoutTree {
 		if ( in_array( $kind, self::patterns(), true ) ) {
 			return "'{$kind}' is a pattern, not a helper: write {\"pattern\": \"{$kind}\", \"args\": {...}}";
 		}
-		if ( array_key_exists( $kind, self::VALUE_HELPERS ) || 'literal' === $kind ) {
-			return "'{$kind}' is a value helper (it goes inside args/attrs), not a node";
+		if ( 0 === strpos( $kind, self::PREFIX ) || array_key_exists( $kind, self::VALUE_HELPERS ) ) {
+			return "'{$kind}' is not a node (value helpers such as \$rv go inside args/attrs)";
 		}
 		return "unknown node kind '{$kind}'." . self::suggest( $kind, array_merge( self::HELPERS, self::patterns() ) )
 			. ' Expected a helper (' . implode( ', ', self::HELPERS ) . '), {"pattern": "<name>", "args": {...}} or {"block": "divi/<name>", "attrs": {...}}';

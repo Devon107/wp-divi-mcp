@@ -21,7 +21,7 @@ class LayoutTreeTest extends TestCase {
 	const EXAMPLE = <<<'JSON'
 {
   "builder_version": "5.14.0",
-  "theme": {"accent": {"color_var": "gcid-link-color"}, "card_radius": "16px"},
+  "theme": {"accent": {"$color_var": "gcid-link-color"}, "card_radius": "16px"},
   "global_colors": [], "global_variables": [], "custom_css": "",
   "blocks": [
     {"section": {"css_id": "becas", "attrs": {}, "children": [
@@ -30,7 +30,7 @@ class LayoutTreeTest extends TestCase {
                                                "intro": "Ayudas para estudiar con nosotros."}}
       ]}}]}},
       {"grid_row": {"cols": 3, "tablet": 2, "phone": 1, "children": [
-        {"pattern": "icon_card", "args": {"icon_value": {"fa": "&#xf19d;"}, "title": "Excelencia",
+        {"pattern": "icon_card", "args": {"icon_value": {"$fa": "&#xf19d;"}, "title": "Excelencia",
                                           "body": "…", "link_label": "Ver becas", "link_url": "/becas"}}
       ]}}
     ]}}
@@ -154,6 +154,8 @@ JSON;
 		$this->assertSame( 'et_builder', $out['envelope']['context'] );
 		$this->assertStringContainsString( 'eyebrow_label', $m[1] );
 		$this->assertStringContainsString( 'icon_value', $m[1] );
+		$this->assertStringContainsString( '"$fa"', $m[1] );
+		$this->assertStringContainsString( '"$color_var"', $m[1] );
 	}
 
 	public function test_unknown_helper_error_has_path() {
@@ -266,7 +268,7 @@ JSON;
 		$this->assertStringContainsString( 'Invalid column width', $e->getMessage() );
 		$this->assertInstanceOf( InvalidArgumentException::class, $e->getPrevious() );
 
-		$e = $this->error_of( self::in_column( array( array( 'icon' => array( 'icon' => array( 'fa' => 'x' ) ) ) ) ) );
+		$e = $this->error_of( self::in_column( array( array( 'icon' => array( 'icon' => array( '$fa' => 'x' ) ) ) ) ) );
 		$this->assertStringContainsString( "Did you mean 'icon_value'?", $e->getMessage() );
 
 		$e = $this->error_of( self::in_column( array( array( 'text' => array( 'html' => 'x', 'children' => array() ) ) ) ) );
@@ -281,49 +283,111 @@ JSON;
 
 	public function test_literal_wrapper() {
 		$attrs = array(
-			'title' => array(
-				'decoration' => array(
-					'literal' => array( 'font' => array( 'font' => array( 'desktop' => array( 'value' => array( 'rv' => 'kept' ) ) ) ) ),
+			'module' => array(
+				'meta' => array(
+					'$literal' => array( 'x' => array( '$rv' => 'kept' ) ),
 				),
 			),
 		);
-		$out   = LayoutTree::build(
-			self::in_column(
-				array(
-					array(
-						'heading' => array(
-							'title' => 'Hi',
-							'attrs' => $attrs,
+		$out   = LayoutTree::build( self::in_column( array( array( 'code' => array( 'html' => 'x', 'attrs' => $attrs ) ) ) ) );
+		$code  = $out['blocks'][0]->children[0]->children[0]->children[0];
+		// Nothing inside $literal is resolved, not even a "$rv" key.
+		$this->assertSame( array( 'x' => array( '$rv' => 'kept' ) ), $code->attrs['module']['meta'] );
+
+		// $literal must be alone in its object.
+		$attrs['module']['meta']['other'] = 1;
+		$e                                = $this->error_of( self::in_column( array( array( 'code' => array( 'html' => 'x', 'attrs' => $attrs ) ) ) ) );
+		$this->assertStringEndsWith( '.code.attrs.module.meta.$literal', $e->path() );
+		$this->assertStringContainsString( 'only key', $e->getMessage() );
+	}
+
+	public function test_real_divi_attr_keys_pass_through() {
+		// Shapes copied from a real Divi 5 export: keys named like the helpers, without "$".
+		$attrs = array(
+			'title'  => array(
+				'decoration' => array(
+					'font' => array( 'font' => array( 'desktop' => array( 'value' => array( 'size' => '32px', 'color' => '#161834' ) ) ) ),
+				),
+			),
+			'module' => array(
+				'decoration' => array(
+					'border'  => array(
+						'desktop' => array(
+							'value' => array(
+								'radius' => array( 'topLeft' => '16px', 'topRight' => '16px', 'bottomLeft' => '16px', 'bottomRight' => '16px', 'sync' => 'on' ),
+							),
 						),
 					),
-				)
+					'layout'  => array( 'desktop' => array( 'value' => array( 'display' => 'flex', 'flex' => '1', 'grid' => 'x' ) ) ),
+					'spacing' => array( 'desktop' => array( 'value' => array( 'padding' => array( 'box' => '1', 'card' => '2' ) ) ) ),
+				),
+			),
+		);
+		$out   = LayoutTree::build( self::in_column( array( array( 'heading' => array( 'title' => 'Hi', 'attrs' => $attrs ) ) ) ) );
+		$h     = $out['blocks'][0]->children[0]->children[0]->children[0];
+		$this->assertSame( $attrs['module'], $h->attrs['module'] );
+		$value = $h->attrs['title']['decoration']['font']['font']['desktop']['value'];
+		$this->assertSame( '32px', $value['size'] );
+		$this->assertSame( '#161834', $value['color'] );
+		$this->assertSame( 'h2', $value['headingLevel'] ); // Merged in by heading() itself.
+
+		// $-helpers still resolve inside real shapes, and an unknown $name is an error.
+		$attrs['title']['decoration']['font']['font']['desktop']['value']['color'] = array( '$color_var' => 'gcid-heading' );
+		$out = LayoutTree::build( self::in_column( array( array( 'heading' => array( 'title' => 'Hi', 'attrs' => $attrs ) ) ) ) );
+		$h   = $out['blocks'][0]->children[0]->children[0]->children[0];
+		$this->assertSame( D5::color_var( 'gcid-heading' ), $h->attrs['title']['decoration']['font']['font']['desktop']['value']['color'] );
+
+		$attrs['title']['decoration']['font']['font']['desktop']['value']['color'] = array( '$colour_var' => 'gcid-heading' );
+		$e = $this->error_of( self::in_column( array( array( 'heading' => array( 'title' => 'Hi', 'attrs' => $attrs ) ) ) ) );
+		$this->assertStringEndsWith( '.value.color.$colour_var', $e->path() );
+		$this->assertStringContainsString( "Did you mean '\$color_var'?", $e->getMessage() );
+	}
+
+	public function test_merge_helper() {
+		$attrs = array(
+			'$merge' => array(
+				array( '$font' => array( 'element' => 'title', 'desktop' => array( 'size' => '32px' ) ) ),
+				array( '$module_deco' => array( 'sizing' => array( '$rv' => array( 'desktop' => array( 'maxWidth' => '700px' ) ) ) ) ),
+				null,
+				array( 'title' => array( 'decoration' => array( 'font' => array( 'font' => array( 'desktop' => array( 'value' => array( 'color' => '#000' ) ) ) ) ) ) ),
+			),
+		);
+		$out   = LayoutTree::build( self::in_column( array( array( 'code' => array( 'html' => 'x', 'attrs' => $attrs ) ) ) ) );
+		$got   = $out['blocks'][0]->children[0]->children[0]->children[0]->attrs;
+		$want  = D5::merge(
+			array( 'content' => array( 'innerContent' => D5::rv( 'x' ) ) ),
+			D5::merge(
+				D5::font( 'title', array( 'desktop' => array( 'size' => '32px' ) ) ),
+				D5::module_deco( array( 'sizing' => D5::rv( array( 'maxWidth' => '700px' ) ) ) ),
+				null,
+				array( 'title' => array( 'decoration' => array( 'font' => array( 'font' => array( 'desktop' => array( 'value' => array( 'color' => '#000' ) ) ) ) ) ) )
 			)
 		);
-		$h     = $out['blocks'][0]->children[0]->children[0]->children[0];
-		// Untouched: {"rv": "kept"} is not resolved (heading() merges its own headingLevel next to it).
-		$this->assertSame( 'kept', $h->attrs['title']['decoration']['font']['font']['desktop']['value']['rv'] );
-		$this->assertSame( 'Hi', $h->attrs['title']['innerContent']['desktop']['value'] );
+		unset( $got['builderVersion'] );
+		$this->assertEquals( $want, $got );
+		$this->assertSame( array( 'size' => '32px', 'color' => '#000' ), $got['title']['decoration']['font']['font']['desktop']['value'] );
 
-		// The same object without literal is read as the font() helper and fails loudly.
-		$attrs['title']['decoration'] = $attrs['title']['decoration']['literal'];
-		$e                            = $this->error_of( self::in_column( array( array( 'heading' => array( 'title' => 'Hi', 'attrs' => $attrs ) ) ) ) );
-		$this->assertStringEndsWith( '.heading.attrs.title.decoration.font', $e->path() );
-		$this->assertStringContainsString( 'literal', $e->getMessage() );
+		$e = $this->error_of( self::in_column( array( array( 'code' => array( 'html' => 'x', 'attrs' => array( '$merge' => array( array( 'a' => 1 ), 'oops' ) ) ) ) ) ) );
+		$this->assertStringEndsWith( '.code.attrs.$merge[1]', $e->path() );
+		$this->assertStringContainsString( 'list of objects', $e->getMessage() );
+
+		$e = $this->error_of( self::in_column( array( array( 'code' => array( 'html' => 'x', 'attrs' => array( '$merge' => array( 'a' => 1 ) ) ) ) ) ) );
+		$this->assertStringEndsWith( '.code.attrs.$merge', $e->path() );
 	}
 
 	public function test_helper_detection_respects_sibling_keys() {
 		$out  = LayoutTree::build(
 			self::in_column(
 				array(
-					array( 'icon' => array( 'icon_value' => array( 'fa' => '&#xf0e0;', 'weight' => '400' ) ) ),
+					array( 'icon' => array( 'icon_value' => array( '$fa' => '&#xf0e0;', 'weight' => '400' ) ) ),
 					array(
 						'text' => array(
 							'html'  => 'x',
 							'attrs' => array(
-								'a' => array( 'fa' => '&#xf0e0;', 'size' => '12px' ),
-								'b' => array( 'color_var' => 'gcid-x', 'opacity' => 50 ),
-								'c' => array( 'rv' => array( 'desktop' => '1px' ), 'extra' => 1 ),
-								'd' => array( 'box' => array( '1px' ), 'radius' => '2px' ),
+								'a' => array( '$fa' => '&#xf0e0;', 'size' => '12px' ),
+								'b' => array( '$color_var' => 'gcid-x', 'opacity' => 50 ),
+								'c' => array( '$rv' => array( 'desktop' => '1px' ), 'extra' => 1 ),
+								'd' => array( '$box' => array( '1px' ), '$radius' => '2px' ),
 							),
 						),
 					),
@@ -335,36 +399,36 @@ JSON;
 		$this->assertSame( D5::fa_icon( '&#xf0e0;', '400' ), $icon->attrs['icon']['innerContent']['desktop']['value'] );
 		$attrs = $col->children[1]->attrs;
 		// fa + an unknown sibling: plain object.
-		$this->assertSame( array( 'fa' => '&#xf0e0;', 'size' => '12px' ), $attrs['a'] );
+		$this->assertSame( array( '$fa' => '&#xf0e0;', 'size' => '12px' ), $attrs['a'] );
 		// color_var + its opacity sibling: helper.
 		$this->assertSame( D5::color_var( 'gcid-x', 50 ), $attrs['b'] );
 		// rv + unknown sibling: plain object, but rv inside is not a helper call either (it is a key).
-		$this->assertSame( array( 'rv' => array( 'desktop' => '1px' ), 'extra' => 1 ), $attrs['c'] );
+		$this->assertSame( array( '$rv' => array( 'desktop' => '1px' ), 'extra' => 1 ), $attrs['c'] );
 		// Two helper keys: plain object.
-		$this->assertSame( array( 'box' => array( '1px' ), 'radius' => '2px' ), $attrs['d'] );
+		$this->assertSame( array( '$box' => array( '1px' ), '$radius' => '2px' ), $attrs['d'] );
 	}
 
 	public function test_value_helpers_resolve() {
 		$attrs = array(
-			'rv'       => array( 'rv' => array( 'desktop' => '1px', 'tablet' => '2px', 'hover' => '3px', 'phoneWide' => '4px' ) ),
-			'box1'     => array( 'box' => array( '10px' ) ),
-			'box2'     => array( 'box' => array( '10px', '20px' ) ),
-			'box3'     => array( 'box' => array( '1px', '2px', '3px' ) ),
-			'box4'     => array( 'box' => array( '1px', '2px', '3px', '4px' ) ),
-			'boxo'     => array( 'box' => array( 'top' => '5px' ) ),
-			'rad1'     => array( 'radius' => '8px' ),
-			'rad4'     => array( 'radius' => array( '1px', '2px', '3px', '4px' ) ),
-			'cv'       => array( 'color_var' => array( 'id' => 'gcid-a', 'opacity' => 40 ) ),
-			'cv2'      => array( 'color_var' => 'gcid-b' ),
-			'gv'       => array( 'content_var' => 'gvid-c' ),
-			'di'       => array( 'divi_icon' => '&#xe00b;' ),
-			'fa'       => array( 'fa' => '&#xf19d;' ),
-			'font'     => array( 'font' => array( 'element' => 'title', 'desktop' => array( 'color' => array( 'color_var' => 'gcid-a' ) ) ) ),
-			'flex'     => array( 'flex' => array( 'direction' => 'column', 'gap' => '8px' ) ),
-			'grid'     => array( 'grid' => array( 'columns' => 3 ) ),
-			'card'     => array( 'card' => array( 'background' => '#fff', 'radius' => array( '1px', '2px', '3px', '4px' ) ) ),
-			'deco'     => array( 'module_deco' => array( 'sizing' => array( 'rv' => array( 'desktop' => array( 'maxWidth' => '700px' ) ) ) ) ),
-			'nested'   => array( array( 'rv' => array( 'desktop' => array( 'color_var' => 'gcid-a' ) ) ) ),
+			'rv'       => array( '$rv' => array( 'desktop' => '1px', 'tablet' => '2px', 'hover' => '3px', 'phoneWide' => '4px' ) ),
+			'box1'     => array( '$box' => array( '10px' ) ),
+			'box2'     => array( '$box' => array( '10px', '20px' ) ),
+			'box3'     => array( '$box' => array( '1px', '2px', '3px' ) ),
+			'box4'     => array( '$box' => array( '1px', '2px', '3px', '4px' ) ),
+			'boxo'     => array( '$box' => array( 'top' => '5px' ) ),
+			'rad1'     => array( '$radius' => '8px' ),
+			'rad4'     => array( '$radius' => array( '1px', '2px', '3px', '4px' ) ),
+			'cv'       => array( '$color_var' => array( 'id' => 'gcid-a', 'opacity' => 40 ) ),
+			'cv2'      => array( '$color_var' => 'gcid-b' ),
+			'gv'       => array( '$content_var' => 'gvid-c' ),
+			'di'       => array( '$divi_icon' => '&#xe00b;' ),
+			'fa'       => array( '$fa' => '&#xf19d;' ),
+			'font'     => array( '$font' => array( 'element' => 'title', 'desktop' => array( 'color' => array( '$color_var' => 'gcid-a' ) ) ) ),
+			'flex'     => array( '$flex' => array( 'direction' => 'column', 'gap' => '8px' ) ),
+			'grid'     => array( '$grid' => array( 'columns' => 3 ) ),
+			'card'     => array( '$card' => array( 'background' => '#fff', 'radius' => array( '1px', '2px', '3px', '4px' ) ) ),
+			'deco'     => array( '$module_deco' => array( 'sizing' => array( '$rv' => array( 'desktop' => array( 'maxWidth' => '700px' ) ) ) ) ),
+			'nested'   => array( array( '$rv' => array( 'desktop' => array( '$color_var' => 'gcid-a' ) ) ) ),
 			'emptyobj' => new stdClass(),
 		);
 		$out   = LayoutTree::build( self::in_column( array( array( 'code' => array( 'html' => 'x', 'attrs' => $attrs ) ) ) ) );
@@ -393,17 +457,17 @@ JSON;
 
 	public function test_bad_value_helper_shapes_have_paths() {
 		$cases = array(
-			array( array( 'rv' => '16px' ), 'rv', 'expects an object' ),
-			array( array( 'rv' => array( 'color' => '#fff' ) ), 'rv', "unknown arg 'color'" ),
-			array( array( 'box' => array( '1', '2', '3', '4', '5' ) ), 'box', '1 to 4' ),
-			array( array( 'radius' => array( '1', '2' ) ), 'radius', '1 or 4' ),
-			array( array( 'color_var' => 42 ), 'color_var', 'gcid' ),
-			array( array( 'flex' => array( 'direktion' => 'row' ) ), 'flex', "unknown arg 'direktion'" ),
+			array( array( '$rv' => '16px' ), 'rv', 'expects an object' ),
+			array( array( '$rv' => array( 'color' => '#fff' ) ), 'rv', "unknown arg 'color'" ),
+			array( array( '$box' => array( '1', '2', '3', '4', '5' ) ), 'box', '1 to 4' ),
+			array( array( '$radius' => array( '1', '2' ) ), 'radius', '1 or 4' ),
+			array( array( '$color_var' => 42 ), 'color_var', 'gcid' ),
+			array( array( '$flex' => array( 'direktion' => 'row' ) ), 'flex', "unknown arg 'direktion'" ),
 		);
 		foreach ( $cases as $case ) {
 			list( $value, $helper, $needle ) = $case;
 			$e = $this->error_of( self::in_column( array( array( 'code' => array( 'html' => 'x', 'attrs' => array( 'k' => $value ) ) ) ) ) );
-			$this->assertStringEndsWith( '.code.attrs.k.' . $helper, $e->path(), $helper );
+			$this->assertStringEndsWith( '.code.attrs.k.$' . $helper, $e->path(), $helper );
 			$this->assertStringContainsString( $needle, $e->getMessage(), $helper );
 		}
 	}
@@ -426,7 +490,7 @@ JSON;
 		);
 		$tree['builder_version'] = '5.14.0';
 		$tree['theme']           = array(
-			'heading' => array( 'color_var' => 'gcid-heading' ),
+			'heading' => array( '$color_var' => 'gcid-heading' ),
 			'h2_size' => '40px',
 		);
 		$out                     = LayoutTree::build( $tree );
@@ -487,7 +551,7 @@ JSON;
 											'children' => array(
 												array(
 													'block' => 'divi/image',
-													'attrs' => array( 'image' => array( 'innerContent' => array( 'rv' => array( 'desktop' => array( 'src' => 'https://ex.com/a.png' ) ) ) ) ),
+													'attrs' => array( 'image' => array( 'innerContent' => array( '$rv' => array( 'desktop' => array( 'src' => 'https://ex.com/a.png' ) ) ) ) ),
 												),
 											),
 										),
