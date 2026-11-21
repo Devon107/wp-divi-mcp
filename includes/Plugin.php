@@ -53,6 +53,7 @@ final class Plugin {
 		add_action( 'rest_api_init', array( Mcp\Transport::class, 'register' ) );
 		Log\ActivityLog::register();
 		Admin\SettingsPage::register();
+		add_filter( 'wpdm_registry', array( Tools\WordPress\Registrar::class, 'add' ) );
 		// Further hooks are registered here by later tasks.
 	}
 
