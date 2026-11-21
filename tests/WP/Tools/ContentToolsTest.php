@@ -29,6 +29,26 @@ class ContentToolsTest extends WP_UnitTestCase {
 		'search',
 	);
 
+	/**
+	 * Tools of the site tools set, registered by the same Registrar.
+	 */
+	const SITE_TOOLS = array(
+		'list_terms',
+		'create_term',
+		'update_term',
+		'list_media',
+		'upload_media',
+		'update_media',
+		'list_menus',
+		'get_menu',
+		'update_menu_items',
+		'list_comments',
+		'moderate_comment',
+		'get_options',
+		'update_options',
+		'list_users',
+	);
+
 	/** @var int */
 	private $admin;
 	/** @var int */
@@ -161,7 +181,8 @@ class ContentToolsTest extends WP_UnitTestCase {
 			$registry->tools( $ctx )
 		);
 		sort( $names );
-		$expected = self::EXPECTED_TOOLS;
+		// The registry also carries the site tools (see SiteToolsTest).
+		$expected = array_merge( self::EXPECTED_TOOLS, self::SITE_TOOLS );
 		sort( $expected );
 		$this->assertSame( $expected, $names );
 	}
@@ -216,7 +237,8 @@ class ContentToolsTest extends WP_UnitTestCase {
 		foreach ( $response['result']['tools'] as $t ) {
 			$tools[ $t['name'] ] = $t;
 		}
-		$this->assertCount( 10, $tools );
+		// 10 content tools + 14 site tools, minus the 5 an editor lacks capabilities for (3 menu, 2 option tools).
+		$this->assertCount( 19, $tools );
 		$this->assertTrue( $tools['get_post']['annotations']['readOnlyHint'] );
 		$this->assertTrue( $tools['trash_post']['annotations']['destructiveHint'] );
 		$this->assertFalse( $tools['create_post']['annotations']['destructiveHint'] );

@@ -33,6 +33,20 @@ final class Registrar {
 		$registry->add_tool( new TrashPost() );
 		$registry->add_tool( new RestorePost() );
 		$registry->add_tool( new Search() );
+		$registry->add_tool( new ListTerms() );
+		$registry->add_tool( new CreateTerm() );
+		$registry->add_tool( new UpdateTerm() );
+		$registry->add_tool( new ListMedia() );
+		$registry->add_tool( new UploadMedia() );
+		$registry->add_tool( new UpdateMedia() );
+		$registry->add_tool( new ListMenus() );
+		$registry->add_tool( new GetMenu() );
+		$registry->add_tool( new UpdateMenuItems() );
+		$registry->add_tool( new ListComments() );
+		$registry->add_tool( new ModerateComment() );
+		$registry->add_tool( new GetOptions() );
+		$registry->add_tool( new UpdateOptions() );
+		$registry->add_tool( new ListUsers() );
 		return $registry;
 	}
 }
