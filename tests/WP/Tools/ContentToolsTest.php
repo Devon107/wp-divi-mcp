@@ -747,6 +747,47 @@ class ContentToolsTest extends WP_UnitTestCase {
 		$this->assertSame( array( $id ), wp_list_pluck( $found['items'], 'id' ) );
 	}
 
+	public function test_hidden_posts_do_not_affect_total_pages_or_paging() {
+		// More hidden drafts/private/pending posts (newer) than per_page, plus own and public posts on page 2.
+		$mine = array();
+		$pub  = array();
+		for ( $i = 0; $i < 3; $i++ ) {
+			$mine[] = self::factory()->post->create( array( 'post_type' => 'post', 'post_status' => 'draft', 'post_author' => $this->author, 'post_title' => "zzpg mine $i", 'post_date' => '2020-01-01 00:00:0' . $i ) );
+			$pub[]  = self::factory()->post->create( array( 'post_type' => 'post', 'post_status' => 'publish', 'post_author' => $this->author2, 'post_title' => "zzpg pub $i", 'post_date' => '2020-01-02 00:00:0' . $i ) );
+		}
+		foreach ( array( 'draft', 'pending', 'private', 'future' ) as $status ) {
+			self::factory()->post->create_many( 6, array( 'post_type' => 'post', 'post_status' => $status, 'post_author' => $this->author2, 'post_title' => 'zzpg hidden ' . $status, 'post_date' => 'future' === $status ? '2090-01-01 00:00:00' : '2021-01-01 00:00:00' ) );
+		}
+		$visible = array_merge( $mine, $pub );
+
+		foreach ( array( 'list_posts', 'search' ) as $tool ) {
+			foreach ( array( 'any', 'draft', 'pending', 'private', 'future', 'publish' ) as $status ) {
+				if ( 'search' === $tool && 'any' !== $status ) {
+					continue;
+				}
+				$base = 'search' === $tool ? array( 'query' => 'zzpg' ) : array( 'post_type' => 'post', 'search' => 'zzpg', 'status' => $status );
+				$all  = array();
+				$page = 1;
+				do {
+					$res = $this->ok( $this->author, $tool, array_merge( $base, array( 'per_page' => 2, 'page' => $page ) ) );
+					if ( 1 === $page ) {
+						$expected = 'any' === $status ? 6 : ( 'draft' === $status ? 3 : ( 'publish' === $status ? 3 : 0 ) );
+						$this->assertSame( $expected, $res['total'], "$tool/$status total" );
+						$this->assertSame( (int) ceil( $expected / 2 ), $res['pages'], "$tool/$status pages" );
+					}
+					$all = array_merge( $all, wp_list_pluck( $res['items'], 'id' ) );
+					++$page;
+				} while ( $page <= $res['pages'] );
+				$want = 'any' === $status ? $visible : ( 'draft' === $status ? $mine : ( 'publish' === $status ? $pub : array() ) );
+				$this->assertEqualSets( $want, $all, "$tool/$status items across pages" );
+			}
+		}
+
+		// Page 2 of a 2-per-page "any" list holds real results.
+		$page2 = $this->ok( $this->author, 'list_posts', array( 'post_type' => 'post', 'search' => 'zzpg', 'per_page' => 2, 'page' => 2 ) );
+		$this->assertCount( 2, $page2['items'] );
+	}
+
 	public function test_search_defaults_filters_and_pagination() {
 		$page = self::factory()->post->create( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'qqneedle page' ) );
 		$post = self::factory()->post->create( array( 'post_type' => 'post', 'post_status' => 'publish', 'post_title' => 'qqneedle post' ) );

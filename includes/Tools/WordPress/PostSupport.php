@@ -269,25 +269,93 @@ final class PostSupport {
 				'no_found_rows'       => false,
 			)
 		);
-		$query = new \WP_Query( $query_args );
-		$text  = ! empty( $query_args['s'] );
-
-		$items   = array();
-		$dropped = 0;
-		foreach ( $query->posts as $post ) {
-			if ( ! $post instanceof \WP_Post || ! self::can_list( $post, $text ) ) {
-				++$dropped;
-				continue;
+		$query_args['wpdm_readable'] = true;
+		$types                       = (array) $query_args['post_type'];
+		$text                        = ! empty( $query_args['s'] );
+		$scope                       = static function ( $where, $query ) use ( $types, $text ) {
+			if ( ! $query->get( 'wpdm_readable' ) ) {
+				return $where;
 			}
-			$items[] = PostFormatter::summary( $post );
+			return $where . self::readable_sql( $types, $text );
+		};
+
+		// Restrict in SQL so found_posts, pages and paging only ever see readable posts.
+		add_filter( 'posts_where', $scope, 99, 2 );
+		try {
+			$query = new \WP_Query( $query_args );
+		} finally {
+			remove_filter( 'posts_where', $scope, 99 );
 		}
 
-		$total = max( 0, (int) $query->found_posts - $dropped );
+		// Defence in depth: the SQL scope above should already guarantee this.
+		$items = array();
+		foreach ( $query->posts as $post ) {
+			if ( $post instanceof \WP_Post && self::can_list( $post, $text ) ) {
+				$items[] = PostFormatter::summary( $post );
+			}
+		}
+
+		$total = (int) $query->found_posts;
 		return array(
 			'items' => $items,
 			'total' => $total,
 			'pages' => (int) ceil( $total / $per_page ),
 		);
+	}
+
+	/**
+	 * SQL condition limiting a query to posts the current user may read, per post
+	 * type: public statuses for everyone; other users' non-public statuses only
+	 * with the type's edit_others_posts (drafts, pending, future, trash) or
+	 * read_private_posts (private); the user's own posts always. For text
+	 * searches, other users' password-protected posts additionally need edit rights.
+	 *
+	 * @param string[] $types Post types in the query.
+	 * @param bool     $text  Whether the query is a text search.
+	 * @return string SQL starting with " AND ".
+	 */
+	private static function readable_sql( array $types, bool $text ): string {
+		global $wpdb;
+
+		$user_id  = get_current_user_id();
+		$statuses = get_post_stati( array(), 'objects' );
+		$clauses  = array();
+
+		foreach ( $types as $name ) {
+			$type = get_post_type_object( $name );
+			if ( ! $type ) {
+				continue;
+			}
+			$can_edit_others = current_user_can( $type->cap->edit_others_posts );
+			$can_read_priv   = current_user_can( $type->cap->read_private_posts );
+
+			$allowed = array();
+			foreach ( $statuses as $status => $object ) {
+				if ( $object->public ) {
+					$allowed[] = $status;
+				} elseif ( $object->private ) {
+					if ( $can_read_priv ) {
+						$allowed[] = $status;
+					}
+				} elseif ( $can_edit_others ) {
+					$allowed[] = $status;
+				}
+			}
+
+			$own = $wpdb->prepare( "{$wpdb->posts}.post_author = %d", $user_id );
+			if ( $allowed ) {
+				$in    = implode( ',', array_fill( 0, count( $allowed ), '%s' ) );
+				$where = '(' . $wpdb->prepare( "{$wpdb->posts}.post_status IN ($in)", $allowed ) . " OR $own)"; // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			} else {
+				$where = $own;
+			}
+			if ( $text && ! ( $can_edit_others && current_user_can( $type->cap->edit_published_posts ) ) ) {
+				$where .= " AND ({$wpdb->posts}.post_password = '' OR $own)";
+			}
+			$clauses[] = '(' . $wpdb->prepare( "{$wpdb->posts}.post_type = %s", $name ) . " AND ($where))";
+		}
+
+		return $clauses ? ' AND (' . implode( ' OR ', $clauses ) . ')' : ' AND 1=0';
 	}
 
 	// ----- writes ----------------------------------------------------------
