@@ -1,0 +1,20 @@
+{
+ "context": "et_builder",
+ "data": {
+  "12": "<!-- wp:divi/placeholder --><!-- wp:divi/section {\"module\":{\"decoration\":{\"background\":{\"desktop\":{\"value\":{\"color\":\"#0b1f3a\"}}}}},\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/row {\"module\":{\"advanced\":{\"columnStructure\":{\"desktop\":{\"value\":\"4_4\"}},\"flexColumnStructure\":{\"desktop\":{\"value\":\"equal-columns_1\"}}},\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"flexWrap\":\"nowrap\"}}}}},\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/column {\"module\":{\"advanced\":{\"type\":{\"desktop\":{\"value\":\"4_4\"}}},\"decoration\":{\"sizing\":{\"desktop\":{\"value\":{\"flexType\":\"24_24\"}}}}},\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003ch2\\u003eReady to start?\\u003c/h2\\u003e\"}},\"decoration\":{\"headingFont\":{\"h2\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"38px\",\"weight\":\"700\",\"color\":\"#ffffff\",\"lineHeight\":\"1.1em\",\"letterSpacing\":\"-0.02em\"}}}}}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003eTalk to us today.\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"16px\",\"lineHeight\":\"1.6em\",\"color\":\"rgba(255,255,255,0.85)\"}}}}}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/link {\"content\":{\"innerContent\":{\"desktop\":{\"value\":{\"text\":\"Contact us\",\"linkUrl\":\"#contact\",\"linkTarget\":\"off\"}}},\"decoration\":{\"font\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"16px\",\"weight\":\"700\",\"color\":\"#ffffff\"},\"hover\":{\"color\":\"#e4572e\"}}}}}},\"icon\":{\"innerContent\":{\"desktop\":{\"value\":{\"unicode\":\"\\u0026#xf061;\",\"type\":\"fa\",\"weight\":\"900\"}}},\"advanced\":{\"size\":{\"desktop\":{\"value\":\"12px\"}}}},\"module\":{\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"flexDirection\":\"row-reverse\",\"justifyContent\":\"start\",\"columnGap\":\"8px\"}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"#e4572e\"},\"hover\":{\"color\":\"#ffffff\"}}},\"border\":{\"desktop\":{\"value\":{\"radius\":{\"topLeft\":\"50px\",\"topRight\":\"50px\",\"bottomLeft\":\"50px\",\"bottomRight\":\"50px\",\"sync\":\"on\"},\"styles\":{\"all\":{\"width\":\"0px\",\"color\":\"#e4572e\"}}},\"hover\":{\"styles\":{\"all\":{\"color\":\"#ffffff\"}}}}},\"spacing\":{\"desktop\":{\"value\":{\"padding\":{\"top\":\"16px\",\"right\":\"30px\",\"bottom\":\"16px\",\"left\":\"30px\",\"syncVertical\":\"on\",\"syncHorizontal\":\"on\"}}}},\"sizing\":{\"desktop\":{\"value\":{\"width\":\"fit-content\"}}}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/image {\"image\":{\"innerContent\":{\"desktop\":{\"value\":{\"src\":\"https://example.com/team.jpg\",\"alt\":\"Team\"}}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- /wp:divi/column -->\n<!-- /wp:divi/row -->\n<!-- /wp:divi/section --><!-- /wp:divi/placeholder -->"
+ },
+ "presets": null,
+ "global_colors": [],
+ "global_variables": [],
+ "page_settings_meta": {
+  "_et_pb_custom_css": [
+   ""
+  ]
+ },
+ "canvases": {
+  "local": [],
+  "global": []
+ },
+ "images": [],
+ "thumbnails": []
+}

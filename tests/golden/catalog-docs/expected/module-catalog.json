@@ -1,0 +1,25 @@
+{
+ "decorationGroups": [
+  "background",
+  "font",
+  "spacing"
+ ],
+ "diviVersion": "9.9.9",
+ "modules": {
+  "divi/card": {
+   "category": "module",
+   "children": [
+    "divi/card-item"
+   ],
+   "d4Shortcode": "et_pb_card",
+   "elements": [
+    "content",
+    "image",
+    "module",
+    "style",
+    "title"
+   ],
+   "title": "Card"
+  }
+ }
+}

@@ -1,0 +1,11 @@
+{
+ "context": "et_builder",
+ "data": {
+  "1": "<!-- wp:divi/placeholder --><!-- wp:divi/section {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/row {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/column {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"<p>ok</p>\"}},\"style\":{}},\"colour\":{\"x\":1},\"zeta\":1,\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"<p>ok</p>\"}},\"decoration\":{\"font\":{},\"glow\":{},\"sparkle\":{}}},\"module\":{\"meta\":{},\"advanced\":{}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"<p>no version</p>\"}}}} /-->\n<!-- /wp:divi/column -->\n<!-- /wp:divi/row -->\n<!-- /wp:divi/section --><!-- /wp:divi/placeholder -->"
+ },
+ "presets": null,
+ "global_colors": [],
+ "global_variables": [],
+ "images": [],
+ "thumbnails": []
+}

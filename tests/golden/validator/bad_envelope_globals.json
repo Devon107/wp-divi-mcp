@@ -1,0 +1,76 @@
+{
+ "context": null,
+ "data": {
+  "1": {
+   "post_content": "<!-- wp:divi/placeholder --><!-- wp:divi/section {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/row {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/column {\"builderVersion\":\"5.19.1\"} -->\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"<p>a</p>\"}}},\"builderVersion\":\"5.19.1\"} /-->\n<!-- /wp:divi/column -->\n<!-- /wp:divi/row -->\n<!-- /wp:divi/section --><!-- /wp:divi/placeholder -->"
+  },
+  "2": "",
+  "3": 42,
+  "4": "<p>no placeholder</p>"
+ },
+ "global_colors": [
+  [
+   "gcid-ok",
+   {
+    "color": "#fff"
+   }
+  ],
+  [
+   "gcid-nocolor",
+   {
+    "label": "x"
+   }
+  ],
+  [
+   "bad-id",
+   {
+    "color": "#000"
+   }
+  ],
+  "gcid-string",
+  [
+   "gcid-a",
+   "b",
+   "c"
+  ],
+  {
+   "x": 1
+  },
+  [
+   1,
+   {
+    "color": true,
+    "it's": null,
+    "n": 1.5
+   }
+  ]
+ ],
+ "global_variables": [
+  {
+   "id": "gvid-ok",
+   "label": "L",
+   "value": "V",
+   "type": "content"
+  },
+  {
+   "id": "gvid-partial"
+  },
+  {
+   "id": "other"
+  },
+  [
+   "gvid-x"
+  ],
+  "gvid-str"
+ ],
+ "images": {
+  "https://example.com/a.png": {
+   "encoded": "AAA",
+   "url": "https://example.com/a.png"
+  },
+  "https://example.com/b.png": {
+   "url": "x"
+  },
+  "https://example.com/c.png": "nope"
+ }
+}

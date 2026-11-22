@@ -1,0 +1,14 @@
+{
+	"name": "wp-divi-mcp",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Dev tooling for the WP Divi MCP plugin (wp-env based test environment).",
+	"scripts": {
+		"env:start": "wp-env start",
+		"env:stop": "wp-env stop",
+		"test": "bin/test"
+	},
+	"devDependencies": {
+		"@wordpress/env": "^10.0.0"
+	}
+}

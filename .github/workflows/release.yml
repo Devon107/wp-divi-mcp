@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: PHP lint (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '7.4', '8.3' ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Lint all PHP files
+        run: |
+          find . -name '*.php' -not -path './vendor/*' -not -path './node_modules/*' -print0 \
+            | xargs -0 -n1 php -l
+
+  release:
+    name: Build zip and publish release
+    runs-on: ubuntu-latest
+    needs: lint
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag must match the plugin version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          header="$(sed -n 's/^ \* Version:[[:space:]]*//p' wp-divi-mcp.php | head -n1 | tr -d '[:space:]')"
+          const="$(sed -n "s/^define( 'WPDM_VERSION', '\([^']*\)' );.*/\1/p" wp-divi-mcp.php | head -n1)"
+          stable="$(sed -n 's/^Stable tag:[[:space:]]*//p' readme.txt | head -n1 | tr -d '[:space:]')"
+          echo "tag=$tag header=$header WPDM_VERSION=$const readme=$stable"
+          fail=0
+          [ "$tag" = "$header" ] || { echo "::error::Tag v$tag does not match the plugin header Version ($header)"; fail=1; }
+          [ "$tag" = "$const" ] || { echo "::error::Tag v$tag does not match WPDM_VERSION ($const)"; fail=1; }
+          [ "$tag" = "$stable" ] || { echo "::error::Tag v$tag does not match readme.txt Stable tag ($stable)"; fail=1; }
+          exit "$fail"
+      - name: Build zip
+        run: bin/build-zip
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" build/wp-divi-mcp.zip --generate-notes

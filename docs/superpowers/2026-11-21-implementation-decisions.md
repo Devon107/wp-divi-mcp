@@ -1,0 +1,117 @@
+# Decisions made during implementation (2026-11-21/22)
+
+Every ruling the controller made while executing the plan, in order, with what it costs if wrong.
+
+- | T8 golden | builder version | Python default differs from PHP default. Ruling below |
+- | Review Focus #4 | test_upload_media_base64_over_limit | listed under T13 but owner is T7 (Media). Ruling below |
+- Ruling: golden cases.json must start by calling set_builder_version("5.19.1") so Python and PHP fixtures are version-pinned — Python lib default is older — cost if wrong: regenerate fixtures.
+- Ruling: PHP fallback builder version constant = "5.19.1" (installed Divi; plan said 5.19.0) — spec says default = installed Divi version — cost: trivial.
+- Ruling: test_upload_media_base64_over_limit lives in Task 7 (owner of Media::from_base64) — plan's Task 7 already lists it — cost: none.
+- Ruling: .superpowers/ and .wp-env.override.json gitignored (controller setup commit).
+- Ruling: committed .wp-env.json phpVersion → 8.2 (wordpress:php7.4 image apt repo 404s, cannot build); PHP 7.4 floor enforced by php -l 7.4 in CI — spec's 7.4 is a runtime floor, not the test env — cost if wrong: 7.4-only runtime bugs not caught by tests. Apply in Task 1 fix round or Task 2.
+- Task 2: dispatched (BASE 9ed5235, implementer a1b327fb5128632dc, sonnet). Rulings in dispatch: Context ctor signature; unknown resource/prompt/tool → -32602; filtered tool → isError
+- Task 2: implementer DONE (8d6da8a). Carry to Task 4: transport must wp_set_current_user (Tokens::authenticate does). Resources are not capability-filtered — Ruling: acceptable, knowledge resources are non-sensitive and endpoint is token-gated — cost: none unless a sensitive resource is added later.
+- Task 3: dispatched (BASE 8d6da8a, implementer a55b54caae77fc409, sonnet). Rulings: single filter wpdm_registry (brief's wpdm_server wording dropped); auth seam Transport::authenticate via wpdm_test_context; wpdm_require_https filter for tests; check order disabled>https>size>method>auth>parse>empty batch>session.
+- Ruling: my resolution (c) put DELETE before auth — wrong; carry to Task 4: authenticate before DELETE, bind session transient to connection id and reject mismatch with 404, refresh TTL on use — spec requires sessions tied to connections; cost: small.
+- Task 4: dispatched (BASE 6c92786, implementer a584410698fde378e, opus — security-critical). Rulings in dispatch: REMOTE_ADDR only for rate limit; 429 -32002 + Retry-After 60; order disabled>https>body>GET>auth>DELETE>parse>batch>session>handle.
+- Ruling: demotion test uses contributor (keeps edit_posts, lacks publish) since subscriber fails verify() with 401 — plan's intent (old rights never retained) preserved — cost: none.
+- Ruling: token must come from query string or Bearer only, not JSON body param — stricter, avoids key confusion — apply in fix round if one opens, else in Task 5 dispatch.
+- Ruling: shared REMOTE_ADDR behind proxy accepted; document in docs/connect.md (Task 16) — cost: 60 s lockouts on misconfigured proxies.
+- Task 5: dispatched (BASE 5497623, implementer a8ba09fc50d4bbde0, sonnet). Rulings: URL shown once via user transient wpdm_new_conn_<uid> 5 min; cron wpdm_prune_log; strip 'key' from logged args. Branch feat/v0.1 pushed to origin.
+- Ruling: plaintext token in 5-min user transient accepted — admin-only DB, deleted on first render — cost: a DB reader within 5 min sees one token.
+- Ruling: ActivityLog::record $ms untyped (Server passes float) accepted.
+- Task 6: dispatched (BASE 0a92d01, implementer aaa01e9986e7c17b0, sonnet). Rulings: Tools\WordPress\Registrar::add on wpdm_registry; update_post destructive; term names created only with edit_terms; force → ToolError force_unavailable until T12.
+- Task 7: dispatched (BASE abb5f49, implementer ad4a6497f8485e5ab, sonnet). Rulings: sideload SSRF guard reject_unsafe_urls; list_users cap edit_posts, non-list_users see authors only w/o email; menus validate-before-write.
+- Ruling: update_options input shape {options:{...}} accepted — lets non-allowlisted keys be rejected explicitly — cost: none.
+- Ruling: wp_safe_remote_get with manual redirect revalidation + CURLOPT_RESOLVE pin instead of download_url accepted — stronger SSRF guard — cost: pin only on cURL transport.
+- Task 8: dispatched (BASE cca90b0, implementer a1a32b3da5c82d72f, opus). Rulings: golden pinned at 5.19.1; explicit ids for uuid helpers; trailing-underscore kwargs drop underscore in PHP opts; $ref interpreter in cases.json; D5 pure PHP.
+- Task 8: implementer DONE (885b1eb, c4c62d2). Ruling: U+2028/2029 left raw like Python (valid JSON; parse_blocks round-trips) — cost: byte diff vs WP serializer only for those chars. embed_image/write_layout not ported — Task 13 handles images via Media.
+- Task 8: carry → Task 9: tighten GoldenTest JSON comparison to text/object (pins {} vs []), add layout_export post_id:0 case — Ruling: {} vs [] matters for Divi import envelope — cost: small.
+- Task 9: dispatched (BASE c4c62d2, implementer a90355f97f0a427ab, opus). Rulings: patterns.<name> fn + $theme in interpreter; GoldenTest JSON tightened (carried).
+- Task 10: dispatched (BASE 8948de7, implementer a6c88add3061f81a9, opus). Rulings: exact Python param names in tree (spec example updated); reflection mapping; top-level theme default; sections-only top level; schema drift test.
+- Ruling: value-helper keys get "$" prefix ($rv, $box, $color_var, $fa, $literal, + new $merge) — spec's bare keys collide with real Divi attr keys (font.font, border radius) that Claude copies from exports — cost if wrong: spec/schema rename only. Sent to implementer pre-review.
+- Ruling: rows inside columns stay rejected (Divi 5 allows nested rows) — revisit if Claude needs nested rows — cost: some layouts need group instead.
+- Ruling (T10 Minor 1): a $-helper key with a disallowed sibling, or two $-helpers in one object, should throw LayoutError — $ keys are never Divi data — carry to final review fix wave.
+- Task 11: dispatched (BASE 5d7cc59, implementer a627cce13f7c4ad18, opus). Rulings: exact message/order parity vs bundled 5.11 catalog copy; CatalogBuilder::from_theme_dir reusable for T15; strict_tree_hints flag for unprefixed helper warnings.
+- Task 12: dispatched (BASE 7e451d2, implementer aeafa9a6114bf6a67, opus). Rulings: confirm nonce/route params from Divi 5.19.1 source; merge input validation invalid_globals; backup before globals change; CPT locked down; UpdatePost force backs up.
+- Ruling: Globals::restore archives variables created after snapshot (Divi 5.19.1 refuses deletion, GlobalData.php:959); colors replaced with set_global_colors(...,false) — Divi constraint — cost: archived vars remain visible as archived.
+- Task 13: dispatched (BASE 94d332c, implementer a93b45c6cc68375b6, opus). Rulings: Divi Registrar; hoist schema $defs; LayoutInput guards depth 64/nodes 5000/8MB; error codes on wire via structuredContent (T2 minor promoted); globals type-mismatch conflict + duplicate rejection (T12 minors promoted); backup tools gated; theme_builder restore deferred to T14.
+- Ruling: divi_validate_layout returns {ok:false, report} (validator shouldn't error) — accepted.
+- Ruling: create_page with status publish + layout must create as draft, apply, then set final status (no empty published window) — include in fix round.
+- Ruling: find_icon returns $-prefixed values — matches T10 ruling — accepted.
+- Task 14: dispatched (BASE 18b5bd3, implementer a5b2a1a82957877aa, opus). Rulings: backup before delete and before set; empty-previous backup meta created; theme_builder restore via upsert, deleted template → template_missing; live=true spy test; sandbox templates only.
+- Ruling: layout_type header|footer only — Divi 5.19.1 upsert-layout rejects body (OutsideVbController.php:794) — accepted.
+- Task 15: dispatched (BASE afcd7a3, implementer ac286b95dcf789910, opus). Rulings: generator reuses CatalogBuilder; parity tests keep 5.11 catalog copy; guide examples tested through LayoutTree+Validator; resource name regex; Knowledge Registrar.
+- Ruling: guide-accuracy minors promoted into fix loop — guide is the remote Claude's only knowledge — cost: tiny.
+- Ruling: Task 16 implementer does packaging/workflow/docs/local inspector check only; step 3 (owner staging E2E) and step 4 (tag/release) done by controller after final review with owner's OK — publishing a release is outward-facing.
+- Ruling: uninstall deletes connections/options/transients/log table but KEEPS wpdm_backup posts unless WPDM_UNINSTALL_DELETE_BACKUPS is true — backups may be the only copy of earlier page content — cost: leftover private posts after uninstall.
+- Ruling: menu item removal stays permanent (no trash exists for nav items) but result returns full definitions of removed items so they can be recreated — deviation from trash-only constraint accepted — cost: recreated items get new ids.
+- Ruling: live assigned non-default Theme Builder templates require new confirm_live_template flag — anti-goal "breaking the Theme Builder" — cost: one extra confirmation.
+- Ruling: update_post backs up whenever content is set, and content changes on publish/future/private posts need confirm_published — spec "before any overwrite" — cost: extra confirmation for published edits.
+- Ruling: on non-Divi sites update_post backups are saved but divi_restore_backup is not registered — accepted for v0.1; follow-up: register a plain restore tool without Divi — cost: manual restore on non-Divi sites.
+- Parked — uninstall opt-in backup delete loop can spin if wp_delete_post is blocked — Ruling: follow-up (only with WPDM_UNINSTALL_DELETE_BACKUPS) — cost: uninstall timeout in that rare case.
+- Parked — confirm_published checks current status only (draft+status=publish in one call skips flag) — Ruling: follow-up — cost: a draft can be published with new content in one call, which is the normal publish flow.
+- Parked — update_post and apply backups share the 20-per-post pool — Ruling: follow-up — cost: older apply backups pruned by frequent edits.
+
+## Deferred minor findings
+
+- Task 1: minor (deferred): bootstrap comment claims divi exclusion that lives only in bin/test (phpunit direct runs include divi group)
+- Task 1: minor (deferred): bin/test empty arrays under set -u break on bash <4.4
+- Task 1: minor (deferred): CI triggers push+pull_request → duplicate runs
+- Task 1: minor (deferred): placeholder Plugin URI in header
+- Task 1: minor (deferred): no boot() idempotence test
+- Task 1: minor (deferred): README says php -l "enforces" 7.4 floor; it is syntax-only
+- Task 2: minor (deferred): structuredContent may be JSON array for list results; empty text when wp_json_encode fails
+- Task 2: minor (deferred): ToolError code/data never surfaced; reader/render exceptions leak raw message as -32603
+- Task 2: minor (deferred): empty properties array encodes [] ; template dup placeholders unvalidated; WPCS alignment
+- Task 2: minor (deferred): JSON-RPC leniency (id+notifications/* no reply, jsonrpc not validated); test gaps (non-array params, ok=false log, id echo variants)
+- Task 3: minor (deferred): 405 Allow header overwritten by WP to include GET; weak test assertion
+- Task 3: minor (deferred): serve_request layer untested; _jsonp not neutralised; _envelope $_GET unset untested
+- Task 3: minor (deferred): test_http_rejected_without_constant bypasses default branch via filter
+- Task 3: minor (deferred): Throwable 500 not logged; is_ssl ignores X-Forwarded-Proto (README note)
+- Task 4: minor (deferred, SECURITY — final review should fix): touch() returns connection even if revoked concurrently → should fail closed
+- Task 4: minor (deferred): connections option lost-update race (touch vs revoke); consider separate option for last_used
+- Task 4: minor (deferred): rate limit per full IPv6 address (bucket /64); shared proxy IP lockout
+- Task 4: minor (deferred): create() doesn't validate expires / user caps
+- Task 4: minor (deferred): session transient rewritten every request
+- Task 4: minor (deferred): token visible in REQUEST_URI and early rest filters — document
+- Task 4: minor (deferred): no boundary test expires===time()
+- Task 5: minor (deferred): db_version set even if dbDelta fails; prune cron only rescheduled in install()
+- Task 5: minor (deferred): transient stores redundant token field (drop it); duplicate _wpnonce ids per row
+- Task 5: minor (deferred): user select number=>200 and role-only capability query; HTTPS warning shown even with ALLOW_HTTP
+- Task 5: minor (deferred): untranslated table headings; no copy feedback; only 'key' redacted; no uninstall cleanup; record() TypeError risk
+- Task 6: minor (deferred): site_info versions visible to subscriber-level (cap read) — consider edit_posts
+- Task 6: minor (deferred): discard_created no-op when EMPTY_TRASH_DAYS=0 leaves failed create behind
+- Task 6: minor (deferred): update_post non-atomic; show_in_rest underscore meta write-only
+- Task 6: minor (deferred): test gaps (meta update protected key, auth_callback denial, trash list non-owner, contributor leaks, EMPTY_TRASH_DAYS refusal)
+- Task 6: minor (deferred): SQL password allowance vs can_list mismatch (own published password post for contributor → total off by one); own-private visibility untested
+- Task 7: minor (deferred): menu removal phase not rolled back; rollback results ignored
+- Task 7: minor (deferred): CURLOPT_RESOLVE pin untested; bypassed with fsockopen/proxy; trailing-dot host key
+- Task 7: minor (deferred): SSRF test gaps (decimal/octal/hex hosts, DNS→private, fe80::, relative Location); 6to4/Teredo not blocked
+- Task 7: minor (deferred): polyglot images accepted (re-encode option); temp cleanup tested on one path only
+- Task 7: minor (deferred): approve trashed/spam comment via wp_set_comment_status leaves trash meta; upload caption failure silent; list_comments returns author_email
+- Task 8: minor (deferred): rv accepts desktop/tablet/phone in $more; null columns dropped vs Python raise; DEL in py_dumps; invalid UTF-8 inconsistent; serialize TypeError on stdClass attrs; fraction() extensions undocumented; uncovered paths (wrap_on string, merge list-over-dict, uuid path)
+- Task 9: minor (deferred): GoldenTest PHP-side json_encode lacks JSON_PRESERVE_ZERO_FRACTION (int vs float not pinned one way)
+- Task 9: minor (deferred): dead stdClass branch Patterns.php:819; Patterns::opts duplicates D5::opts
+- Task 10: minor (deferred): no depth/node-count cap in LayoutTree recursion (cap 64 depth) — also consider in Task 13 LayoutInput
+- Task 10: minor (deferred): raw block name only prefix-checked; enforce ^divi/[a-z][a-z0-9-]*$
+- Task 10: minor (deferred): schema $radius object form missing / 1–4 vs 1|4 mismatch; schema looser than code (icon bool, catch-all, role default)
+- Task 10: minor (deferred): post_content/layout_export outside error wrap; module directly in regular section accepted; schema file missing → RuntimeException
+- Task 11: minor (deferred): other preg_match_all false results ignored (lines 599, 259, 652)
+- Task 11: minor (deferred, consider ERROR): non-list global_colors/global_variables and non-string color pass silently (Python crashes) — globals merge gets garbage; Task 12/13 merge must validate types anyway
+- Task 11: minor (deferred): assoc input data {"0":...} → false ERROR; object-mode PHP arrays as lists
+- Task 11: minor (deferred): Py::lower fallback without mbstring; fixture generator needs Python ≥3.13 assert; escaped-quote alt edge; counts [] vs {}
+- Task 11: minor (deferred): row/column parent-rule messages not pinned by any fixture
+- Task 12: minor (deferred): nonce retry regenerates identical nonce (comment overstates); Env::divi_version assumes Divi theme; orphan backup meta on fatal; test side effect deletes static CSS
+- Task 13: minor (deferred): portability size check covers first data entry only; envelope.images count unbounded
+- Task 13: minor (deferred): Inspector walk_paths empty-object diffs vs Python; tree rtrim; section/example not truncated; unbounded recursion on stored content
+- Task 13: minor (deferred): ListBackups filters after capped read of 200; www/scheme variant of home host re-sideloaded
+- Task 13: minor (deferred): non-ToolError Throwable raw message returned as internal_error (may leak internals); create_page inserts before upload_files check; css_restored false ambiguity
+- Task 13: minor (deferred): future-date test runs on UTC site (no offset coverage); private/pending/future finalize skip save_post
+- Task 14: minor (deferred, fail-open — final wave should fix): is_default() treats missing 'default' key as non-default; also check _et_default meta
+- Task 14: minor (deferred): site-wide non-default templates unguarded; prune may drop the backup being restored (shared 20 budget); test_hidden_without_divi precondition; title sanitized to empty
+- Task 15: minor (deferred): validator info line mentions Python write_layout; module-name regex $ vs \z; INDEX.md file links; -32602 vs -32002 resource not found; bad post_id → -32603; instructions test bypasses hook
+- Task 15: minor (deferred, consider): validator contrast check only flags identical colors — add WCAG ratio warning (<3:1) as PHP-only check
+- Task 15: minor (deferred): guide Hover-states wording repeats "The validator"; orphan line break
+- Task 16: minor (deferred): actions pinned to major tags; checkout persist-credentials; no tag-on-main check; build-zip find -printf GNU-only; .distignore blacklist; Desktop mcp-remote untested
+- Task 16: minor (deferred): ToolSchemaWireTest walker skips prefixItems/if/then/else; tuple items unsupported

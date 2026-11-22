@@ -1,0 +1,19 @@
+{
+ "errors": [],
+ "warnings": [
+  "data[1] line 4 divi/link: on hover the button background (#0b1f3a) matches its container and no contrasting border remains — the button seems to disappear (only text is left)",
+  "data[1] line 5 divi/link: on hover the button background (#0b1f3a) matches its container and no contrasting border remains — the button seems to disappear (only text is left)",
+  "data[1] line 7 divi/link: on hover the outline color (#0b1f3a) matches the container background — the outline disappears",
+  "data[1] line 8 divi/link: on hover the text color equals the button background (#ffffff)",
+  "data[1] line 9 divi/button: on hover the button background (#0b1f3a) matches its container and no contrasting border remains — the button seems to disappear (only text is left)"
+ ],
+ "info": [],
+ "counts": {
+  "divi/placeholder": 1,
+  "divi/section": 1,
+  "divi/row": 1,
+  "divi/column": 1,
+  "divi/link": 5,
+  "divi/button": 1
+ }
+}

@@ -1,0 +1,123 @@
+{
+ "context": "et_builder",
+ "data": {
+  "360": "<!-- wp:divi/placeholder --><!-- wp:divi/section {\"module\":{\"decoration\":{\"spacing\":{\"desktop\":{\"value\":{\"padding\":{\"top\":\"76px\",\"syncVertical\":\"on\",\"syncHorizontal\":\"on\",\"bottom\":\"76px\",\"left\":\"24px\",\"right\":\"24px\"}}}},\"layout\":{\"desktop\":{\"value\":{\"rowGap\":\"16px\"}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"$variable({\\u0022type\\u0022:\\u0022color\\u0022,\\u0022value\\u0022:{\\u0022name\\u0022:\\u0022gcid-f1tcywpwys\\u0022,\\u0022settings\\u0022:{}}})$\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/row {\"module\":{\"advanced\":{\"columnStructure\":{\"desktop\":{\"value\":\"4_4\"}},\"flexColumnStructure\":{\"desktop\":{\"value\":\"equal-columns_1\"}}},\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"flexWrap\":\"nowrap\"}}},\"sizing\":{\"desktop\":{\"value\":{\"maxWidth\":\"1240px\",\"width\":\"95%\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/column {\"module\":{\"advanced\":{\"type\":{\"desktop\":{\"value\":\"4_4\"}}},\"decoration\":{\"sizing\":{\"desktop\":{\"value\":{\"flexType\":\"24_24\"}}},\"layout\":{\"desktop\":{\"value\":{\"rowGap\":\"8px\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/group {\"module\":{\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"rowGap\":\"8px\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003eProceso de aplicación\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"$variable({\\u0022type\\u0022:\\u0022color\\u0022,\\u0022value\\u0022:{\\u0022name\\u0022:\\u0022gcid-u7qat6ue5e\\u0022,\\u0022settings\\u0022:{}}})$\",\"size\":\"11px\",\"capitalization\":\"uppercase\",\"weightFineTune\":\"800\",\"letterSpacing\":\"0.08em\",\"family\":\"Red Hat Display\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n\r\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003ch2\\u003eCinco pasos para aplicar\\u003c/h2\\u003e\"}},\"decoration\":{\"headingFont\":{\"h2\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"$variable({\\u0022type\\u0022:\\u0022content\\u0022,\\u0022value\\u0022:{\\u0022name\\u0022:\\u0022gvid-612spbkke2\\u0022,\\u0022settings\\u0022:{}}})$\",\"lineHeight\":\"1.08\",\"weightFineTune\":\"700\",\"letterSpacing\":\"-0.025em\",\"color\":\"$variable({\\u0022type\\u0022:\\u0022color\\u0022,\\u0022value\\u0022:{\\u0022name\\u0022:\\u0022gcid-heading-color\\u0022,\\u0022settings\\u0022:{}}})$\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n<!-- /wp:divi/group -->\r\n<!-- /wp:divi/column -->\r\n<!-- /wp:divi/row -->\r\n\r\n<!-- wp:divi/row {\"module\":{\"advanced\":{\"columnStructure\":{\"desktop\":{\"value\":\"4_4\"}},\"flexColumnStructure\":{\"desktop\":{\"value\":\"equal-columns_1\"}}},\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"flexWrap\":\"nowrap\"}}},\"sizing\":{\"desktop\":{\"value\":{\"maxWidth\":\"1240px\",\"width\":\"95%\"}}},\"spacing\":{\"desktop\":{\"value\":{\"padding\":{\"top\":\"26px\",\"syncVertical\":\"on\",\"syncHorizontal\":\"on\",\"bottom\":\"26px\",\"left\":\"28px\",\"right\":\"28px\"}}}},\"border\":{\"desktop\":{\"value\":{\"radius\":{\"topLeft\":\"6px\",\"topRight\":\"6px\",\"bottomLeft\":\"26px\",\"bottomRight\":\"26px\",\"sync\":\"off\"},\"styles\":{\"all\":{\"width\":\"1px\",\"color\":\"#e3e6ef\"}}}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"#ffffff\"}}}}},\"builderVersion\":\"5.13\",\"css\":{\"desktop\":{\"hover\":{\"mainElement\":\"border-color: rgb(199, 203, 224) !important;\\n    box-shadow: rgba(22, 24, 52, 0.07) 0px 10px 28px !important;\"}}}} -->\r\n<!-- wp:divi/column {\"module\":{\"advanced\":{\"type\":{\"desktop\":{\"value\":\"4_4\"}}},\"decoration\":{\"sizing\":{\"desktop\":{\"value\":{\"flexType\":\"24_24\"}}},\"layout\":{\"desktop\":{\"value\":{\"flexDirection\":\"row\",\"columnGap\":\"20px\"}},\"tablet\":{\"value\":{\"flexDirection\":\"column\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/text {\"module\":{\"decoration\":{\"sizing\":{\"desktop\":{\"value\":{\"width\":\"52px\",\"height\":\"52px\"}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"#e9edfa\"}}},\"layout\":{\"desktop\":{\"value\":{\"justifyContent\":\"center\",\"alignItems\":\"center\"}}},\"border\":{\"desktop\":{\"value\":{\"radius\":{\"topLeft\":\"100px\",\"topRight\":\"100px\",\"bottomLeft\":\"100px\",\"bottomRight\":\"100px\",\"sync\":\"on\"}}}}}},\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003e01\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"19px\",\"weightFineTune\":\"900\",\"color\":\"#2a3b89\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n\r\n<!-- wp:divi/group {\"module\":{\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"columnGap\":\"0px\",\"rowGap\":\"0px\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003eCompleta el formulario de pre solicitud\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"#161834\",\"size\":\"24.5px\",\"weightFineTune\":\"700\",\"lineHeight\":\"1.25\",\"letterSpacing\":\"-0.02em\"}},\"phone\":{\"value\":{\"hyphens\":\"off\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n\r\n<!-- wp:divi/text {\"module\":{\"decoration\":{\"spacing\":{\"desktop\":{\"value\":{\"margin\":{\"top\":\"10px\",\"syncVertical\":\"off\",\"syncHorizontal\":\"off\"}}}}}},\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003eDa clic aquí para iniciar tu proceso\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"16px\",\"lineHeight\":\"1.65em\",\"color\":\"#3a4060\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n\r\n<!-- wp:divi/link {\"module\":{\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"flexDirection\":\"row-reverse\",\"justifyContent\":\"start\"}}},\"spacing\":{\"desktop\":{\"value\":{\"padding\":{\"syncVertical\":\"on\",\"syncHorizontal\":\"on\",\"top\":\"11px\",\"bottom\":\"11px\",\"left\":\"20px\",\"right\":\"20px\"},\"margin\":{\"top\":\"16px\",\"syncVertical\":\"off\",\"syncHorizontal\":\"off\"}}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"#e9edfa\"},\"hover\":{\"color\":\"#2f4ba3\"}}},\"sizing\":{\"desktop\":{\"value\":{\"width\":\"fit-content\"}}},\"border\":{\"desktop\":{\"value\":{\"radius\":{\"topLeft\":\"50px\",\"topRight\":\"50px\",\"bottomLeft\":\"50px\",\"bottomRight\":\"50px\",\"sync\":\"on\"}}}}}},\"content\":{\"innerContent\":{\"desktop\":{\"value\":{\"text\":\"Formulario de pre solicitud\",\"linkUrl\":\"https://forms.gle/5iZppP6UBvcUm3w76\",\"linkTarget\":\"on\"}}},\"decoration\":{\"font\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"#2a3b89\",\"size\":\"14.5px\",\"weightFineTune\":\"700\"},\"hover\":{\"color\":\"#ffffff\"}}}}}},\"icon\":{\"innerContent\":{\"desktop\":{\"value\":{\"unicode\":\"\\u0026#xf35d;\",\"type\":\"fa\",\"weight\":\"900\"}}},\"advanced\":{\"color\":{\"desktop\":{\"value\":\"#2a3b89\",\"hover\":\"#ffffff\"}},\"size\":{\"desktop\":{\"value\":\"12px\"}}}},\"builderVersion\":\"5.13\"} /-->\r\n<!-- /wp:divi/group -->\r\n<!-- /wp:divi/column -->\r\n<!-- /wp:divi/row -->\r\n\r\n<!-- wp:divi/row {\"module\":{\"advanced\":{\"columnStructure\":{\"desktop\":{\"value\":\"4_4\"}},\"flexColumnStructure\":{\"desktop\":{\"value\":\"equal-columns_1\"}}},\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"flexWrap\":\"nowrap\"}}},\"sizing\":{\"desktop\":{\"value\":{\"maxWidth\":\"1240px\",\"width\":\"95%\"}}},\"spacing\":{\"desktop\":{\"value\":{\"padding\":{\"top\":\"26px\",\"syncVertical\":\"on\",\"syncHorizontal\":\"on\",\"bottom\":\"26px\",\"left\":\"28px\",\"right\":\"28px\"}}}},\"border\":{\"desktop\":{\"value\":{\"radius\":{\"topLeft\":\"6px\",\"topRight\":\"6px\",\"bottomLeft\":\"26px\",\"bottomRight\":\"26px\",\"sync\":\"off\"},\"styles\":{\"all\":{\"width\":\"1px\",\"color\":\"#e3e6ef\"}}}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"#ffffff\"}}}}},\"builderVersion\":\"5.13\",\"css\":{\"desktop\":{\"hover\":{\"mainElement\":\"border-color: rgb(199, 203, 224) !important;\\n    box-shadow: rgba(22, 24, 52, 0.07) 0px 10px 28px !important;\"}}}} -->\r\n<!-- wp:divi/column {\"module\":{\"advanced\":{\"type\":{\"desktop\":{\"value\":\"4_4\"}}},\"decoration\":{\"sizing\":{\"desktop\":{\"value\":{\"flexType\":\"24_24\"}}},\"layout\":{\"desktop\":{\"value\":{\"flexDirection\":\"row\",\"columnGap\":\"20px\"}},\"tablet\":{\"value\":{\"flexDirection\":\"column\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/text {\"module\":{\"decoration\":{\"sizing\":{\"desktop\":{\"value\":{\"width\":\"52px\",\"height\":\"52px\"}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"#e9edfa\"}}},\"layout\":{\"desktop\":{\"value\":{\"justifyContent\":\"center\",\"alignItems\":\"center\"}}},\"border\":{\"desktop\":{\"value\":{\"radius\":{\"topLeft\":\"100px\",\"topRight\":\"100px\",\"bottomLeft\":\"100px\",\"bottomRight\":\"100px\",\"sync\":\"on\"}}}}}},\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003e02\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"19px\",\"weightFineTune\":\"900\",\"color\":\"#2a3b89\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n\r\n<!-- wp:divi/group {\"module\":{\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"columnGap\":\"0px\",\"rowGap\":\"0px\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003eRealiza tu proceso de admisión a nuevo ingreso\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"#161834\",\"size\":\"24.5px\",\"weightFineTune\":\"700\",\"lineHeight\":\"1.25\",\"letterSpacing\":\"-0.02em\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n\r\n<!-- wp:divi/text {\"module\":{\"decoration\":{\"spacing\":{\"desktop\":{\"value\":{\"margin\":{\"top\":\"10px\",\"syncVertical\":\"off\",\"syncHorizontal\":\"off\"}}}}}},\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003eSigue los pasos dando clic aquí\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"16px\",\"lineHeight\":\"1.65em\",\"color\":\"#3a4060\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n\r\n<!-- wp:divi/link {\"module\":{\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"flexDirection\":\"row-reverse\",\"justifyContent\":\"start\"}}},\"spacing\":{\"desktop\":{\"value\":{\"padding\":{\"syncVertical\":\"on\",\"syncHorizontal\":\"on\",\"top\":\"11px\",\"bottom\":\"11px\",\"left\":\"20px\",\"right\":\"20px\"},\"margin\":{\"top\":\"16px\",\"syncVertical\":\"off\",\"syncHorizontal\":\"off\"}}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"#e9edfa\"},\"hover\":{\"color\":\"#2f4ba3\"}}},\"sizing\":{\"desktop\":{\"value\":{\"width\":\"fit-content\"}}},\"border\":{\"desktop\":{\"value\":{\"radius\":{\"topLeft\":\"50px\",\"topRight\":\"50px\",\"bottomLeft\":\"50px\",\"bottomRight\":\"50px\",\"sync\":\"on\"}}}}}},\"content\":{\"innerContent\":{\"desktop\":{\"value\":{\"text\":\"Ver proceso de nuevo ingreso\",\"linkUrl\":\"$variable({\\u0022type\\u0022:\\u0022content\\u0022,\\u0022value\\u0022:{\\u0022name\\u0022:\\u0022post_link_url_page\\u0022,\\u0022settings\\u0022:{\\u0022post_id\\u0022:\\u0022328\\u0022}}})$\",\"linkTarget\":\"off\"}}},\"decoration\":{\"font\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"#2a3b89\",\"size\":\"14.5px\",\"weightFineTune\":\"700\"},\"hover\":{\"color\":\"#ffffff\"}}}}}},\"icon\":{\"innerContent\":{\"desktop\":{\"value\":{\"unicode\":\"\\u0026#xf35d;\",\"type\":\"fa\",\"weight\":\"900\"}}},\"advanced\":{\"color\":{\"desktop\":{\"value\":\"#2a3b89\",\"hover\":\"#ffffff\"}},\"size\":{\"desktop\":{\"value\":\"12px\"}}}},\"builderVersion\":\"5.13\"} /-->\r\n<!-- /wp:divi/group -->\r\n<!-- /wp:divi/column -->\r\n<!-- /wp:divi/row -->\r\n\r\n<!-- wp:divi/row {\"module\":{\"advanced\":{\"columnStructure\":{\"desktop\":{\"value\":\"4_4\"}},\"flexColumnStructure\":{\"desktop\":{\"value\":\"equal-columns_1\"}}},\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"flexWrap\":\"nowrap\"}}},\"sizing\":{\"desktop\":{\"value\":{\"maxWidth\":\"1240px\",\"width\":\"95%\"}}},\"spacing\":{\"desktop\":{\"value\":{\"padding\":{\"top\":\"26px\",\"syncVertical\":\"on\",\"syncHorizontal\":\"on\",\"bottom\":\"26px\",\"left\":\"28px\",\"right\":\"28px\"}}}},\"border\":{\"desktop\":{\"value\":{\"radius\":{\"topLeft\":\"6px\",\"topRight\":\"6px\",\"bottomLeft\":\"26px\",\"bottomRight\":\"26px\",\"sync\":\"off\"},\"styles\":{\"all\":{\"width\":\"1px\",\"color\":\"#e3e6ef\"}}}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"#ffffff\"}}}}},\"builderVersion\":\"5.13\",\"css\":{\"desktop\":{\"hover\":{\"mainElement\":\"border-color: rgb(199, 203, 224) !important;\\n    box-shadow: rgba(22, 24, 52, 0.07) 0px 10px 28px !important;\"}}}} -->\r\n<!-- wp:divi/column {\"module\":{\"advanced\":{\"type\":{\"desktop\":{\"value\":\"4_4\"}}},\"decoration\":{\"sizing\":{\"desktop\":{\"value\":{\"flexType\":\"24_24\"}}},\"layout\":{\"desktop\":{\"value\":{\"flexDirection\":\"row\",\"columnGap\":\"20px\"}},\"tablet\":{\"value\":{\"flexDirection\":\"column\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/text {\"module\":{\"decoration\":{\"sizing\":{\"desktop\":{\"value\":{\"width\":\"52px\",\"height\":\"52px\"}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"#e9edfa\"}}},\"layout\":{\"desktop\":{\"value\":{\"justifyContent\":\"center\",\"alignItems\":\"center\"}}},\"border\":{\"desktop\":{\"value\":{\"radius\":{\"topLeft\":\"100px\",\"topRight\":\"100px\",\"bottomLeft\":\"100px\",\"bottomRight\":\"100px\",\"sync\":\"on\"}}}}}},\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003e03\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"19px\",\"weightFineTune\":\"900\",\"color\":\"#2a3b89\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n\r\n<!-- wp:divi/group {\"module\":{\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"columnGap\":\"0px\",\"rowGap\":\"0px\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003eAprueba el cursillo pre universitario\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"#161834\",\"size\":\"24.5px\",\"weightFineTune\":\"700\",\"lineHeight\":\"1.25\",\"letterSpacing\":\"-0.02em\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n\r\n<!-- wp:divi/text {\"module\":{\"decoration\":{\"spacing\":{\"desktop\":{\"value\":{\"margin\":{\"top\":\"10px\",\"syncVertical\":\"off\",\"syncHorizontal\":\"off\"}}}}}},\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003eEntrega la documentación completa en el sistema de admisión\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"16px\",\"lineHeight\":\"1.65em\",\"color\":\"#3a4060\",\"columnCount\":\"1\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n<!-- /wp:divi/group -->\r\n<!-- /wp:divi/column -->\r\n<!-- /wp:divi/row -->\r\n\r\n<!-- wp:divi/row {\"module\":{\"advanced\":{\"columnStructure\":{\"desktop\":{\"value\":\"4_4\"}},\"flexColumnStructure\":{\"desktop\":{\"value\":\"equal-columns_1\"}}},\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"flexWrap\":\"nowrap\"}}},\"sizing\":{\"desktop\":{\"value\":{\"maxWidth\":\"1240px\",\"width\":\"95%\"}}},\"spacing\":{\"desktop\":{\"value\":{\"padding\":{\"top\":\"26px\",\"syncVertical\":\"on\",\"syncHorizontal\":\"on\",\"bottom\":\"26px\",\"left\":\"28px\",\"right\":\"28px\"}}}},\"border\":{\"desktop\":{\"value\":{\"radius\":{\"topLeft\":\"6px\",\"topRight\":\"6px\",\"bottomLeft\":\"26px\",\"bottomRight\":\"26px\",\"sync\":\"off\"},\"styles\":{\"all\":{\"width\":\"1px\",\"color\":\"#e3e6ef\"}}}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"#ffffff\"}}}}},\"builderVersion\":\"5.13\",\"css\":{\"desktop\":{\"hover\":{\"mainElement\":\"border-color: rgb(199, 203, 224) !important;\\n    box-shadow: rgba(22, 24, 52, 0.07) 0px 10px 28px !important;\"}}}} -->\r\n<!-- wp:divi/column {\"module\":{\"advanced\":{\"type\":{\"desktop\":{\"value\":\"4_4\"}}},\"decoration\":{\"sizing\":{\"desktop\":{\"value\":{\"flexType\":\"24_24\"}}},\"layout\":{\"desktop\":{\"value\":{\"flexDirection\":\"row\",\"columnGap\":\"20px\"}},\"tablet\":{\"value\":{\"flexDirection\":\"column\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/text {\"module\":{\"decoration\":{\"sizing\":{\"desktop\":{\"value\":{\"width\":\"52px\",\"height\":\"52px\"}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"#e9edfa\"}}},\"layout\":{\"desktop\":{\"value\":{\"justifyContent\":\"center\",\"alignItems\":\"center\"}}},\"border\":{\"desktop\":{\"value\":{\"radius\":{\"topLeft\":\"100px\",\"topRight\":\"100px\",\"bottomLeft\":\"100px\",\"bottomRight\":\"100px\",\"sync\":\"on\"}}}}}},\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003e04\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"19px\",\"weightFineTune\":\"900\",\"color\":\"#2a3b89\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n\r\n<!-- wp:divi/group {\"module\":{\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"columnGap\":\"0px\",\"rowGap\":\"0px\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003eAgenda tu entrevista personal\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"#161834\",\"size\":\"24.5px\",\"weightFineTune\":\"700\",\"lineHeight\":\"1.25\",\"letterSpacing\":\"-0.02em\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n\r\n<!-- wp:divi/text {\"module\":{\"decoration\":{\"spacing\":{\"desktop\":{\"value\":{\"margin\":{\"top\":\"10px\",\"syncVertical\":\"off\",\"syncHorizontal\":\"off\"}}}}}},\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003eCoordina la cita con nuestro equipo del programa de becas\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"16px\",\"lineHeight\":\"1.65em\",\"color\":\"#3a4060\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n<!-- /wp:divi/group -->\r\n<!-- /wp:divi/column -->\r\n<!-- /wp:divi/row -->\r\n\r\n<!-- wp:divi/row {\"module\":{\"advanced\":{\"columnStructure\":{\"desktop\":{\"value\":\"4_4\"}},\"flexColumnStructure\":{\"desktop\":{\"value\":\"equal-columns_1\"}}},\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"flexWrap\":\"nowrap\"}}},\"sizing\":{\"desktop\":{\"value\":{\"maxWidth\":\"1240px\",\"width\":\"95%\"}}},\"spacing\":{\"desktop\":{\"value\":{\"padding\":{\"top\":\"26px\",\"syncVertical\":\"on\",\"syncHorizontal\":\"on\",\"bottom\":\"26px\",\"left\":\"28px\",\"right\":\"28px\"}}}},\"border\":{\"desktop\":{\"value\":{\"radius\":{\"topLeft\":\"6px\",\"topRight\":\"6px\",\"bottomLeft\":\"26px\",\"bottomRight\":\"26px\",\"sync\":\"off\"},\"styles\":{\"all\":{\"width\":\"1px\",\"color\":\"#e3e6ef\"}}}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"#ffffff\"}}}}},\"builderVersion\":\"5.13\",\"css\":{\"desktop\":{\"hover\":{\"mainElement\":\"border-color: rgb(199, 203, 224) !important;\\n    box-shadow: rgba(22, 24, 52, 0.07) 0px 10px 28px !important;\"}}}} -->\r\n<!-- wp:divi/column {\"module\":{\"advanced\":{\"type\":{\"desktop\":{\"value\":\"4_4\"}}},\"decoration\":{\"sizing\":{\"desktop\":{\"value\":{\"flexType\":\"24_24\"}}},\"layout\":{\"desktop\":{\"value\":{\"flexDirection\":\"row\",\"columnGap\":\"20px\"}},\"tablet\":{\"value\":{\"flexDirection\":\"column\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/text {\"module\":{\"decoration\":{\"sizing\":{\"desktop\":{\"value\":{\"width\":\"52px\",\"height\":\"52px\"}}},\"background\":{\"desktop\":{\"value\":{\"color\":\"#e9edfa\"}}},\"layout\":{\"desktop\":{\"value\":{\"justifyContent\":\"center\",\"alignItems\":\"center\"}}},\"border\":{\"desktop\":{\"value\":{\"radius\":{\"topLeft\":\"100px\",\"topRight\":\"100px\",\"bottomLeft\":\"100px\",\"bottomRight\":\"100px\",\"sync\":\"on\"}}}}}},\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003e05\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"19px\",\"weightFineTune\":\"900\",\"color\":\"#2a3b89\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n\r\n<!-- wp:divi/group {\"module\":{\"decoration\":{\"layout\":{\"desktop\":{\"value\":{\"columnGap\":\"0px\",\"rowGap\":\"0px\"}}}}},\"builderVersion\":\"5.13\"} -->\r\n<!-- wp:divi/text {\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003eEspera la resolución de tu solicitud\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"color\":\"#161834\",\"size\":\"24.5px\",\"weightFineTune\":\"700\",\"lineHeight\":\"1.25\",\"letterSpacing\":\"-0.02em\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n\r\n<!-- wp:divi/text {\"module\":{\"decoration\":{\"spacing\":{\"desktop\":{\"value\":{\"margin\":{\"top\":\"10px\",\"syncVertical\":\"off\",\"syncHorizontal\":\"off\"}}}}}},\"content\":{\"innerContent\":{\"desktop\":{\"value\":\"\\u003cp\\u003eRecibirás los resultados en enero de 2026\\u003c/p\\u003e\",\"hover\":\"\\u003cp\\u003ePosterior a que completes la solicitud de ingreso y adjuntes la documentación solicitada, recibirás un correo electrónico con la información para realizarlo. Durante el cursillo pre universitario realizarás diferentes pruebas académicas, entrevistas y talleres, según la naturaleza de la carrera de tu interés. El cursillo se realiza del 23 de noviembre al 11 de diciembre.\\u003c/p\\u003e\"}},\"decoration\":{\"bodyFont\":{\"body\":{\"font\":{\"desktop\":{\"value\":{\"size\":\"16px\",\"lineHeight\":\"1.65em\",\"color\":\"#3a4060\"}}}}}}},\"builderVersion\":\"5.13\"} /-->\r\n<!-- /wp:divi/group -->\r\n<!-- /wp:divi/column -->\r\n<!-- /wp:divi/row -->\r\n<!-- /wp:divi/section --><!-- /wp:divi/placeholder -->"
+ },
+ "presets": null,
+ "global_colors": [
+  [
+   "gcid-primary-color",
+   {
+    "color": "#182255",
+    "status": "active",
+    "label": "Color Primario"
+   }
+  ],
+  [
+   "gcid-secondary-color",
+   {
+    "color": "#ffb600",
+    "status": "active",
+    "label": "Color Secundario"
+   }
+  ],
+  [
+   "gcid-heading-color",
+   {
+    "color": "#161834",
+    "status": "active",
+    "label": "Color del Texto de Encabezados"
+   }
+  ],
+  [
+   "gcid-body-color",
+   {
+    "color": "#3a4060",
+    "status": "active",
+    "label": "Color del Texto Principal"
+   }
+  ],
+  [
+   "gcid-link-color",
+   {
+    "color": "#0043ff",
+    "status": "active",
+    "label": "Color Del Enlace"
+   }
+  ],
+  [
+   "gcid-f1tcywpwys",
+   {
+    "color": "#f4f5f8",
+    "status": "active",
+    "label": "bg-gray"
+   }
+  ],
+  [
+   "gcid-j2hweynnmw",
+   {
+    "color": "#182255",
+    "status": "active",
+    "label": "enlaces-menu"
+   }
+  ],
+  [
+   "gcid-u7qat6ue5e",
+   {
+    "color": "#0043ff",
+    "status": "active",
+    "label": "eyebrow"
+   }
+  ],
+  [
+   "gcid-v31balm0nx",
+   {
+    "color": "#d7dcf2",
+    "status": "active",
+    "label": "light-body"
+   }
+  ],
+  [
+   "gcid-yf7m86blg9",
+   {
+    "color": "#161834",
+    "status": "active",
+    "label": "tag"
+   }
+  ]
+ ],
+ "global_variables": [
+  {
+   "id": "gvid-p7mf6bwyvs",
+   "label": "H1",
+   "value": "clamp(2.5rem, 5vw + 1rem, 4.125rem)",
+   "status": "active",
+   "type": "numbers"
+  },
+  {
+   "id": "gvid-ufrhbvy5rj",
+   "label": "Subheading",
+   "value": "19px",
+   "status": "active",
+   "type": "numbers"
+  },
+  {
+   "id": "gvid-612spbkke2",
+   "label": "H2",
+   "value": "clamp(1.625rem, 4vw + 1rem, 2.375rem)",
+   "status": "active",
+   "type": "numbers"
+  }
+ ],
+ "page_settings_meta": {
+  "_et_pb_custom_css": [
+   ""
+  ]
+ },
+ "canvases": {
+  "local": [],
+  "global": []
+ },
+ "images": {},
+ "thumbnails": []
+}

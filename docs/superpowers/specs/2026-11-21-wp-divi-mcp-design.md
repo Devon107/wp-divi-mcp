@@ -197,15 +197,17 @@ A JSON tree mirroring the Python library, so the skill's knowledge carries over 
 ```json
 {
   "builder_version": "5.14.0",
-  "theme": {"accent": {"color_var": "gcid-link-color"}, "card_radius": "16px"},
+  "theme": {"accent": {"$color_var": "gcid-link-color"}, "card_radius": "16px"},
   "global_colors": [], "global_variables": [], "custom_css": "",
   "blocks": [
     {"section": {"css_id": "becas", "attrs": {}, "children": [
       {"row": {"children": [{"column": {"children": [
-        {"pattern": "section_header", "args": {"eyebrow": "Becas", "title": "Una beca para cada talento"}}
+        {"pattern": "section_header", "args": {"eyebrow_label": "Becas", "title": "Una beca para cada talento",
+                                               "intro": "Ayudas para estudiar con nosotros."}}
       ]}}]}},
       {"grid_row": {"cols": 3, "tablet": 2, "phone": 1, "children": [
-        {"pattern": "icon_card", "args": {"icon": {"fa": "&#xf19d;"}, "title": "Excelencia", "body": "…"}}
+        {"pattern": "icon_card", "args": {"icon_value": {"$fa": "&#xf19d;"}, "title": "Excelencia",
+                                          "body": "…", "link_label": "Ver becas", "link_url": "/becas"}}
       ]}}
     ]}}
   ]
@@ -215,8 +217,21 @@ A JSON tree mirroring the Python library, so the skill's knowledge carries over 
 - Node kinds: every helper in `divi5.py` (`section`, `row`, `grid_row`, `column`, `group`, `text`,
   `image`, `link`, `icon`, all-in-one modules…), every pattern in `patterns.py`, and a generic
   `{"block": "divi/<name>", "attrs": {…}, "children": […]}` escape hatch.
-- Helper values: `{"rv": {...}}`, `{"box": [...]}`, `{"color_var": "gcid-…"}`, `{"content_var": "gvid-…"}`,
-  `{"fa": "&#xf19d;", "weight": "900"}`, `{"divi_icon": "&#xe00b;"}`.
+- Argument names are the exact Python/PHP parameter names (`eyebrow_label`, `icon_value`, `body`,
+  `link_label`…): required parameters are bound by name, all others go to the helper's options;
+  `children` are the variadic children of section/row/grid_row/column/group/accordion….
+- Helper values, resolved anywhere in args/attrs, are `$`-prefixed: `{"$rv": {...}}`, `{"$box": [...]}`,
+  `{"$radius": ...}`, `{"$color_var": "gcid-…"}`, `{"$content_var": "gvid-…"}`,
+  `{"$fa": "&#xf19d;", "weight": "900"}`, `{"$divi_icon": "&#xe00b;"}`, `{"$font": {...}}`, `{"$flex": {...}}`,
+  `{"$grid": {...}}`, `{"$card": {...}}`, `{"$module_deco": {...}}`, `{"$merge": [a, b, …]}`. Sibling keys
+  stay unprefixed (`weight`, `opacity`); an object is a helper only when its other keys are that helper's
+  siblings. Keys without `$` are always plain data, so attributes copied from real exports
+  (`decoration.font.font`, `border.*.radius`…) pass through untouched; an unknown `$name` is an error.
+  `{"$literal": X}` passes X through untouched.
+- The top-level `theme` goes to every pattern; a pattern's `args.theme` is merged over it.
+- Structure is checked: top-level blocks are sections, rows sit in sections, columns and card
+  patterns (which return columns) sit directly in a row/grid_row. Errors carry a path such as
+  `blocks[0].section.children[1].pattern(icon_card).args.icon_value`.
 - The exact JSON schema is published as an MCP resource and in the tool's `inputSchema`.
 - Raw `wp:divi/` markup is also accepted by validate/apply, for edits of exported content.
 

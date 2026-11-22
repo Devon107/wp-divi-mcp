@@ -1,0 +1,16 @@
+{
+	"core": "WordPress/WordPress#6.8",
+	"phpVersion": "8.2",
+	"plugins": [ "." ],
+	"config": {
+		"WP_DEBUG": true,
+		"SCRIPT_DEBUG": true
+	},
+	"env": {
+		"development": {
+			"config": {
+				"WP_DIVI_MCP_ALLOW_HTTP": true
+			}
+		}
+	}
+}

@@ -1,0 +1,12 @@
+{
+ "errors": [
+  "global_colors entries must be [\"gcid-...\", {color, status, label}]: gcid-x",
+  "global_variables entries must be objects with id 'gvid-...': a",
+  "global_variables entries must be objects with id 'gvid-...': b",
+  "'images' must be an object keyed by URL (or an empty list)",
+  "data[1]: empty post content"
+ ],
+ "warnings": [],
+ "info": [],
+ "counts": {}
+}

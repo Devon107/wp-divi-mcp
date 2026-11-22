@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Run PHPUnit inside the wp-env tests container.
+# Usage: bin/test [phpunit args]            e.g. bin/test --testsuite unit
+# Divi-dependent tests (group "divi") are excluded unless WPDM_TEST_DIVI=1,
+# which requires the Divi theme to be mapped via .wp-env.override.json.
+# WP_MULTISITE=1 bin/test runs as multisite (multisite-only tests skip otherwise).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+env_args=(env)
+group_args=()
+if [ "${WPDM_TEST_DIVI:-}" = "1" ]; then
+	env_args+=(WPDM_TEST_DIVI=1)
+else
+	group_args=(--exclude-group divi)
+fi
+# WP_MULTISITE=1 runs the suite as multisite (the WP test bootstrap reads it).
+if [ "${WP_MULTISITE:-}" = "1" ]; then
+	env_args+=(WP_MULTISITE=1)
+fi
+
+exec npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-divi-mcp \
+	"${env_args[@]}" vendor/bin/phpunit "${group_args[@]}" "$@"

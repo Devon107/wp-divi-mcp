@@ -1,0 +1,17 @@
+{
+ "errors": [],
+ "warnings": [
+  "data[1] line 4 divi/link: button/link text color equals its background (#ffffff)",
+  "data[1] line 5 divi/link: button/link text color equals its background (#ffffff)",
+  "data[1] line 7 divi/link: link icon color repeats the text color — remove it; the icon inherits the text color (and its hover) automatically",
+  "data[1] line 8 divi/link: link icon has a fixed color but no hover color while the text changes on hover — the icon won't follow the text"
+ ],
+ "info": [],
+ "counts": {
+  "divi/placeholder": 1,
+  "divi/section": 1,
+  "divi/row": 1,
+  "divi/column": 1,
+  "divi/link": 5
+ }
+}

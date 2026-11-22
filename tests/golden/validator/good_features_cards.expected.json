@@ -1,0 +1,15 @@
+{
+ "errors": [],
+ "warnings": [],
+ "info": [],
+ "counts": {
+  "divi/placeholder": 1,
+  "divi/section": 1,
+  "divi/row": 3,
+  "divi/column": 5,
+  "divi/group": 2,
+  "divi/text": 9,
+  "divi/icon": 3,
+  "divi/link": 2
+ }
+}

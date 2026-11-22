@@ -1,0 +1,19 @@
+{
+ "errors": [],
+ "warnings": [
+  "data[360] line 21 divi/link: link icon color repeats the text color — remove it; the icon inherits the text color (and its hover) automatically",
+  "data[360] line 35 divi/link: link icon color repeats the text color — remove it; the icon inherits the text color (and its hover) automatically"
+ ],
+ "info": [
+  "dynamic content 'post_link_url_page' is used; if it points to a post/page ID it only resolves on the source site"
+ ],
+ "counts": {
+  "divi/placeholder": 1,
+  "divi/section": 1,
+  "divi/row": 6,
+  "divi/column": 6,
+  "divi/group": 6,
+  "divi/text": 17,
+  "divi/link": 2
+ }
+}

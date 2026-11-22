@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Build the installable plugin zip: build/wp-divi-mcp.zip (top folder wp-divi-mcp/).
+#
+# The zip is made from `git archive HEAD` minus the paths in .distignore, so it always
+# matches a commit. The script refuses to run when a path that ships has uncommitted
+# or untracked changes. Dev-only files (tests, tools, vendor, docs, ...) never ship.
+#
+# Usage: bin/build-zip
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+SLUG=wp-divi-mcp
+BUILD=build
+STAGE="$BUILD/$SLUG"
+ZIP="$BUILD/$SLUG.zip"
+
+for tool in git rsync zip; do
+	command -v "$tool" >/dev/null 2>&1 || { echo "bin/build-zip: '$tool' is required" >&2; exit 1; }
+done
+
+rm -rf "$STAGE" "$ZIP"
+mkdir -p "$STAGE"
+
+# Clean export of the committed tree, then drop the dev-only paths.
+export_dir="$(mktemp -d)"
+trap 'rm -rf "$export_dir"' EXIT
+git archive HEAD | tar -x -C "$export_dir"
+rsync -a --exclude-from=.distignore "$export_dir"/ "$STAGE"/
+
+# What ships = the top-level entries of the staged tree. Fail if any of them is dirty.
+shipped=()
+while IFS= read -r entry; do
+	shipped+=( "$entry" )
+done < <(cd "$STAGE" && find . -mindepth 1 -maxdepth 1 -printf '%f\n' | sort)
+
+if [ "${#shipped[@]}" -eq 0 ]; then
+	echo "bin/build-zip: nothing to package (is HEAD empty?)" >&2
+	exit 1
+fi
+
+dirty="$(git status --porcelain --untracked-files=all -- "${shipped[@]}")"
+if [ -n "$dirty" ]; then
+	echo "bin/build-zip: uncommitted changes in files that ship; commit or stash them first:" >&2
+	echo "$dirty" >&2
+	exit 1
+fi
+
+# Sanity: the runtime files the plugin cannot work without.
+for required in wp-divi-mcp.php readme.txt includes/Divi/schema/layout.schema.json knowledge/guide.md knowledge/module-catalog.json assets/admin.css; do
+	[ -e "$STAGE/$required" ] || { echo "bin/build-zip: missing $required in the package" >&2; exit 1; }
+done
+
+# -X drops extra file attributes; sorted names keep the listing stable.
+(cd "$BUILD" && find "$SLUG" -type f | LC_ALL=C sort | zip -X -q "$SLUG.zip" -@)
+
+files="$(unzip -Z1 "$ZIP" | grep -vc '/$')"
+size="$(du -h "$ZIP" | cut -f1)"
+commit="$(git rev-parse --short HEAD)"
+echo "Built $ZIP from $commit: $size, $files files"

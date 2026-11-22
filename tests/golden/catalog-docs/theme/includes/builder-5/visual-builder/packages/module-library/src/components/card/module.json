@@ -1,0 +1,9 @@
+{"_comment":"x","name":"divi/card","title":"Card","childrenName":["divi/card-item"],"d4Shortcode":"et_pb_card",
+ "attributes":{
+  "module":{"settings":{"advanced":{"link":{"component":{"type":"field","name":"divi/text"}},"gap":{"item":{"component":{"type":"field","name":"divi/range"},"features":{"responsive":false}}}},"decoration":{"spacing":{},"background":{}}}},
+  "title":{"settings":{"innerContent":{"groupA":{"items":{"t":{"subName":"text","label":"Title | Text","component":{"type":"field","name":"divi/text"}},"u":{"component":{"type":"field","name":"divi/button-link"}}}}},"decoration":{"font":{}}}},
+  "image":{"settings":{"innerContent":{"x":{"label":"Image","subName":"src","component":{"type":"field","name":"divi/upload","props":{"syncImageData":{"src":true,"alt":true,"id":false,"titleText":1}}}}}}},
+  "style":{"settings":{"advanced":{"s":{"attrName":"style.advanced.kind","label":"Kind","component":{"type":"field","name":"divi/select","props":{"options":{"a":{},"b":{},"c":{}}}}}, "d":{"attrName":"module.decoration.x","component":{"type":"field","name":"divi/text"}}}}},
+  "content":{"settings":{"innerContent":{}}},
+  "broken":"no"
+ }}

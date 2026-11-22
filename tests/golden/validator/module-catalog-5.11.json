@@ -1,0 +1,1654 @@
+{
+ "decorationGroups": [
+  "animation",
+  "attributes",
+  "background",
+  "bodyFont",
+  "border",
+  "boxShadow",
+  "button",
+  "conditions",
+  "disabledOn",
+  "filters",
+  "fit",
+  "font",
+  "headingFont",
+  "icon",
+  "image",
+  "interactions",
+  "layout",
+  "order",
+  "overflow",
+  "position",
+  "scroll",
+  "sizing",
+  "spacing",
+  "sticky",
+  "transform",
+  "transition",
+  "zIndex"
+ ],
+ "diviVersion": "5.11.0",
+ "modules": {
+  "divi/accordion": {
+   "category": "module",
+   "children": [
+    "divi/accordion-item"
+   ],
+   "d4Shortcode": "et_pb_accordion",
+   "elements": [
+    "closedToggle",
+    "closedToggleIcon",
+    "content",
+    "module",
+    "openToggle",
+    "title"
+   ],
+   "title": "Accordion"
+  },
+  "divi/accordion-item": {
+   "category": "child-module",
+   "children": [],
+   "d4Shortcode": "et_pb_accordion_item",
+   "elements": [
+    "closedToggle",
+    "closedToggleIcon",
+    "content",
+    "module",
+    "openToggle",
+    "title"
+   ],
+   "title": "Accordion Item"
+  },
+  "divi/audio": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_audio",
+   "elements": [
+    "albumName",
+    "artistName",
+    "audio",
+    "caption",
+    "image",
+    "module",
+    "title"
+   ],
+   "title": "Audio"
+  },
+  "divi/before-after-image": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_before_after_image",
+   "elements": [
+    "afterImage",
+    "afterLabel",
+    "beforeImage",
+    "beforeLabel",
+    "labels",
+    "module",
+    "slider"
+   ],
+   "title": "Before/After Image"
+  },
+  "divi/blog": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_blog",
+   "elements": [
+    "blogGrid",
+    "content",
+    "fullwidth",
+    "image",
+    "masonry",
+    "meta",
+    "module",
+    "overlay",
+    "overlayIcon",
+    "pagination",
+    "post",
+    "readMore",
+    "title"
+   ],
+   "title": "Blog"
+  },
+  "divi/blurb": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_blurb",
+   "elements": [
+    "content",
+    "contentContainer",
+    "imageIcon",
+    "module",
+    "title"
+   ],
+   "title": "Blurb"
+  },
+  "divi/breadcrumbs": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": null,
+   "elements": [
+    "breadcrumb",
+    "breadcrumbLink",
+    "home",
+    "module",
+    "separator",
+    "trail"
+   ],
+   "title": "Breadcrumbs"
+  },
+  "divi/button": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_button",
+   "elements": [
+    "button",
+    "module"
+   ],
+   "title": "Button"
+  },
+  "divi/canvas-portal": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_canvas_portal",
+   "elements": [
+    "canvas",
+    "css",
+    "module"
+   ],
+   "title": "Canvas Portal"
+  },
+  "divi/charts": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_charts",
+   "elements": [
+    "chart",
+    "module"
+   ],
+   "title": "Chart"
+  },
+  "divi/circle-counter": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_circle_counter",
+   "elements": [
+    "circle",
+    "contentContainer",
+    "module",
+    "number",
+    "title"
+   ],
+   "title": "Circle Counter"
+  },
+  "divi/code": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_code",
+   "elements": [
+    "content",
+    "module"
+   ],
+   "title": "Code"
+  },
+  "divi/column": {
+   "category": "structure",
+   "children": [],
+   "d4Shortcode": "et_pb_column",
+   "elements": [
+    "module"
+   ],
+   "title": "Column"
+  },
+  "divi/column-inner": {
+   "category": "structure",
+   "children": [],
+   "d4Shortcode": "et_pb_column_inner",
+   "elements": [
+    "module"
+   ],
+   "title": "Inner Column"
+  },
+  "divi/comments": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_comments",
+   "elements": [
+    "button",
+    "commentCount",
+    "commentText",
+    "field",
+    "formTitle",
+    "image",
+    "meta",
+    "module"
+   ],
+   "title": "Comments"
+  },
+  "divi/contact-field": {
+   "category": "child-module",
+   "children": [],
+   "d4Shortcode": "et_pb_contact_field",
+   "elements": [
+    "checkbox",
+    "conditionalLogic",
+    "field",
+    "fieldItem",
+    "fieldTitle",
+    "module",
+    "radio"
+   ],
+   "title": "Field"
+  },
+  "divi/contact-form": {
+   "category": "module",
+   "children": [
+    "divi/contact-field"
+   ],
+   "d4Shortcode": "et_pb_contact_form",
+   "elements": [
+    "button",
+    "captcha",
+    "checkbox",
+    "email",
+    "field",
+    "module",
+    "radio",
+    "redirect",
+    "title"
+   ],
+   "title": "Contact Form"
+  },
+  "divi/contact-form-7": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_contact_form_7",
+   "elements": [
+    "button",
+    "checkbox",
+    "field",
+    "form",
+    "messageAcceptance",
+    "messageFailure",
+    "messageInvalid",
+    "messageSpam",
+    "messageSuccess",
+    "messageValidation",
+    "module",
+    "radioButton"
+   ],
+   "title": "Contact Form 7 Styler"
+  },
+  "divi/countdown-timer": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_countdown_timer",
+   "elements": [
+    "content",
+    "label",
+    "module",
+    "number",
+    "separator",
+    "title"
+   ],
+   "title": "Countdown Timer"
+  },
+  "divi/counter": {
+   "category": "child-module",
+   "children": [],
+   "d4Shortcode": "et_pb_counter",
+   "elements": [
+    "barCounter",
+    "barProgress",
+    "module",
+    "title"
+   ],
+   "title": "Bar Counter"
+  },
+  "divi/counters": {
+   "category": "module",
+   "children": [
+    "divi/counter"
+   ],
+   "d4Shortcode": "et_pb_counters",
+   "elements": [
+    "barCounter",
+    "barProgress",
+    "children",
+    "module",
+    "title"
+   ],
+   "title": "Bar Counters"
+  },
+  "divi/cta": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_cta",
+   "elements": [
+    "button",
+    "content",
+    "module",
+    "title"
+   ],
+   "title": "Call To Action"
+  },
+  "divi/divider": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_divider",
+   "elements": [
+    "divider",
+    "module"
+   ],
+   "title": "Divider"
+  },
+  "divi/dropdown": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_dropdown",
+   "elements": [
+    "module"
+   ],
+   "title": "Dropdown"
+  },
+  "divi/filterable-portfolio": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_filterable_portfolio",
+   "elements": [
+    "filter",
+    "image",
+    "meta",
+    "module",
+    "overlay",
+    "pagination",
+    "portfolio",
+    "portfolioGrid",
+    "portfolioItem",
+    "title"
+   ],
+   "title": "Filterable Portfolio"
+  },
+  "divi/fullwidth-code": {
+   "category": "fullwidth-module",
+   "children": [],
+   "d4Shortcode": "et_pb_fullwidth_code",
+   "elements": [
+    "content",
+    "module"
+   ],
+   "title": "Fullwidth Code"
+  },
+  "divi/fullwidth-header": {
+   "category": "fullwidth-module",
+   "children": [],
+   "d4Shortcode": "et_pb_fullwidth_header",
+   "elements": [
+    "buttonOne",
+    "buttonTwo",
+    "content",
+    "image",
+    "logo",
+    "module",
+    "overlay",
+    "scrollDown",
+    "subhead",
+    "title"
+   ],
+   "title": "Hero"
+  },
+  "divi/fullwidth-image": {
+   "category": "fullwidth-module",
+   "children": [],
+   "d4Shortcode": "et_pb_fullwidth_image",
+   "elements": [
+    "image",
+    "module"
+   ],
+   "title": "Fullwidth Image"
+  },
+  "divi/fullwidth-map": {
+   "category": "fullwidth-module",
+   "children": [
+    "divi/map-pin"
+   ],
+   "d4Shortcode": "et_pb_fullwidth_map",
+   "elements": [
+    "map",
+    "module"
+   ],
+   "title": "Fullwidth Map"
+  },
+  "divi/fullwidth-menu": {
+   "category": "fullwidth-module",
+   "children": [],
+   "d4Shortcode": "et_pb_fullwidth_menu",
+   "elements": [
+    "cartIcon",
+    "cartQuantity",
+    "hamburgerMenuIcon",
+    "logo",
+    "menu",
+    "menuDropdown",
+    "menuMobile",
+    "module",
+    "searchIcon"
+   ],
+   "title": "Fullwidth Menu"
+  },
+  "divi/fullwidth-portfolio": {
+   "category": "fullwidth-module",
+   "children": [],
+   "d4Shortcode": "et_pb_fullwidth_portfolio",
+   "elements": [
+    "image",
+    "meta",
+    "module",
+    "overlay",
+    "portfolio",
+    "portfolioGrid",
+    "portfolioItemTitle",
+    "title"
+   ],
+   "title": "Post Carousel"
+  },
+  "divi/fullwidth-post-content": {
+   "category": "fullwidth-module",
+   "children": [],
+   "d4Shortcode": "et_pb_fullwidth_post_content",
+   "elements": [
+    "image",
+    "module"
+   ],
+   "title": "Fullwidth Post Content"
+  },
+  "divi/fullwidth-post-slider": {
+   "category": "fullwidth-module",
+   "children": [],
+   "d4Shortcode": "et_pb_fullwidth_post_slider",
+   "elements": [
+    "arrows",
+    "button",
+    "content",
+    "contentOverlay",
+    "image",
+    "meta",
+    "module",
+    "pagination",
+    "post",
+    "slideOverlay",
+    "title"
+   ],
+   "title": "Fullwidth Post Slider"
+  },
+  "divi/fullwidth-post-title": {
+   "category": "fullwidth-module",
+   "children": [],
+   "d4Shortcode": "et_pb_fullwidth_post_title",
+   "elements": [
+    "featuredImage",
+    "meta",
+    "module",
+    "textWrapper",
+    "title"
+   ],
+   "title": "Fullwidth Post Title"
+  },
+  "divi/fullwidth-slider": {
+   "category": "fullwidth-module",
+   "children": [
+    "divi/slide"
+   ],
+   "d4Shortcode": "et_pb_fullwidth_slider",
+   "elements": [
+    "arrows",
+    "button",
+    "children",
+    "content",
+    "dotNav",
+    "image",
+    "module",
+    "pagination",
+    "title"
+   ],
+   "title": "Fullwidth Slider"
+  },
+  "divi/gallery": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_gallery",
+   "elements": [
+    "caption",
+    "galleryGrid",
+    "image",
+    "item",
+    "module",
+    "overlay",
+    "pagination",
+    "title"
+   ],
+   "title": "Gallery"
+  },
+  "divi/global-layout": {
+   "category": "structure",
+   "children": [],
+   "d4Shortcode": null,
+   "elements": [],
+   "title": "Global Layout"
+  },
+  "divi/gravity-forms": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "",
+   "elements": [
+    "button",
+    "checkbox",
+    "description",
+    "field",
+    "fileUploadButton",
+    "formConfirmation",
+    "gravityForm",
+    "imageChoice",
+    "module",
+    "nextButton",
+    "previousButton",
+    "progressBar",
+    "radioButton",
+    "requiredMarker",
+    "saveButton",
+    "sectionHeading",
+    "subLabel",
+    "title",
+    "validationFieldMessage",
+    "validationSummary"
+   ],
+   "title": "Gravity Form"
+  },
+  "divi/group": {
+   "category": "structure",
+   "children": [],
+   "d4Shortcode": "",
+   "elements": [
+    "module"
+   ],
+   "title": "Group"
+  },
+  "divi/group-carousel": {
+   "category": "module",
+   "children": [
+    "divi/group"
+   ],
+   "d4Shortcode": null,
+   "elements": [
+    "activeGroups",
+    "arrows",
+    "children",
+    "dotNav",
+    "module"
+   ],
+   "title": "Group Carousel"
+  },
+  "divi/heading": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_heading",
+   "elements": [
+    "module",
+    "title"
+   ],
+   "title": "Heading"
+  },
+  "divi/icon": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_icon",
+   "elements": [
+    "icon",
+    "iconLink",
+    "module"
+   ],
+   "title": "Icon"
+  },
+  "divi/icon-list": {
+   "category": "module",
+   "children": [
+    "divi/icon-list-item"
+   ],
+   "d4Shortcode": "et_pb_icon_list",
+   "elements": [
+    "icon",
+    "listItem",
+    "module"
+   ],
+   "title": "Icon List"
+  },
+  "divi/icon-list-item": {
+   "category": "child-module",
+   "children": [],
+   "d4Shortcode": "et_pb_icon_list_item",
+   "elements": [
+    "content",
+    "icon",
+    "module"
+   ],
+   "title": "Icon List Item"
+  },
+  "divi/image": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_image",
+   "elements": [
+    "image",
+    "module"
+   ],
+   "title": "Image"
+  },
+  "divi/imagely-gallery": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "",
+   "elements": [
+    "counter",
+    "description",
+    "exifMetaData",
+    "image",
+    "imagelyGallery",
+    "module",
+    "navigationArrows",
+    "pagination",
+    "slideshowLink",
+    "tagCloud",
+    "title"
+   ],
+   "title": "Imagely Gallery"
+  },
+  "divi/instagram-feed": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_instagram_feed",
+   "elements": [
+    "feed",
+    "followButton",
+    "item",
+    "media",
+    "module"
+   ],
+   "title": "Instagram Feed"
+  },
+  "divi/link": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_link",
+   "elements": [
+    "content",
+    "icon",
+    "module"
+   ],
+   "title": "Link"
+  },
+  "divi/login": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_login",
+   "elements": [
+    "button",
+    "content",
+    "field",
+    "module",
+    "title"
+   ],
+   "title": "Login"
+  },
+  "divi/lottie": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_lottie",
+   "elements": [
+    "lottie",
+    "module"
+   ],
+   "title": "Lottie"
+  },
+  "divi/map": {
+   "category": "module",
+   "children": [
+    "divi/map-pin"
+   ],
+   "d4Shortcode": "et_pb_map",
+   "elements": [
+    "map",
+    "module"
+   ],
+   "title": "Map"
+  },
+  "divi/map-pin": {
+   "category": "child-module",
+   "children": [],
+   "d4Shortcode": "et_pb_map_pin",
+   "elements": [
+    "content",
+    "pin",
+    "title"
+   ],
+   "title": "Map Pin"
+  },
+  "divi/menu": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_menu",
+   "elements": [
+    "cartIcon",
+    "cartQuantity",
+    "hamburgerMenuIcon",
+    "logo",
+    "menu",
+    "menuContent",
+    "menuDropdown",
+    "menuMobile",
+    "module",
+    "searchIcon"
+   ],
+   "title": "Menu"
+  },
+  "divi/number-counter": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_number_counter",
+   "elements": [
+    "module",
+    "number",
+    "title"
+   ],
+   "title": "Number Counter"
+  },
+  "divi/payment-button": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": null,
+   "elements": [
+    "button",
+    "module"
+   ],
+   "title": "Payment Button"
+  },
+  "divi/portfolio": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_portfolio",
+   "elements": [
+    "image",
+    "meta",
+    "module",
+    "overlay",
+    "pagination",
+    "portfolio",
+    "portfolioGrid",
+    "title"
+   ],
+   "title": "Portfolio"
+  },
+  "divi/post-content": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_post_content",
+   "elements": [
+    "image",
+    "module"
+   ],
+   "title": "Post Content"
+  },
+  "divi/post-filter": {
+   "category": "module",
+   "children": [
+    "divi/post-filter-item"
+   ],
+   "d4Shortcode": "et_pb_post_filter",
+   "elements": [
+    "button",
+    "checkbox",
+    "field",
+    "module",
+    "multipleOrderButton",
+    "option",
+    "radio"
+   ],
+   "title": "Post Filter"
+  },
+  "divi/post-filter-item": {
+   "category": "child-module",
+   "children": [],
+   "d4Shortcode": "et_pb_post_filter_item",
+   "elements": [
+    "button",
+    "checkbox",
+    "field",
+    "label",
+    "module",
+    "multipleOrderButton",
+    "option",
+    "radio"
+   ],
+   "title": "Post Filter Item"
+  },
+  "divi/post-nav": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_post_nav",
+   "elements": [
+    "links",
+    "module"
+   ],
+   "title": "Pagination"
+  },
+  "divi/post-slider": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_post_slider",
+   "elements": [
+    "arrows",
+    "button",
+    "content",
+    "contentOverlay",
+    "image",
+    "meta",
+    "module",
+    "pagination",
+    "post",
+    "slideOverlay",
+    "title"
+   ],
+   "title": "Post Slider"
+  },
+  "divi/post-title": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_post_title",
+   "elements": [
+    "image",
+    "meta",
+    "module",
+    "textWrapper",
+    "title"
+   ],
+   "title": "Post Title"
+  },
+  "divi/pricing-table": {
+   "category": "child-module",
+   "children": [],
+   "d4Shortcode": "et_pb_pricing_table",
+   "elements": [
+    "button",
+    "content",
+    "currencyFrequency",
+    "excluded",
+    "module",
+    "price",
+    "subtitle",
+    "title"
+   ],
+   "title": "Pricing Table"
+  },
+  "divi/pricing-tables": {
+   "category": "module",
+   "children": [
+    "divi/pricing-table"
+   ],
+   "d4Shortcode": "et_pb_pricing_tables",
+   "elements": [
+    "button",
+    "children",
+    "content",
+    "currencyFrequency",
+    "excluded",
+    "featuredContent",
+    "featuredCurrencyFrequency",
+    "featuredExcluded",
+    "featuredPrice",
+    "featuredSubtitle",
+    "featuredTable",
+    "featuredTitle",
+    "module",
+    "price",
+    "subtitle",
+    "title"
+   ],
+   "title": "Pricing Tables"
+  },
+  "divi/row": {
+   "category": "structure",
+   "children": [],
+   "d4Shortcode": "et_pb_row",
+   "elements": [
+    "module"
+   ],
+   "title": "Row"
+  },
+  "divi/row-inner": {
+   "category": "structure",
+   "children": [],
+   "d4Shortcode": "et_pb_row_inner",
+   "elements": [
+    "module"
+   ],
+   "title": "Inner Row"
+  },
+  "divi/search": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_search",
+   "elements": [
+    "button",
+    "field",
+    "module",
+    "search",
+    "searchPlaceholder"
+   ],
+   "title": "Search"
+  },
+  "divi/section": {
+   "category": "structure",
+   "children": [
+    "divi/row"
+   ],
+   "d4Shortcode": "et_pb_section",
+   "elements": [
+    "column1",
+    "column2",
+    "column3",
+    "innerSizing",
+    "module"
+   ],
+   "title": "Section"
+  },
+  "divi/shop": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_shop",
+   "elements": [
+    "content",
+    "elements",
+    "image",
+    "module",
+    "overlay",
+    "overlayIcon",
+    "price",
+    "rating",
+    "saleBadge",
+    "salePrice",
+    "title"
+   ],
+   "title": "Woo Products"
+  },
+  "divi/shortcode-module": {
+   "category": "unsupported",
+   "children": [],
+   "d4Shortcode": "et_pb_unsupported",
+   "elements": [],
+   "title": "Shortcode Module"
+  },
+  "divi/sidebar": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_sidebar",
+   "elements": [
+    "module",
+    "sidebar",
+    "sidebarWidgets",
+    "title"
+   ],
+   "title": "Sidebar"
+  },
+  "divi/signup": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_signup",
+   "elements": [
+    "button",
+    "checkbox",
+    "content",
+    "customFields",
+    "field",
+    "footerContent",
+    "formField",
+    "module",
+    "radio",
+    "resultMessage",
+    "success",
+    "title"
+   ],
+   "title": "Email Optin"
+  },
+  "divi/signup-custom-field": {
+   "category": "child-module",
+   "children": [],
+   "d4Shortcode": "et_pb_signup_custom_field",
+   "elements": [
+    "checkbox",
+    "conditionalLogic",
+    "field",
+    "fieldItem",
+    "module",
+    "radio"
+   ],
+   "title": "Custom Field"
+  },
+  "divi/slide": {
+   "category": "child-module",
+   "children": [],
+   "d4Shortcode": "et_pb_slide",
+   "elements": [
+    "arrows",
+    "button",
+    "content",
+    "contentOverlay",
+    "dotNav",
+    "image",
+    "module",
+    "slideOverlay",
+    "title",
+    "video"
+   ],
+   "title": "Slide"
+  },
+  "divi/slider": {
+   "category": "module",
+   "children": [
+    "divi/slide"
+   ],
+   "d4Shortcode": "et_pb_slider",
+   "elements": [
+    "arrows",
+    "button",
+    "children",
+    "content",
+    "dotNav",
+    "image",
+    "module",
+    "pagination",
+    "title"
+   ],
+   "title": "Slider"
+  },
+  "divi/social-media-follow": {
+   "category": "module",
+   "children": [
+    "divi/social-media-follow-network"
+   ],
+   "d4Shortcode": "et_pb_social_media_follow",
+   "elements": [
+    "button",
+    "icon",
+    "module",
+    "socialNetwork"
+   ],
+   "title": "Social Media Follow"
+  },
+  "divi/social-media-follow-network": {
+   "category": "child-module",
+   "children": [],
+   "d4Shortcode": "et_pb_social_media_follow_network",
+   "elements": [
+    "button",
+    "icon",
+    "iconLink",
+    "module",
+    "socialNetwork"
+   ],
+   "title": "Social Network"
+  },
+  "divi/svg": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_svg",
+   "elements": [
+    "module",
+    "svg"
+   ],
+   "title": "SVG"
+  },
+  "divi/tab": {
+   "category": "child-module",
+   "children": [],
+   "d4Shortcode": "et_pb_tab",
+   "elements": [
+    "content",
+    "module",
+    "title"
+   ],
+   "title": "Tab"
+  },
+  "divi/table-of-contents": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_table_of_contents",
+   "elements": [
+    "emptyState",
+    "list",
+    "list1",
+    "list2",
+    "list3",
+    "list4",
+    "list5",
+    "list6",
+    "marker",
+    "module",
+    "title"
+   ],
+   "title": "Table of Contents"
+  },
+  "divi/tabs": {
+   "category": "module",
+   "children": [
+    "divi/tab"
+   ],
+   "d4Shortcode": "et_pb_tabs",
+   "elements": [
+    "activeTab",
+    "content",
+    "module",
+    "tab"
+   ],
+   "title": "Tabs"
+  },
+  "divi/team-member": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_team_member",
+   "elements": [
+    "content",
+    "image",
+    "module",
+    "name",
+    "position",
+    "social"
+   ],
+   "title": "Person"
+  },
+  "divi/testimonial": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_testimonial",
+   "elements": [
+    "author",
+    "company",
+    "content",
+    "jobTitle",
+    "module",
+    "portrait",
+    "quoteIcon",
+    "testimonialDescription"
+   ],
+   "title": "Testimonial"
+  },
+  "divi/text": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_text",
+   "elements": [
+    "content",
+    "module"
+   ],
+   "title": "Text"
+  },
+  "divi/timeline": {
+   "category": "module",
+   "children": [
+    "divi/timeline-item"
+   ],
+   "d4Shortcode": "et_pb_timeline",
+   "elements": [
+    "card",
+    "cardEven",
+    "children",
+    "connector",
+    "content",
+    "contentEven",
+    "date",
+    "dateEven",
+    "item",
+    "itemEven",
+    "marker",
+    "module",
+    "spacer",
+    "spacerEven",
+    "title",
+    "titleEven",
+    "track"
+   ],
+   "title": "Timeline"
+  },
+  "divi/timeline-item": {
+   "category": "child-module",
+   "children": [],
+   "d4Shortcode": "et_pb_timeline_item",
+   "elements": [
+    "card",
+    "connector",
+    "content",
+    "date",
+    "marker",
+    "module",
+    "spacer",
+    "title"
+   ],
+   "title": "Timeline Item"
+  },
+  "divi/toggle": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_toggle",
+   "elements": [
+    "closedTitle",
+    "closedToggle",
+    "closedToggleIcon",
+    "content",
+    "module",
+    "openToggle",
+    "openToggleIcon",
+    "title"
+   ],
+   "title": "Toggle"
+  },
+  "divi/tooltip": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "",
+   "elements": [
+    "content",
+    "module"
+   ],
+   "title": "Tooltip"
+  },
+  "divi/video": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_video",
+   "elements": [
+    "module",
+    "overlay",
+    "playIcon",
+    "video"
+   ],
+   "title": "Video"
+  },
+  "divi/video-slider": {
+   "category": "module",
+   "children": [
+    "divi/video-slider-item"
+   ],
+   "d4Shortcode": "et_pb_video_slider",
+   "elements": [
+    "module",
+    "overlay",
+    "playIcon",
+    "sliderControls",
+    "video"
+   ],
+   "title": "Video Slider"
+  },
+  "divi/video-slider-item": {
+   "category": "child-module",
+   "children": [],
+   "d4Shortcode": "et_pb_video_slider_item",
+   "elements": [
+    "module",
+    "overlay",
+    "playIcon",
+    "sliderControls",
+    "video"
+   ],
+   "title": "Video Slider Item"
+  },
+  "divi/woocommerce-breadcrumb": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_breadcrumb",
+   "elements": [
+    "content",
+    "module"
+   ],
+   "title": "Woo Breadcrumbs"
+  },
+  "divi/woocommerce-cart-notice": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_cart_notice",
+   "elements": [
+    "button",
+    "content",
+    "field",
+    "form",
+    "module",
+    "title"
+   ],
+   "title": "Woo Notice"
+  },
+  "divi/woocommerce-cart-products": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_cart_products",
+   "elements": [
+    "button",
+    "content",
+    "disabledButton",
+    "elements",
+    "field",
+    "image",
+    "layout",
+    "module",
+    "removeIcon",
+    "table",
+    "tableCell",
+    "tableHeader",
+    "tableRow"
+   ],
+   "title": "Woo Cart Products"
+  },
+  "divi/woocommerce-cart-totals": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_cart_totals",
+   "elements": [
+    "button",
+    "columnLabel",
+    "content",
+    "field",
+    "module",
+    "table",
+    "tableCell",
+    "tableRow",
+    "title"
+   ],
+   "title": "Woo Cart Totals"
+  },
+  "divi/woocommerce-checkout-additional-info": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_checkout_additional_info",
+   "elements": [
+    "elements",
+    "field",
+    "module",
+    "title"
+   ],
+   "title": "Woo Checkout Information"
+  },
+  "divi/woocommerce-checkout-billing": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_checkout_billing",
+   "elements": [
+    "field",
+    "formNotice",
+    "layout",
+    "module",
+    "title"
+   ],
+   "title": "Woo Checkout Billing"
+  },
+  "divi/woocommerce-checkout-order-details": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_checkout_order_details",
+   "elements": [
+    "columnLabel",
+    "content",
+    "module",
+    "table",
+    "tableCell",
+    "tableRow",
+    "title"
+   ],
+   "title": "Woo Checkout Details"
+  },
+  "divi/woocommerce-checkout-payment-info": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_checkout_payment_info",
+   "elements": [
+    "button",
+    "content",
+    "formNotice",
+    "module",
+    "radioButton",
+    "selectedRadioButton",
+    "tooltip"
+   ],
+   "title": "Woo Checkout Payment"
+  },
+  "divi/woocommerce-checkout-shipping": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_checkout_shipping",
+   "elements": [
+    "checkbox",
+    "field",
+    "layout",
+    "module",
+    "radio",
+    "title"
+   ],
+   "title": "Woo Checkout Shipping"
+  },
+  "divi/woocommerce-cross-sells": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_cross_sells",
+   "elements": [
+    "module",
+    "price",
+    "title"
+   ],
+   "title": "Woo Cross Sells"
+  },
+  "divi/woocommerce-product-add-to-cart": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_add_to_cart",
+   "elements": [
+    "button",
+    "content",
+    "dropdownMenus",
+    "elements",
+    "field",
+    "fieldLabels",
+    "module"
+   ],
+   "title": "Woo Product Add To Cart"
+  },
+  "divi/woocommerce-product-additional-info": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_additional_info",
+   "elements": [
+    "attribute",
+    "content",
+    "elements",
+    "module",
+    "table",
+    "tableCell",
+    "tableRow",
+    "title"
+   ],
+   "title": "Woo Product Information"
+  },
+  "divi/woocommerce-product-description": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_description",
+   "elements": [
+    "content",
+    "module"
+   ],
+   "title": "Woo Product Description"
+  },
+  "divi/woocommerce-product-gallery": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_gallery",
+   "elements": [
+    "caption",
+    "content",
+    "galleryGrid",
+    "image",
+    "layout",
+    "module",
+    "overlay",
+    "overlayIcon",
+    "pagination",
+    "title"
+   ],
+   "title": "Woo Product Gallery"
+  },
+  "divi/woocommerce-product-images": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_images",
+   "elements": [
+    "content",
+    "elements",
+    "galleryGrid",
+    "image",
+    "module",
+    "saleBadge"
+   ],
+   "title": "Woo Product Images"
+  },
+  "divi/woocommerce-product-meta": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_meta",
+   "elements": [
+    "content",
+    "elements",
+    "layout",
+    "module"
+   ],
+   "title": "Woo Product Meta"
+  },
+  "divi/woocommerce-product-price": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_price",
+   "elements": [
+    "content",
+    "module",
+    "price",
+    "saleNewPrice",
+    "saleOldPrice"
+   ],
+   "title": "Woo Product Price"
+  },
+  "divi/woocommerce-product-rating": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_rating",
+   "elements": [
+    "body",
+    "content",
+    "elements",
+    "layout",
+    "module",
+    "rating"
+   ],
+   "title": "Woo Product Rating"
+  },
+  "divi/woocommerce-product-reviews": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_reviews",
+   "elements": [
+    "button",
+    "comment",
+    "content",
+    "elements",
+    "field",
+    "formTitle",
+    "image",
+    "meta",
+    "module",
+    "reviewCount",
+    "starRating"
+   ],
+   "title": "Woo Product Reviews"
+  },
+  "divi/woocommerce-product-stock": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_stock",
+   "elements": [
+    "content",
+    "inStock",
+    "module",
+    "onBackorder",
+    "outOfStock"
+   ],
+   "title": "Woo Product Stock"
+  },
+  "divi/woocommerce-product-tabs": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_tabs",
+   "elements": [
+    "activeTab",
+    "content",
+    "inactiveTab",
+    "module",
+    "tab"
+   ],
+   "title": "Woo Product Tabs"
+  },
+  "divi/woocommerce-product-title": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_title",
+   "elements": [
+    "content",
+    "module",
+    "title"
+   ],
+   "title": "Woo Product Title"
+  },
+  "divi/woocommerce-product-upsell": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_upsells",
+   "elements": [
+    "content",
+    "elements",
+    "image",
+    "module",
+    "overlay",
+    "overlayIcon",
+    "price",
+    "productTitle",
+    "rating",
+    "saleBadge",
+    "salePrice",
+    "title"
+   ],
+   "title": "Woo Product Upsell"
+  },
+  "divi/woocommerce-related-products": {
+   "category": "module",
+   "children": [],
+   "d4Shortcode": "et_pb_wc_related_products",
+   "elements": [
+    "content",
+    "elements",
+    "image",
+    "module",
+    "overlay",
+    "overlayIcon",
+    "price",
+    "productTitle",
+    "rating",
+    "saleBadge",
+    "salePrice",
+    "title"
+   ],
+   "title": "Woo Related Products"
+  }
+ }
+}
