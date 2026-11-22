@@ -56,12 +56,14 @@ class Registry {
 
 	/**
 	 * Register a resource template with {placeholder} segments.
-	 * The reader receives the extracted variables as an array.
+	 * The reader receives the extracted variables as an array and returns the
+	 * content, or null when nothing exists for them (then the next template is
+	 * tried; no match at all reads as "unknown resource").
 	 *
 	 * @param string   $uri_template URI template, e.g. wpdm://page/{id}.
 	 * @param string   $name         Display name.
 	 * @param string   $mime         MIME type.
-	 * @param callable $reader       function( array $vars ): string.
+	 * @param callable $reader       function( array $vars ): ?string.
 	 * @return void
 	 */
 	public function add_resource_template( string $uri_template, string $name, string $mime, callable $reader ): void {
@@ -169,10 +171,14 @@ class Registry {
 						$vars[ $key ] = $value;
 					}
 				}
+				$text = call_user_func( $t['reader'], $vars );
+				if ( null === $text ) {
+					continue;
+				}
 				return array(
 					'uri'      => $uri,
 					'mimeType' => $t['mime'],
-					'text'     => (string) call_user_func( $t['reader'], $vars ),
+					'text'     => (string) $text,
 				);
 			}
 		}
