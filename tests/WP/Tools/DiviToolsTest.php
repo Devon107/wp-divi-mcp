@@ -810,4 +810,168 @@ class DiviToolsTest extends WP_UnitTestCase {
 		$this->assertSame( '.after{color:red}', get_post_meta( $page, '_et_pb_custom_css', true ) );
 		$this->assertSame( '.before{}', Backups::get( $out['backup_id'] )['meta']['custom_css'] );
 	}
+
+	// ----- review fixes ---------------------------------------------------
+
+	/**
+	 * Make Divi's set-layout route fail.
+	 */
+	private static function break_set_layout(): callable {
+		$filter = static function ( $result, $server, $request ) {
+			if ( '/divi/v1/outside-vb/posts/set-layout' === $request->get_route() ) {
+				return new WP_Error( 'wpdm_test_down', 'set-layout is down', array( 'status' => 500 ) );
+			}
+			return $result;
+		};
+		add_filter( 'rest_pre_dispatch', $filter, 10, 3 );
+		return $filter;
+	}
+
+	private static function portability( string $markup, array $extra = array() ): array {
+		return array_merge(
+			array(
+				'context'            => 'et_builder',
+				'data'               => array( '1' => $markup ),
+				'presets'            => null,
+				'global_colors'      => array(),
+				'global_variables'   => array(),
+				'page_settings_meta' => array( '_et_pb_custom_css' => array( '' ) ),
+				'canvases'           => array( 'local' => array(), 'global' => array() ),
+				'images'             => array(),
+				'thumbnails'         => array(),
+			),
+			$extra
+		);
+	}
+
+	private static function image_markup( string $url ): string {
+		return '<!-- wp:divi/placeholder --><!-- wp:divi/section --><!-- wp:divi/row --><!-- wp:divi/column --><!-- wp:divi/image {"image":{"innerContent":{"desktop":{"value":{"src":"' . $url . '","alt":"A"}}}}} /--><!-- /wp:divi/column --><!-- /wp:divi/row --><!-- /wp:divi/section --><!-- /wp:divi/placeholder -->';
+	}
+
+	/**
+	 * @group divi
+	 */
+	public function test_create_publish_with_layout_never_empty_live() {
+		$seen     = array();
+		$watch    = static function ( $new, $old, $post ) use ( &$seen ) {
+			if ( 'page' === $post->post_type ) {
+				$seen[] = array( $new, (string) get_post_field( 'post_content', $post->ID, 'raw' ) );
+			}
+		};
+		add_action( 'transition_post_status', $watch, 10, 3 );
+		try {
+			$out = $this->ok( $this->admin, 'divi_create_page', array( 'title' => 'Live', 'status' => 'publish', 'layout' => self::text_tree( '<p>Live now</p>' ) ) );
+		} finally {
+			remove_action( 'transition_post_status', $watch, 10 );
+		}
+		$this->assertSame( 'publish', get_post_status( $out['post_id'] ) );
+		$this->assertSame( 'publish', $out['status'] );
+		$this->assertStringContainsString( 'Live now', get_post( $out['post_id'] )->post_content );
+		$this->assertContains( 'publish', array_column( $seen, 0 ) );
+		foreach ( $seen as $event ) {
+			if ( 'publish' === $event[0] ) {
+				$this->assertStringContainsString( 'Live now', $event[1], 'published only once the layout is in' );
+			}
+		}
+
+		// private works the same way.
+		$private = $this->ok( $this->admin, 'divi_create_page', array( 'title' => 'Members', 'status' => 'private', 'layout' => self::text_tree() ) );
+		$this->assertSame( 'private', get_post_status( $private['post_id'] ) );
+
+		// A failed apply never leaves a published page behind.
+		$seen   = array();
+		$broken = self::break_set_layout();
+		add_action( 'transition_post_status', $watch, 10, 3 );
+		try {
+			$fail = $this->fails( $this->admin, 'divi_create_page', array( 'title' => 'Broken live', 'status' => 'publish', 'layout' => self::text_tree() ), 'wpdm_test_down' );
+		} finally {
+			remove_action( 'transition_post_status', $watch, 10 );
+			remove_filter( 'rest_pre_dispatch', $broken, 10 );
+		}
+		$this->assertNotContains( 'publish', array_column( $seen, 0 ) );
+		$this->assertArrayHasKey( 'page_trashed', $fail['data'] );
+		$this->assertSame( 'trash', get_post_status( $fail['data']['page_trashed'] ) );
+	}
+
+	/**
+	 * @group divi
+	 */
+	public function test_apply_images_require_upload_files() {
+		$contributor = self::factory()->user->create( array( 'role' => 'contributor' ) );
+		$post        = self::factory()->post->create( array( 'post_type' => 'post', 'post_status' => 'draft', 'post_author' => $contributor, 'post_content' => 'draft text' ) );
+		$remote      = 'https://images.example.org/c.png';
+		$doc         = self::portability( self::image_markup( $remote ), array( 'images' => array( $remote => array( 'encoded' => self::PNG, 'url' => $remote ) ) ) );
+		$attachments = count( get_posts( array( 'post_type' => 'attachment', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids' ) ) );
+
+		$err = $this->fails( $contributor, 'divi_apply_layout', array( 'post_id' => $post, 'portability' => $doc ), 'forbidden' );
+		$this->assertStringContainsString( 'upload_images=false', $err['message'] );
+		$this->assertSame( 'draft text', get_post( $post )->post_content );
+		$this->assertSame( array(), Backups::list( $post, 'post_content' ) );
+
+		// External tree images too.
+		$this->fails( $contributor, 'divi_apply_layout', array( 'post_id' => $post, 'layout' => self::tree( array( array( 'image' => array( 'src' => $remote ) ) ) ) ), 'forbidden' );
+
+		// Dry run warns instead.
+		$dry = $this->ok( $contributor, 'divi_apply_layout', array( 'post_id' => $post, 'portability' => $doc, 'dry_run' => true ) );
+		$this->assertStringContainsString( 'cannot upload media', implode( "\n", $dry['warnings'] ) );
+
+		// upload_images=false keeps the original URLs.
+		$this->ok( $contributor, 'divi_apply_layout', array( 'post_id' => $post, 'portability' => $doc, 'upload_images' => false ) );
+		$this->assertStringContainsString( $remote, get_post( $post )->post_content );
+		$this->assertCount( $attachments, get_posts( array( 'post_type' => 'attachment', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids' ) ) );
+	}
+
+	/**
+	 * @group divi
+	 */
+	public function test_set_layout_failure_restores_css_and_reports_backups() {
+		$page = $this->page( 'draft', self::text_markup( 'Before' ) );
+		update_post_meta( $page, '_et_pb_custom_css', '.old{}' );
+		$remote = 'https://images.example.org/f.png';
+		$doc    = self::portability(
+			self::image_markup( $remote ),
+			array(
+				'images'             => array( $remote => array( 'encoded' => self::PNG, 'url' => $remote ) ),
+				'global_colors'      => array( array( 'gcid-wpdm-fail', array( 'color' => '#121212', 'status' => 'active', 'label' => 'Fail' ) ) ),
+				'page_settings_meta' => array( '_et_pb_custom_css' => array( '.new{}' ) ),
+			)
+		);
+
+		$broken = self::break_set_layout();
+		try {
+			$err = $this->fails( $this->admin, 'divi_apply_layout', array( 'post_id' => $page, 'portability' => $doc ), 'wpdm_test_down' );
+		} finally {
+			remove_filter( 'rest_pre_dispatch', $broken, 10 );
+		}
+		$data = $err['data'];
+		$this->assertSame( 'set_layout', $data['step'] );
+		$this->assertSame( self::text_markup( 'Before' ), Backups::get( $data['backup_id'] )['content'] );
+		$this->assertIsInt( $data['globals_backup_id'] );
+		$this->assertSame( 'globals', Backups::get( $data['globals_backup_id'] )['kind'] );
+		$this->assertCount( 1, $data['uploaded_ids'] );
+		$this->assertSame( 'attachment', get_post_type( $data['uploaded_ids'][0] ) );
+		$this->assertTrue( $data['css_restored'] );
+
+		$this->assertSame( '.old{}', get_post_meta( $page, '_et_pb_custom_css', true ) );
+		$this->assertStringContainsString( 'Before', get_post( $page )->post_content );
+		// Globals are reported, not rolled back.
+		$this->assertArrayHasKey( 'gcid-wpdm-fail', Globals::read()['colors'] );
+
+		// A non-ToolError failure is reported the same way, as internal_error.
+		$throw = static function ( $result, $server, $request ) {
+			if ( '/divi/v1/outside-vb/posts/set-layout' === $request->get_route() ) {
+				throw new RuntimeException( 'kaboom' );
+			}
+			return $result;
+		};
+		add_filter( 'rest_pre_dispatch', $throw, 10, 3 );
+		try {
+			$err = $this->fails( $this->admin, 'divi_apply_layout', array( 'post_id' => $page, 'portability' => $doc, 'upload_images' => false ), 'internal_error' );
+		} finally {
+			remove_filter( 'rest_pre_dispatch', $throw, 10 );
+		}
+		$this->assertIsInt( $err['data']['backup_id'] );
+		$this->assertTrue( $err['data']['css_restored'] );
+		$this->assertSame( '.old{}', get_post_meta( $page, '_et_pb_custom_css', true ) );
+	}
 }

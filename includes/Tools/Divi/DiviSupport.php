@@ -269,11 +269,23 @@ final class DiviSupport {
 		$embedded = $opts['upload_images'] ? self::embedded_images( $envelope ) : array();
 		$external = $opts['upload_images'] ? self::external_images( $resolved['images'], $embedded ) : array();
 		$css      = LayoutInput::page_css( $envelope );
+		// Media.php: callers must have checked upload_files. Refuse like the globals check.
+		$cannot_upload = ( $embedded || $external ) && ! current_user_can( 'upload_files' );
+		if ( $cannot_upload && ! $opts['dry_run'] ) {
+			throw new ToolError(
+				'This layout has ' . ( count( $embedded ) + count( $external ) ) . ' image(s) to import, but your role cannot upload media; pass upload_images=false to keep the original image URLs. Nothing was changed.',
+				'forbidden',
+				array( 'images' => array_merge( array_keys( $embedded ), $external ) )
+			);
+		}
 
 		if ( $opts['dry_run'] ) {
 			$warnings = $report->warnings;
 			if ( $sync && $changes && ! current_user_can( 'edit_theme_options' ) ) {
 				$warnings[] = 'applying would change global colors/variables (' . implode( ', ', $changes ) . '), which needs edit_theme_options; it will be refused unless sync_globals=false';
+			}
+			if ( $cannot_upload ) {
+				$warnings[] = 'applying would import images, but your role cannot upload media; it will be refused unless upload_images=false';
 			}
 			return array(
 				'ok'               => true,
@@ -290,9 +302,13 @@ final class DiviSupport {
 
 		// First write follows: back up what is stored right now.
 		$backup_id = self::backup_post( $post->ID, $ctx, 'before_apply' );
+		$old_css   = (string) get_post_meta( $post->ID, '_et_pb_custom_css', true );
+		$uploaded  = array();
+		$failed    = array();
+		$globals   = null;
+		$css_set   = false;
+		$step      = 'images';
 		try {
-			$uploaded = array();
-			$failed   = array();
 			foreach ( $embedded as $url => $encoded ) {
 				try {
 					$media = Media::from_base64( $encoded, self::file_name( $url ) );
@@ -322,20 +338,19 @@ final class DiviSupport {
 				);
 			}
 
-			$globals = null;
 			if ( $sync ) {
+				$step    = 'globals';
 				$globals = Globals::merge( $colors, $variables, (bool) $opts['overwrite_globals'], false, $label );
 			}
 			if ( '' !== $css ) {
+				$step    = 'page_css';
+				$css_set = true;
 				self::set_page_css( $post->ID, $css );
 			}
+			$step = 'set_layout';
 			self::set_layout( $post->ID, $content );
-		} catch ( ToolError $e ) {
-			throw new ToolError(
-				$e->getMessage() . ' The previous content is in backup ' . $backup_id . ' (divi_restore_backup).',
-				$e->error_code(),
-				array_merge( $e->data(), array( 'backup_id' => $backup_id ) )
-			);
+		} catch ( \Throwable $e ) {
+			throw self::apply_failure( $e, $post->ID, $step, $backup_id, $globals, $uploaded, $css_set, $old_css );
 		}
 
 		$warnings = $report->warnings;
@@ -361,6 +376,64 @@ final class DiviSupport {
 				'globals'         => $globals,
 				'page_css'        => '' !== $css,
 				'warnings'        => $warnings,
+			)
+		);
+	}
+
+	/**
+	 * Turn a failure after the backup into a ToolError that reports every write
+	 * already made. The page CSS is put back; globals are not (they are
+	 * reported so the user can restore them with divi_restore_backup).
+	 *
+	 * @param \Throwable $e         Failure.
+	 * @param int        $post_id   Post id.
+	 * @param string     $step      Step that failed.
+	 * @param int        $backup_id Content backup.
+	 * @param array|null $globals   Merge report when the merge succeeded.
+	 * @param array      $uploaded  Uploaded images.
+	 * @param bool       $css_set   Whether the page CSS was (being) written.
+	 * @param string     $old_css   Page CSS before the apply.
+	 * @return ToolError
+	 */
+	private static function apply_failure( \Throwable $e, int $post_id, string $step, int $backup_id, ?array $globals, array $uploaded, bool $css_set, string $old_css ): ToolError {
+		$data = $e instanceof ToolError ? $e->data() : array();
+		$code = $e instanceof ToolError ? $e->error_code() : 'internal_error';
+
+		$globals_backup = $globals['backup_id'] ?? null;
+		if ( 'globals' === $step && isset( $data['backup_id'] ) ) {
+			$globals_backup = $data['backup_id']; // Globals::merge failed after its own backup.
+		}
+
+		$css_restored = false;
+		if ( $css_set ) {
+			if ( '' === $old_css ) {
+				delete_post_meta( $post_id, '_et_pb_custom_css' );
+			} else {
+				update_post_meta( $post_id, '_et_pb_custom_css', wp_slash( $old_css ) );
+			}
+			$css_restored = (string) get_post_meta( $post_id, '_et_pb_custom_css', true ) === $old_css;
+		}
+
+		$message = $e->getMessage() . ' (failed at: ' . $step . '). The previous content is in backup ' . $backup_id . ' (divi_restore_backup).';
+		if ( null !== $globals_backup ) {
+			$message .= ' Global colors/variables may have changed; their previous state is in backup ' . $globals_backup . '.';
+		}
+		if ( $uploaded ) {
+			$message .= ' ' . count( $uploaded ) . ' image(s) were already added to the media library.';
+		}
+
+		return new ToolError(
+			$message,
+			$code,
+			array_merge(
+				$data,
+				array(
+					'step'              => $step,
+					'backup_id'         => $backup_id,
+					'globals_backup_id' => $globals_backup,
+					'uploaded_ids'      => array_column( $uploaded, 'id' ),
+					'css_restored'      => $css_restored,
+				)
 			)
 		);
 	}

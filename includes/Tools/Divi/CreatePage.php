@@ -76,9 +76,15 @@ final class CreatePage extends Tool {
 			array_intersect_key( $args, array_flip( array( 'title', 'slug', 'parent', 'status' ) ) ),
 			null
 		);
+		$final = $plan['post']['post_status'] ?? 'draft';
+		$post  = $plan['post'];
+		if ( null !== $resolved && 'draft' !== $final ) {
+			// Never visible while empty: insert a draft, apply, then move to the final status.
+			$post['post_status'] = 'draft';
+		}
 		$postarr = array_merge(
 			array( 'post_status' => 'draft' ),
-			$plan['post'],
+			$post,
 			array(
 				'post_type'    => 'page',
 				'post_author'  => $ctx->user_id,
@@ -104,17 +110,75 @@ final class CreatePage extends Tool {
 		}
 
 		try {
-			// The page is new: there is nothing visitors could lose, so no confirmation.
+			// The page is a new draft: nothing visitors could lose, so no confirmation.
 			$applied = DiviSupport::apply(
 				get_post( $id ),
 				$resolved,
 				array_merge( $args, array( 'confirm_published' => true ) ),
 				$ctx
 			);
-		} catch ( ToolError $e ) {
-			PostSupport::discard_created( $id );
-			throw $e;
+			if ( 'draft' !== $final ) {
+				self::finalize_status( $id, $final );
+			}
+		} catch ( \Throwable $e ) {
+			throw self::discard( $id, $e );
 		}
-		return array_merge( $out, $applied, array( 'status' => get_post_status( $id ) ) );
+		return array_merge( $out, $applied, DiviSupport::links( $id ), array( 'status' => get_post_status( $id ) ) );
+	}
+
+	/**
+	 * Move the filled draft to its final status without re-saving the content
+	 * (wp_update_post would run kses over the Divi markup again).
+	 *
+	 * @param int    $id     Page id.
+	 * @param string $status publish, pending, private or future.
+	 * @return void
+	 * @throws ToolError update_failed.
+	 */
+	private static function finalize_status( int $id, string $status ): void {
+		if ( 'publish' === $status ) {
+			wp_publish_post( $id );
+		} else {
+			global $wpdb;
+			$old = get_post( $id );
+			if ( false === $wpdb->update( $wpdb->posts, array( 'post_status' => $status ), array( 'ID' => $id ) ) ) {
+				throw new ToolError( 'Could not set the page status to ' . $status . '.', 'update_failed' );
+			}
+			clean_post_cache( $id );
+			$new = get_post( $id );
+			wp_transition_post_status( $status, $old->post_status, $new );
+			if ( 'future' === $status ) {
+				wp_schedule_single_event( strtotime( get_gmt_from_date( $new->post_date ) . ' GMT' ), 'publish_future_post', array( $id ) );
+			}
+		}
+		clean_post_cache( $id );
+		if ( get_post_status( $id ) !== $status ) {
+			throw new ToolError( 'Could not set the page status to ' . $status . '.', 'update_failed' );
+		}
+	}
+
+	/**
+	 * After a failed apply: trash the page when trash is available, otherwise
+	 * make sure it is a draft and say so. It is never left published.
+	 *
+	 * @param int        $id Page id.
+	 * @param \Throwable $e  Failure.
+	 * @return ToolError
+	 */
+	private static function discard( int $id, \Throwable $e ): ToolError {
+		$data = $e instanceof ToolError ? $e->data() : array();
+		$code = $e instanceof ToolError ? $e->error_code() : 'internal_error';
+		if ( EMPTY_TRASH_DAYS ) {
+			wp_trash_post( $id );
+			$data['page_trashed'] = $id;
+		} else {
+			if ( 'draft' !== get_post_status( $id ) ) {
+				global $wpdb;
+				$wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $id ) );
+				clean_post_cache( $id );
+			}
+			$data['page_left_as_draft'] = $id;
+		}
+		return new ToolError( $e->getMessage(), $code, $data );
 	}
 }
