@@ -256,7 +256,9 @@ Every card also takes `width`, `tablet`, `phone`, `attrs`.
 
 Value helpers write Divi's attribute shapes for you. They work anywhere inside `attrs` and
 args. Their keys start with `$`; keys without `$` are always plain Divi data, so attributes
-copied from `divi_inspect_page` can be pasted as they are.
+copied from `divi_inspect_page` can be pasted as they are. A helper object holds one `$` key
+plus only that helper's listed siblings; any other key next to it, or a second helper in the
+same object, is an error: combine helpers with `$merge`.
 
 | Helper | Example | Produces |
 |---|---|---|

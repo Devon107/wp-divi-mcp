@@ -687,7 +687,7 @@ if ( ! function_exists( 'wpdm_layout_schema_json' ) ) {
 					'type'        => 'object',
 				),
 				'value'    => array(
-					'description' => 'Any JSON value. Value helper keys start with "$" ($rv, $box, $radius, $color_var, $content_var, $fa, $divi_icon, $font, $flex, $grid, $card, $module_deco, $merge): an object is a helper call when exactly one of its keys is a $helper and its other keys are that helper\'s siblings ($fa: weight; $color_var: opacity). Keys without "$" are always plain data, so attrs copied from real Divi exports (decoration.font.font, border radius...) pass through; their values are still resolved recursively. {"$literal": X} yields X untouched.',
+					'description' => 'Any JSON value. Value helper keys start with "$" ($rv, $box, $radius, $color_var, $content_var, $fa, $divi_icon, $font, $flex, $grid, $card, $module_deco, $merge): an object is a helper call when exactly one of its keys is a $helper and its other keys are that helper\'s siblings ($fa: weight; $color_var: opacity); any other key next to a $helper, or two $helpers in one object, is an error (combine helpers with $merge). Keys without "$" are always plain data, so attrs copied from real Divi exports (decoration.font.font, border radius...) pass through; their values are still resolved recursively. {"$literal": X} yields X untouched.',
 					'anyOf'       => array_merge( $value_refs, array( array( 'type' => array( 'string', 'number', 'boolean', 'null', 'array', 'object' ) ) ) ),
 				),
 				'string'   => array(

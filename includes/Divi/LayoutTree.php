@@ -27,6 +27,7 @@ namespace WPDM\Divi;
  * with real Divi attribute keys (`decoration.font.font`, `border.*.radius`...), which are always
  * plain data. An object is a helper call when exactly one of its keys is a `$helper` and every
  * other key is one of that helper's sibling keys (`$fa` + `weight`, `$color_var` + `opacity`).
+ * Any other key next to a `$helper`, or two `$helper` keys in one object, is a LayoutError.
  * `{"$literal": X}` yields X untouched.
  *
  * Structure: top-level blocks are sections, rows go directly in sections, columns (and the
@@ -700,8 +701,9 @@ class LayoutTree {
 	 * Name (without "$") of the value helper this object calls, or null for a plain object.
 	 *
 	 * @param array  $object Object.
-	 * @param string $path   Path of the object (for an unknown "$name").
+	 * @param string $path   Path of the object.
 	 * @return string|null
+	 * @throws LayoutError On an unknown "$name", two helpers, or a disallowed sibling.
 	 */
 	private static function detect_helper( array $object, $path ) {
 		$keys  = array_map( 'strval', array_keys( $object ) );
@@ -715,14 +717,22 @@ class LayoutTree {
 			}
 		}
 		$found = array_values( array_intersect( $keys, $known ) );
-		if ( 1 !== count( $found ) ) {
+		if ( array() === $found ) {
 			return null;
+		}
+		if ( count( $found ) > 1 ) {
+			throw new LayoutError( $path, 'two value helpers in one object (' . implode( ', ', $found ) . '); use $merge' );
 		}
 		$helper   = substr( $found[0], strlen( self::PREFIX ) );
 		$siblings = isset( self::VALUE_SIBLINGS[ $helper ] ) ? self::VALUE_SIBLINGS[ $helper ] : array();
 		foreach ( $keys as $key ) {
 			if ( $key !== $found[0] && ! in_array( $key, $siblings, true ) ) {
-				return null;
+				throw new LayoutError(
+					"{$path}.{$key}",
+					array() === $siblings
+						? "{$found[0]} allows no sibling keys; found {$key}"
+						: "{$found[0]} only allows sibling(s) " . implode( ', ', $siblings ) . "; found {$key}"
+				);
 			}
 		}
 		return $helper;

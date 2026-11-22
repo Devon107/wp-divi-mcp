@@ -384,10 +384,7 @@ JSON;
 						'text' => array(
 							'html'  => 'x',
 							'attrs' => array(
-								'a' => array( '$fa' => '&#xf0e0;', 'size' => '12px' ),
 								'b' => array( '$color_var' => 'gcid-x', 'opacity' => 50 ),
-								'c' => array( '$rv' => array( 'desktop' => '1px' ), 'extra' => 1 ),
-								'd' => array( '$box' => array( '1px' ), '$radius' => '2px' ),
 							),
 						),
 					),
@@ -397,15 +394,23 @@ JSON;
 		$col  = $out['blocks'][0]->children[0]->children[0];
 		$icon = $col->children[0];
 		$this->assertSame( D5::fa_icon( '&#xf0e0;', '400' ), $icon->attrs['icon']['innerContent']['desktop']['value'] );
-		$attrs = $col->children[1]->attrs;
-		// fa + an unknown sibling: plain object.
-		$this->assertSame( array( '$fa' => '&#xf0e0;', 'size' => '12px' ), $attrs['a'] );
 		// color_var + its opacity sibling: helper.
-		$this->assertSame( D5::color_var( 'gcid-x', 50 ), $attrs['b'] );
-		// rv + unknown sibling: plain object, but rv inside is not a helper call either (it is a key).
-		$this->assertSame( array( '$rv' => array( 'desktop' => '1px' ), 'extra' => 1 ), $attrs['c'] );
-		// Two helper keys: plain object.
-		$this->assertSame( array( '$box' => array( '1px' ), '$radius' => '2px' ), $attrs['d'] );
+		$this->assertSame( D5::color_var( 'gcid-x', 50 ), $col->children[1]->attrs['b'] );
+
+		$text = static function ( array $attrs ) {
+			return self::in_column( array( array( 'text' => array( 'html' => 'x', 'attrs' => $attrs ) ) ) );
+		};
+		// A helper with a sibling it does not allow: error, never passed through.
+		$e = $this->error_of( $text( array( 'a' => array( '$fa' => '&#xf0e0;', 'size' => '12px' ) ) ) );
+		$this->assertStringContainsString( '$fa only allows sibling(s) weight; found size', $e->getMessage() );
+		$this->assertStringEndsWith( '.attrs.a.size', $e->path() );
+		$e = $this->error_of( $text( array( 'c' => array( '$rv' => array( 'desktop' => '1px' ), 'extra' => 1 ) ) ) );
+		$this->assertStringContainsString( '$rv allows no sibling keys; found extra', $e->getMessage() );
+		$this->assertStringEndsWith( '.attrs.c.extra', $e->path() );
+		// Two helpers in one object: error.
+		$e = $this->error_of( $text( array( 'd' => array( '$box' => array( '1px' ), '$radius' => '2px' ) ) ) );
+		$this->assertStringContainsString( 'two value helpers in one object ($box, $radius); use $merge', $e->getMessage() );
+		$this->assertStringEndsWith( '.attrs.d', $e->path() );
 	}
 
 	public function test_value_helpers_resolve() {
