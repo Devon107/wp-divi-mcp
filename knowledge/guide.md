@@ -73,7 +73,9 @@ What real imports showed (the site owner reviewed generated pages):
 - Hero buttons "disappeared" on hover: their hover background (and the outline button's hover
   border) was the brand color of the section behind them. Hover states must contrast with the
   container too. On dark or brand-colored backgrounds pass `"on_dark": true` to `pill_link`
-  (white hover with the button color as text). The validator checks hover backgrounds, borders
+  (white hover with the button color as text). With `on_dark` the hover text defaults to the
+  button color, so that color must be readable on white; otherwise set `hover_fg` (e.g. the
+  dark section color). The validator only flags identical colors, not low contrast. The validator checks hover backgrounds, borders
   and text.
 - A link's icon inherits the link text color, normal and hover. Never set an icon color
   (`icon.advanced.color`, `pill_link` `icon_color` / `icon_hover_color`) unless the icon must
@@ -93,9 +95,10 @@ of the copy, brand colors/fonts, real images or placeholders, and whether to mat
 existing page. Write real, specific copy in the user's language, never lorem ipsum.
 
 ### 2. Read the site
-1. `divi_status`: Divi must be active; note `divi_version` and `can`. Without Divi only
-   `divi_build_layout`, `divi_validate_layout` and `divi_find_icon` are available (and this
-   knowledge), so you can still plan and check a layout.
+1. `divi_status`: note `divi_version` and `can`. If `divi_status` is not in your tool list,
+   Divi 5 is not active on this site: only the WordPress tools and `divi_build_layout` /
+   `divi_validate_layout` / `divi_find_icon` are available, so you can still plan and check a
+   layout.
 2. `divi_get_globals`: reuse the site's real global colors and variables in the tree
    (`{"$color_var": "gcid-..."}`, `{"$content_var": "gvid-..."}`). Check which built-in color the
    site actually uses as its accent: often `gcid-secondary-color`, not `gcid-primary-color`.
@@ -143,7 +146,11 @@ section: build the new section with `divi_build_layout`, replace the old section
 the page markup (`divi_export_page` → the value inside `portability.data`; sections are the
 `<!-- wp:divi/section ... -->` … `<!-- /wp:divi/section -->` blocks inside
 `divi/placeholder`), and pass the whole result as `markup` to `divi_apply_layout` (dry run
-first). Never hand-edit attribute JSON inside the markup; rebuild the section instead. The
+first). `divi_build_layout` returns its `markup` wrapped in `divi/placeholder`: splice only the
+inner `divi/section` block(s), not the wrapper. Passing `markup` does not carry the tree's
+`global_colors` / `custom_css`: when the new section needs new globals, call
+`divi_merge_globals` first (and `divi_set_page_css` for page CSS). Never hand-edit attribute
+JSON inside the markup; rebuild the section instead. The
 safest way is to do this on a draft copy first (`divi_create_page`, then `divi_apply_layout`
 with the export as `portability`) and let the user compare.
 
@@ -321,8 +328,8 @@ brand colors: on a real site take the ids from `divi_get_globals` and only ship
 
 ### Example 1: hero with pill links on a dark background
 
-The buttons sit on navy, so both pills use `on_dark` (white hover). The outline pill's hover
-text is set to the navy so it reads on the white hover fill.
+The buttons sit on navy, so both pills use `on_dark` (white hover). Both set `hover_fg` to the
+navy: the default hover text is the button color (yellow here), which is unreadable on white.
 
 ```json
 {
@@ -368,7 +375,7 @@ text is set to the navy so it reads on the white hover fill.
               {"pattern": "body_text", "args": {"html": "Primera visita y radiografía gratis. Financiación a 12 meses sin intereses.",
                 "color": "rgba(255,255,255,0.85)", "size": "19px", "max_width": "620px"}},
               {"group": {"direction": "row", "gap": "12px", "wrap": true, "children": [
-                {"pattern": "pill_link", "args": {"label": "Pide tu cita", "url": "#contacto", "on_dark": true}},
+                {"pattern": "pill_link", "args": {"label": "Pide tu cita", "url": "#contacto", "on_dark": true, "hover_fg": "#0b1f3a"}},
                 {"pattern": "pill_link", "args": {"label": "Ver tratamientos", "url": "/tratamientos/", "variant": "outline", "on_dark": true, "hover_fg": "#0b1f3a"}}
               ]}}
             ]
