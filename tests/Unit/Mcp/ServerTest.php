@@ -34,6 +34,27 @@ class WPDM_Test_Read_Tool extends Tool {
 	}
 }
 
+class WPDM_Test_Empty_Props_Tool extends Tool {
+	public function name(): string {
+		return 'test_empty_props';
+	}
+	public function description(): string {
+		return 'Declares properties as an empty PHP array.';
+	}
+	public function input_schema(): array {
+		return array( 'type' => 'object', 'properties' => array(), 'additionalProperties' => false );
+	}
+	public function read_only(): bool {
+		return true;
+	}
+	public function capability(): string {
+		return 'read';
+	}
+	public function execute( array $args, Context $ctx ): array {
+		return array();
+	}
+}
+
 class WPDM_Test_Write_Tool extends Tool {
 	public $mode = 'ok';
 	public function name(): string {
@@ -269,6 +290,19 @@ class ServerTest extends WP_UnitTestCase {
 		$this->assertTrue( $tools['test_write']['annotations']['destructiveHint'] );
 		$this->assertFalse( $tools['test_write']['annotations']['openWorldHint'] );
 		$this->assertTrue( $tools['test_read']['annotations']['readOnlyHint'] );
+	}
+
+	public function test_tools_list_encodes_empty_properties_as_an_object() {
+		$this->registry->add_tool( new WPDM_Test_Empty_Props_Tool() );
+		$res = $this->server->handle( $this->rpc( 'tools/list' ), $this->admin_ctx() );
+		$tool = null;
+		foreach ( $res['result']['tools'] as $t ) {
+			if ( 'test_empty_props' === $t['name'] ) {
+				$tool = $t;
+			}
+		}
+		$this->assertNotNull( $tool );
+		$this->assertStringContainsString( '"properties":{}', wp_json_encode( $tool['inputSchema'] ) );
 	}
 
 	public function test_tools_list_hides_tools_without_capability() {

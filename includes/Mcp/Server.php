@@ -171,6 +171,10 @@ class Server {
 					'properties' => new \stdClass(),
 				);
 			}
+			// An empty PHP array encodes as JSON [], which strict clients reject ("properties" must be an object).
+			if ( isset( $schema['properties'] ) && array() === $schema['properties'] ) {
+				$schema['properties'] = new \stdClass();
+			}
 			$out[] = array(
 				'name'        => $tool->name(),
 				'description' => $tool->description(),
