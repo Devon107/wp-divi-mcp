@@ -35,12 +35,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build zip
         run: bin/build-zip
-      - name: Upload zip
+      - name: Upload plugin
         uses: actions/upload-artifact@v4
         with:
-          # GitHub wraps every artifact in its own zip: download it, extract once,
-          # and upload the wp-divi-mcp.zip inside to WordPress.
+          # GitHub always wraps an artifact in its own zip, so upload the staged
+          # folder (not build/wp-divi-mcp.zip): the downloaded artifact is then the
+          # installable plugin zip itself. The [p] wildcard makes build/ the root,
+          # which keeps the top-level wp-divi-mcp/ folder WordPress expects.
           name: wp-divi-mcp-${{ github.ref_name }}-${{ github.sha }}
-          path: build/wp-divi-mcp.zip
+          path: build/wp-divi-mc[p]/
           if-no-files-found: error
           retention-days: 30
