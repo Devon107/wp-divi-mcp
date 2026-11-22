@@ -7,7 +7,7 @@ Esta guía es para el propietario del sitio. Explica cómo instalar el plugin, c
 - Un WordPress con HTTPS (el endpoint rechaza HTTP plano, porque la URL de conexión lleva un secreto).
 - WordPress 6.2 o superior y PHP 7.4 o superior.
 - El tema Divi 5 activo, si quieres que Claude construya páginas con Divi. Sin Divi el plugin funciona igual para contenido, medios, menús y ajustes; solo faltan las herramientas de Divi.
-- El archivo `wp-divi-mcp.zip` (descárgalo de la página de releases del repositorio).
+- El archivo `wp-divi-mcp.zip`. Descárgalo de la página de releases del repositorio. Para una versión sin publicar, ve a **Actions → Build zip → Run workflow**, elige la rama y, cuando termine, descarga el artefacto de esa ejecución. GitHub lo entrega dentro de otro zip: descomprímelo una vez y usa el `wp-divi-mcp.zip` de dentro.
 
 ## 1. Instalar el plugin
 

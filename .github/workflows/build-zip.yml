@@ -1,0 +1,46 @@
+name: Build zip
+
+# Manual "Run workflow" button: builds the installable plugin zip from the chosen
+# branch and attaches it to the run as a downloadable artifact. No tag, no release.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: PHP lint (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '7.4', '8.3' ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Lint all PHP files
+        run: |
+          find . -name '*.php' -not -path './vendor/*' -not -path './node_modules/*' -print0 \
+            | xargs -0 -n1 php -l
+
+  build:
+    name: Build zip
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build zip
+        run: bin/build-zip
+      - name: Upload zip
+        uses: actions/upload-artifact@v4
+        with:
+          # GitHub wraps every artifact in its own zip: download it, extract once,
+          # and upload the wp-divi-mcp.zip inside to WordPress.
+          name: wp-divi-mcp-${{ github.ref_name }}-${{ github.sha }}
+          path: build/wp-divi-mcp.zip
+          if-no-files-found: error
+          retention-days: 30
