@@ -564,8 +564,9 @@ The pattern defaults are generic. To match a site:
 - **New designs go into a new draft page** (`divi_create_page`). Change an existing page only
   when the user asks.
 - **`confirm_published: true`** is required to change a published, scheduled or private page
-  (`divi_apply_layout`, `divi_set_page_css`, `divi_restore_backup`). Ask the user before you set
-  it: the change is visible at once.
+  (`divi_apply_layout`, `divi_set_page_css`, `divi_restore_backup`, and `update_post` when it
+  changes `content`, with or without `force`). Ask the user before you set it: the change is
+  visible at once.
 - **`confirm_default_template: true`** is required to change the Default Website Template
   (`divi_set_theme_builder_layout`, `divi_restore_backup`): it changes the header/footer of the
   whole site. Ask first; prefer a new template (`divi_create_theme_builder_template`).
@@ -575,12 +576,14 @@ The pattern defaults are generic. To match a site:
 - **Theme Builder**: only `header` and `footer` layouts can be set; deleting a template backs up
   its layouts, and the Default Website Template cannot be deleted.
 - **Backups**: page content, page CSS, globals and Theme Builder layouts are backed up before
-  every change. `divi_list_backups` lists them; `divi_restore_backup` with `backup_id` restores
+  every change; so is the current content whenever `update_post` gets `content` (Divi or not),
+  and its result has `backup_id`. `divi_list_backups` lists them; `divi_restore_backup` with `backup_id` restores
   one (after backing up the current state). Tell the user the `backup_id` when you change an
   existing page.
 - **Posts and pages are trash-only**: `trash_post` moves to the trash, `restore_post` brings it back.
   Two exceptions: `update_menu_items` permanently deletes the menu items it removes (confirm with
-  the user before removing items), and `divi_delete_theme_builder_template` moves a Theme Builder
+  the user before removing items; its `removed` result lists each removed item's id, title, url,
+  type, object, object_id, parent and position, so you can recreate them), and `divi_delete_theme_builder_template` moves a Theme Builder
   template to Divi's trash (the layouts' content stays in the backups).
 - **Globals**: `divi_apply_layout` never overwrites an existing global value unless you pass
   `overwrite_globals: true`; do that only when the user asked to change a site color.

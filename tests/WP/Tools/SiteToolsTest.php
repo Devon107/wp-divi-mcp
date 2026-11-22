@@ -952,7 +952,22 @@ class SiteToolsTest extends WP_UnitTestCase {
 
 		list( , $drop ) = $out['created'];
 		$res            = $this->ok( $this->admin, 'update_menu_items', array( 'menu_id' => $menu, 'remove_ids' => array( $drop ) ) );
-		$this->assertSame( array( $drop ), $res['removed'] );
+		$this->assertSame(
+			array(
+				array(
+					'id'        => $drop,
+					'title'     => 'Drop',
+					'url'       => 'https://example.org/d',
+					'type'      => 'custom',
+					'object'    => 'custom',
+					'object_id' => $drop,
+					'parent'    => 0,
+					'position'  => 2,
+				),
+			),
+			$res['removed'],
+			'removed lists each item\'s definition, captured before the delete'
+		);
 		$this->assertSame( array( 'Keep' ), wp_list_pluck( wp_get_nav_menu_items( $menu ), 'title' ) );
 		$this->assertNull( get_post( $drop ) );
 
@@ -970,7 +985,15 @@ class SiteToolsTest extends WP_UnitTestCase {
 		$out2 = $this->ok( $this->admin, 'update_menu_items', array( 'menu_id' => $menu, 'items' => array( array( 'title' => 'C', 'url' => 'https://example.org/c', 'parent' => $p, 'position' => 2 ) ) ) );
 		$c    = $out2['created'][0];
 
-		$this->ok( $this->admin, 'update_menu_items', array( 'menu_id' => $menu, 'remove_ids' => array( $p ) ) );
+		$page = self::factory()->post->create( array( 'post_type' => 'page', 'post_title' => 'Linked' ) );
+		$out3 = $this->ok( $this->admin, 'update_menu_items', array( 'menu_id' => $menu, 'items' => array( array( 'title' => 'Pg', 'object_type' => 'page', 'object_id' => $page, 'parent' => $c, 'position' => 3 ) ) ) );
+		$pg   = $out3['created'][0];
+
+		$res = $this->ok( $this->admin, 'update_menu_items', array( 'menu_id' => $menu, 'remove_ids' => array( $p, $pg ) ) );
+		$this->assertSame( array( $p, $pg ), array_column( $res['removed'], 'id' ) );
+		$this->assertSame( 'https://example.org/p', $res['removed'][0]['url'] );
+		$this->assertSame( array( 'post_type', 'page', $page, $c, 3 ), array( $res['removed'][1]['type'], $res['removed'][1]['object'], $res['removed'][1]['object_id'], $res['removed'][1]['parent'], $res['removed'][1]['position'] ) );
+		$this->assertSame( 'Pg', $res['removed'][1]['title'] );
 		$items = $this->menu_titles( $menu );
 		$this->assertSame( array( 'C' ), array_keys( $items ) );
 		$this->assertSame( 0, (int) $items['C']->menu_item_parent );

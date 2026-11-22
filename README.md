@@ -42,7 +42,7 @@ Divi 5 tools (17; 14 need the Divi theme, `divi_build_layout`, `divi_validate_la
 
 Resources: `divi://guide`, `divi://attributes`, `divi://modules/index`, `divi://schema/layout` and the template `divi://modules/{name}`. Prompts: `build_divi_page`, `match_existing_site`.
 
-Safety: posts and pages only go to the trash (restorable), Divi changes are backed up first, new designs go to a draft, and changing a published page or the default website template needs an explicit confirmation flag. No plugin, theme or user management. Two things are not recoverable that way: `update_menu_items` permanently deletes the menu items it removes, and `divi_delete_theme_builder_template` moves a Theme Builder template to Divi's trash (its layouts' content stays in the backups).
+Safety: posts and pages only go to the trash (restorable), Divi changes are backed up first, new designs go to a draft, and changing a published page or the default website template needs an explicit confirmation flag. No plugin, theme or user management. `update_post` backs up the current content whenever it changes it, and a published page's content needs `confirm_published`. Two things are not recoverable that way: `update_menu_items` permanently deletes the menu items it removes (its result lists their definitions so they can be recreated), and `divi_delete_theme_builder_template` moves a Theme Builder template to Divi's trash (its layouts' content stays in the backups).
 
 ## Development
 

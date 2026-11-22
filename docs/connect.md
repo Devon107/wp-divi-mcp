@@ -95,15 +95,15 @@ Todo se hace en **Ajustes → Divi MCP**:
 - Instalar, activar, actualizar ni borrar plugins o temas.
 - Crear, editar ni borrar usuarios.
 - Borrar entradas o páginas de forma definitiva: solo van a la papelera y se pueden restaurar (no hay herramienta para borrar medios ni términos). Hay dos excepciones que debes conocer:
-  - **Elementos de menú**: al editar un menú, `update_menu_items` borra de verdad los elementos que Claude quite. Esa edición **no se puede deshacer** desde WordPress; para recuperarlos tendrías que volver a crearlos a mano. Antes de dejar que Claude reorganice un menú importante, apunta cómo está o pídele que te lo describa primero.
+  - **Elementos de menú**: al editar un menú, `update_menu_items` borra de verdad los elementos que Claude quite. Esa edición **no se puede deshacer** desde WordPress. El resultado de la herramienta incluye la definición de cada elemento quitado (título, URL, tipo, objeto enlazado, padre y posición), así que Claude puede volver a crearlos si se lo pides; si no, habría que hacerlo a mano. Antes de dejar que Claude reorganice un menú importante, apunta cómo está o pídele que te lo describa primero.
   - **Plantillas del Theme Builder**: `divi_delete_theme_builder_template` manda la plantilla a la papelera de Divi y la desvincula del sitio. La plantilla en sí no se restaura con `divi_restore_backup` (el contenido de sus diseños de cabecera, cuerpo y pie sí queda guardado en las copias de seguridad). La plantilla por defecto del sitio no se puede borrar.
 - Cambiar ajustes que no estén en la lista permitida (por ejemplo, la estructura de enlaces permanentes es solo de lectura).
 - Tocar otras partes del Theme Builder que no sean cabecera y pie: solo permite establecer el diseño de la cabecera y el pie de una plantilla (más crear, listar y borrar plantillas).
 
 **Seguridad añadida en Divi**:
 
-- Antes de cambiar una página Divi se guarda una copia (copia de seguridad) que se puede restaurar.
-- Para modificar una página que ya está publicada, programada o privada, Claude tiene que pedir confirmación explícita (`confirm_published`). Los diseños nuevos van siempre a un borrador.
+- Antes de cambiar una página Divi se guarda una copia (copia de seguridad) que se puede restaurar. Lo mismo ocurre cada vez que `update_post` cambia el contenido de una entrada o página, sea de Divi o no.
+- Para modificar una página que ya está publicada, programada o privada, Claude tiene que pedir confirmación explícita (`confirm_published`), también para cambiar el contenido de una entrada o página publicada con `update_post`. Los diseños nuevos van siempre a un borrador.
 - Para cambiar la plantilla por defecto del sitio (la cabecera y el pie de todo el sitio) también hace falta una confirmación expresa (`confirm_default_template`).
 - Para cambiar, restaurar o borrar cualquier otra plantilla del Theme Builder que esté activa y asignada a alguna parte del sitio (`use_on`), hace falta `confirm_live_template`. Si falta, Claude recibe un error que dice en qué páginas está en uso la plantilla.
 

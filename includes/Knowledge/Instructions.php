@@ -28,12 +28,12 @@ final class Instructions {
 			"\n",
 			array(
 				'WP Divi MCP manages this WordPress site (posts, pages, media, menus, terms, options) and builds Divi 5 pages from a JSON layout tree.',
-				'Read the resource divi://guide before building Divi pages (also divi://attributes, divi://modules/{name}, divi://schema/layout).',
+				'Read divi://guide before building Divi pages (also divi://attributes, divi://modules/{name}, divi://schema/layout).',
 				'Workflow: divi_status -> divi_get_globals -> divi_export_page / divi_inspect_page on a similar page -> build a layout tree -> divi_validate_layout -> divi_create_page (draft) -> divi_apply_layout with dry_run=true -> apply -> share the view / edit_divi links.',
 				'Build by composition: section > row > column > group > text / icon / image / link and the patterns (section_header, icon_card, pill_link...), not the blurb, testimonial, team_member, button or cta modules. Reuse the site\'s global colors and variables.',
 				'New designs go into a new draft page; change an existing page only when the user asks.',
-				'Confirm flags: confirm_published=true to change a published, scheduled or private page; confirm_default_template=true for the Default Website Template (the whole site\'s header/footer); confirm_live_template=true for any other enabled, assigned Theme Builder template. Ask the user before setting any.',
-				'Divi changes are backed up first (divi_list_backups, divi_restore_backup). Posts and pages are only trashed (trash_post, restore_post). Exception: update_menu_items permanently deletes the menu items it removes, so confirm with the user first; divi_delete_theme_builder_template moves a template to the Divi trash.',
+				'Ask the user before setting a confirm flag: confirm_published (change a published, scheduled or private page, also via update_post content), confirm_default_template (Default Website Template: the whole site\'s header/footer), confirm_live_template (any other enabled, assigned Theme Builder template).',
+				'Divi changes and update_post content are backed up first (divi_list_backups, divi_restore_backup). Posts and pages are only trashed (trash_post, restore_post). Exceptions: update_menu_items permanently deletes removed items (the result lists their definitions); confirm first; divi_delete_theme_builder_template moves a template to the Divi trash.',
 			)
 		);
 	}

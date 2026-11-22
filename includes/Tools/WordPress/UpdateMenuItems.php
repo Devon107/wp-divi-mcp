@@ -31,7 +31,7 @@ final class UpdateMenuItems extends Tool {
 	}
 
 	public function description(): string {
-		return 'Change one navigation menu in a single call: create items (no id), edit or reorder items (with id; only the fields you pass change) and remove items (remove_ids, menu items only, they are not content). An item links either to a custom url, or to a post/page/term via object_type (a post type or taxonomy name) plus object_id. parent must be the id of another item already in this menu (to nest under a new item, create the parent first, then make a second call). position orders items (ascending). set_location assigns the menu to a registered theme location. Everything is validated first: if anything is invalid, nothing is changed.';
+		return 'Change one navigation menu in a single call: create items (no id), edit or reorder items (with id; only the fields you pass change) and remove items (remove_ids, menu items only, they are not content; removal is permanent; the result lists the removed items\' definitions). An item links either to a custom url, or to a post/page/term via object_type (a post type or taxonomy name) plus object_id. parent must be the id of another item already in this menu (to nest under a new item, create the parent first, then make a second call). position orders items (ascending). set_location assigns the menu to a registered theme location. Everything is validated first: if anything is invalid, nothing is changed.';
 	}
 
 	/**
@@ -189,13 +189,23 @@ final class UpdateMenuItems extends Tool {
 			throw $e;
 		}
 
+		// Nav menu items have no trash: removal is permanent. Capture each
+		// item's definition first (before any reparenting) so it can be recreated.
+		$definitions = array();
+		foreach ( $remove as $id ) {
+			$definitions[ $id ] = self::definition( $id );
+		}
 		$removed = array();
 		foreach ( $remove as $id ) {
 			$this->reparent_children( $id, array_keys( $members ) );
 			if ( ! wp_delete_post( $id, true ) ) {
-				throw new ToolError( 'Could not remove menu item ' . $id . '. Items removed so far: ' . ( $removed ? implode( ', ', $removed ) : 'none' ) . '.', 'remove_failed' );
+				throw new ToolError(
+					'Could not remove menu item ' . $id . '. Items removed so far: ' . ( $removed ? implode( ', ', array_column( $removed, 'id' ) ) : 'none' ) . '.',
+					'remove_failed',
+					array( 'removed' => $removed )
+				);
 			}
-			$removed[] = $id;
+			$removed[] = $definitions[ $id ];
 		}
 
 		if ( null !== $location ) {
@@ -209,6 +219,26 @@ final class UpdateMenuItems extends Tool {
 			'removed'  => $removed,
 			'location' => null === $location ? null : $location['location'],
 			'items'    => SiteSupport::menu_items( $menu_id ),
+		);
+	}
+
+	/**
+	 * What a menu item is, in the shape of get_menu's items.
+	 *
+	 * @param int $id Menu item id.
+	 * @return array{id:int,title:string,url:string,type:string,object:string,object_id:int,parent:int,position:int}
+	 */
+	private static function definition( int $id ): array {
+		$item = wp_setup_nav_menu_item( get_post( $id ) );
+		return array(
+			'id'        => $id,
+			'title'     => (string) $item->title,
+			'url'       => (string) $item->url,
+			'type'      => (string) $item->type,
+			'object'    => (string) $item->object,
+			'object_id' => (int) $item->object_id,
+			'parent'    => (int) $item->menu_item_parent,
+			'position'  => (int) $item->menu_order,
 		);
 	}
 
