@@ -874,9 +874,40 @@ class DiviToolsTest extends WP_UnitTestCase {
 			}
 		}
 
-		// private works the same way.
-		$private = $this->ok( $this->admin, 'divi_create_page', array( 'title' => 'Members', 'status' => 'private', 'layout' => self::text_tree() ) );
-		$this->assertSame( 'private', get_post_status( $private['post_id'] ) );
+		// Slug, GMT date and permalink are set like a normal insert would.
+		$this->set_permalink_structure( '/%postname%/' );
+		$future_date = gmdate( 'Y-m-d H:i:s', time() + WEEK_IN_SECONDS );
+		$cases       = array(
+			'publish' => array( 'title' => 'Live T13 Page' ),
+			'private' => array( 'title' => 'Members T13 Page' ),
+			'future'  => array(
+				'title' => 'Soon T13 Page',
+				'date'  => $future_date,
+			),
+			'pending' => array( 'title' => 'Review T13 Page' ),
+		);
+		foreach ( $cases as $status => $extra ) {
+			$made = $this->ok( $this->admin, 'divi_create_page', array_merge( $extra, array( 'status' => $status, 'layout' => self::text_tree() ) ) );
+			$page = get_post( $made['post_id'] );
+			$this->assertSame( $status, $page->post_status, $status );
+			$this->assertStringContainsString( 'wp:divi/text', $page->post_content, $status );
+			$this->assertSame( sanitize_title( $extra['title'] ), $page->post_name, $status . ' slug' );
+			if ( 'pending' !== $status ) {
+				$this->assertNotSame( '0000-00-00 00:00:00', $page->post_date_gmt, $status . ' date_gmt' );
+				$this->assertSame( get_gmt_from_date( $page->post_date ), $page->post_date_gmt, $status . ' date_gmt matches post_date' );
+				$this->assertNotSame( home_url( '/' ), get_permalink( $page ), $status . ' permalink' );
+				if ( 'future' !== $status ) { // Core gives scheduled pages a plain ?page_id= link.
+					$this->assertStringContainsString( $page->post_name, get_permalink( $page ), $status . ' permalink' );
+				}
+			}
+		}
+		$future = get_page_by_path( 'soon-t13-page', OBJECT, 'page' );
+		$this->assertSame( get_date_from_gmt( $future_date ), $future->post_date );
+		$this->assertNotFalse( wp_next_scheduled( 'publish_future_post', array( $future->ID ) ), 'future publication scheduled' );
+
+		// An explicit slug that is taken is made unique.
+		$dup = $this->ok( $this->admin, 'divi_create_page', array( 'title' => 'Other', 'slug' => 'live-t13-page', 'status' => 'publish', 'layout' => self::text_tree() ) );
+		$this->assertSame( 'live-t13-page-2', get_post( $dup['post_id'] )->post_name );
 
 		// A failed apply never leaves a published page behind.
 		$seen   = array();
