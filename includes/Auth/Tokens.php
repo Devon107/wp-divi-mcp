@@ -176,14 +176,23 @@ class Tokens {
 			return new WP_Error( 'wpdm_unauthorized', 'Unauthorized', array( 'status' => 401 ) );
 		}
 
+		// touch() re-reads the stored connections; a connection revoked by
+		// another request since verify() is rejected like any invalid token.
+		$connection = self::touch( $connection );
+		if ( null === $connection ) {
+			self::record_failure( $fail_key, $fails );
+			return new WP_Error( 'wpdm_unauthorized', 'Unauthorized', array( 'status' => 401 ) );
+		}
+
 		$user_id = (int) $connection['user_id'];
 		wp_set_current_user( $user_id );
-		$connection = self::touch( $connection );
 
 		$public = self::public_fields( $connection );
+		// Fail closed: anything other than exactly 'full' is read-only.
+		$read_only = 'full' !== ( $connection['mode'] ?? null );
 		return array(
 			'connection' => $public,
-			'context'    => new Context( $user_id, $public, 'read' === $connection['mode'] ),
+			'context'    => new Context( $user_id, $public, $read_only ),
 		);
 	}
 
@@ -235,9 +244,10 @@ class Tokens {
 	 * Record last_used / last_ip, at most once per TOUCH_INTERVAL.
 	 *
 	 * @param array $connection Verified connection.
-	 * @return array Possibly updated connection.
+	 * @return array|null Possibly updated connection; null when a re-read
+	 *                    finds it revoked since verify().
 	 */
-	private static function touch( array $connection ): array {
+	private static function touch( array $connection ): ?array {
 		$now = time();
 		if ( null !== $connection['last_used'] && $now - (int) $connection['last_used'] < self::TOUCH_INTERVAL ) {
 			return $connection;
@@ -247,7 +257,7 @@ class Tokens {
 		wp_cache_delete( self::OPTION, 'options' );
 		$connections = self::load();
 		if ( ! isset( $connections[ $connection['id'] ] ) ) {
-			return $connection;
+			return null;
 		}
 		$connection['last_used'] = $now;
 		$connection['last_ip']   = self::client_ip();

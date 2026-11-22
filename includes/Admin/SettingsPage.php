@@ -137,7 +137,7 @@ class SettingsPage {
 			self::redirect( 'err_label' );
 			return;
 		}
-		if ( $user_id <= 0 || ! user_can( $user_id, 'edit_posts' ) ) {
+		if ( ! self::can_mint_for( $user_id ) ) {
 			self::redirect( 'err_user' );
 			return;
 		}
@@ -164,6 +164,34 @@ class SettingsPage {
 		);
 
 		self::redirect( 'created' );
+	}
+
+	/**
+	 * Whether the current user may create a connection that acts as $user_id.
+	 *
+	 * The target must be the current user, or a member of this site whom the
+	 * current user can edit. A super admin target needs a super admin minting
+	 * it (on multisite a site admin must never get a network-wide token). The
+	 * target must always be able to edit posts.
+	 *
+	 * @param int $user_id Target user.
+	 * @return bool
+	 */
+	public static function can_mint_for( int $user_id ): bool {
+		if ( $user_id <= 0 || ! get_userdata( $user_id ) || ! user_can( $user_id, 'edit_posts' ) ) {
+			return false;
+		}
+		$me = get_current_user_id();
+		if ( $user_id === $me ) {
+			return true;
+		}
+		if ( ! current_user_can( 'edit_user', $user_id ) || ! is_user_member_of_blog( $user_id ) ) {
+			return false;
+		}
+		if ( is_super_admin( $user_id ) && ! is_super_admin( $me ) ) {
+			return false;
+		}
+		return true;
 	}
 
 	/**
@@ -289,7 +317,7 @@ class SettingsPage {
 			'revoked'     => array( 'success', __( 'Connection revoked.', 'wp-divi-mcp' ) ),
 			'saved'       => array( 'success', __( 'Settings saved.', 'wp-divi-mcp' ) ),
 			'err_label'   => array( 'error', __( 'Enter a label for the connection.', 'wp-divi-mcp' ) ),
-			'err_user'    => array( 'error', __( 'Choose a user who can edit posts.', 'wp-divi-mcp' ) ),
+			'err_user'    => array( 'error', __( 'Choose a user who can edit posts and whom you can manage on this site.', 'wp-divi-mcp' ) ),
 			'err_mode'    => array( 'error', __( 'Choose a valid mode.', 'wp-divi-mcp' ) ),
 			'err_expiry'  => array( 'error', __( 'Choose a valid expiry.', 'wp-divi-mcp' ) ),
 			'err_missing' => array( 'error', __( 'That connection no longer exists.', 'wp-divi-mcp' ) ),
@@ -407,7 +435,7 @@ class SettingsPage {
 			echo '<tr>';
 			echo '<td>' . esc_html( (string) ( $c['label'] ?? '' ) ) . '</td>';
 			echo '<td>' . esc_html( $user ? $user->display_name : __( '(deleted user)', 'wp-divi-mcp' ) ) . '</td>';
-			echo '<td>' . esc_html( 'read' === ( $c['mode'] ?? '' ) ? __( 'Read only', 'wp-divi-mcp' ) : __( 'Full access', 'wp-divi-mcp' ) ) . '</td>';
+			echo '<td>' . esc_html( 'full' === ( $c['mode'] ?? '' ) ? __( 'Full access', 'wp-divi-mcp' ) : __( 'Read only', 'wp-divi-mcp' ) ) . '</td>';
 			echo '<td>' . esc_html( self::format_time( isset( $c['created'] ) ? (int) $c['created'] : null ) ) . '</td>';
 			echo '<td>' . esc_html( null === $expires ? __( 'Never', 'wp-divi-mcp' ) : self::format_time( $expires ) );
 			if ( $expired ) {
@@ -455,6 +483,9 @@ class SettingsPage {
 		echo '<tr><th scope="row"><label for="wpdm-user">' . esc_html__( 'Acts as user', 'wp-divi-mcp' ) . '</label></th><td>';
 		echo '<select id="wpdm-user" name="user_id">';
 		foreach ( $users as $u ) {
+			if ( ! self::can_mint_for( (int) $u->ID ) ) {
+				continue;
+			}
 			printf(
 				'<option value="%d"%s>%s</option>',
 				(int) $u->ID,

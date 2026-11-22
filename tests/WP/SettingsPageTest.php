@@ -139,6 +139,125 @@ class SettingsPageTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'err_user', (string) $this->redirect );
 	}
 
+	public function test_create_for_other_user_current_user_can_edit() {
+		if ( is_multisite() ) {
+			grant_super_admin( $this->admin_id ); // Site admins cannot edit other users on multisite.
+		}
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$this->post( 'wpdm_create', $this->create_post( array( 'user_id' => (string) $editor ) ) );
+		SettingsPage::handle_create();
+		$this->assertSame( $editor, array_values( Tokens::all() )[0]['user_id'] );
+	}
+
+	public function test_create_rejects_user_current_user_cannot_edit() {
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		add_filter(
+			'map_meta_cap',
+			static function ( $caps, $cap, $uid, $args ) use ( $editor ) {
+				return ( 'edit_user' === $cap && (int) ( $args[0] ?? 0 ) === $editor ) ? array( 'do_not_allow' ) : $caps;
+			},
+			10,
+			4
+		);
+		$this->post( 'wpdm_create', $this->create_post( array( 'user_id' => (string) $editor ) ) );
+		SettingsPage::handle_create();
+		$this->assertSame( array(), Tokens::all() );
+		$this->assertStringContainsString( 'err_user', (string) $this->redirect );
+		$this->assertStringNotContainsString( 'value="' . $editor . '"', $this->render() );
+	}
+
+	public function test_create_rejects_super_admin_target_unless_super_admin() {
+		if ( is_multisite() ) {
+			$this->markTestSkipped( 'Single-site semantics; see test_multisite_site_admin_cannot_mint_for_super_admin.' );
+		}
+		$other = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$me    = $this->admin_id;
+		// Single site: is_super_admin() means delete_users. Strip it from the
+		// current admin only, so the target is a super admin and the minter is not.
+		add_filter(
+			'user_has_cap',
+			static function ( $allcaps, $caps, $args, $user ) use ( $me ) {
+				if ( (int) $user->ID === $me ) {
+					unset( $allcaps['delete_users'] );
+				}
+				return $allcaps;
+			},
+			10,
+			4
+		);
+		$this->assertTrue( is_super_admin( $other ) );
+		$this->assertFalse( is_super_admin( $me ) );
+		$this->assertTrue( current_user_can( 'edit_user', $other ) );
+
+		$this->post( 'wpdm_create', $this->create_post( array( 'user_id' => (string) $other ) ) );
+		SettingsPage::handle_create();
+		$this->assertSame( array(), Tokens::all() );
+		$this->assertStringContainsString( 'err_user', (string) $this->redirect );
+
+		// Minting for oneself is still fine.
+		$this->post( 'wpdm_create', $this->create_post() );
+		SettingsPage::handle_create();
+		$this->assertCount( 1, Tokens::all() );
+	}
+
+	public function test_create_by_super_admin_for_super_admin_ok() {
+		$other = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		if ( is_multisite() ) {
+			grant_super_admin( $this->admin_id );
+			grant_super_admin( $other );
+		}
+		$this->post( 'wpdm_create', $this->create_post( array( 'user_id' => (string) $other ) ) );
+		SettingsPage::handle_create();
+		$this->assertSame( $other, array_values( Tokens::all() )[0]['user_id'] );
+	}
+
+	/**
+	 * Run with WP_MULTISITE=1 bin/test --filter SettingsPageTest.
+	 */
+	public function test_multisite_create_rejects_user_not_member_of_this_site() {
+		if ( ! is_multisite() ) {
+			$this->markTestSkipped( 'Multisite only (WP_MULTISITE=1 bin/test).' );
+		}
+		grant_super_admin( $this->admin_id );
+		$outsider = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$blog     = self::factory()->blog->create( array( 'user_id' => $this->admin_id ) );
+		remove_user_from_blog( $outsider, get_current_blog_id() );
+		add_user_to_blog( $blog, $outsider, 'editor' );
+		// Grant edit_posts here anyway, so only the membership rule can refuse.
+		add_filter(
+			'user_has_cap',
+			static function ( $allcaps, $caps, $args, $user ) use ( $outsider ) {
+				if ( (int) $user->ID === $outsider ) {
+					$allcaps['edit_posts'] = true;
+				}
+				return $allcaps;
+			},
+			10,
+			4
+		);
+		$this->assertTrue( user_can( $outsider, 'edit_posts' ) );
+		$this->assertFalse( is_user_member_of_blog( $outsider ) );
+		$this->assertTrue( current_user_can( 'edit_user', $outsider ) );
+
+		$this->post( 'wpdm_create', $this->create_post( array( 'user_id' => (string) $outsider ) ) );
+		SettingsPage::handle_create();
+		$this->assertSame( array(), Tokens::all() );
+		$this->assertStringContainsString( 'err_user', (string) $this->redirect );
+	}
+
+	public function test_multisite_site_admin_cannot_mint_for_super_admin() {
+		if ( ! is_multisite() ) {
+			$this->markTestSkipped( 'Multisite only (WP_MULTISITE=1 bin/test).' );
+		}
+		$super = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		grant_super_admin( $super );
+		$this->assertFalse( is_super_admin( $this->admin_id ) );
+		$this->post( 'wpdm_create', $this->create_post( array( 'user_id' => (string) $super ) ) );
+		SettingsPage::handle_create();
+		$this->assertSame( array(), Tokens::all() );
+		$this->assertStringContainsString( 'err_user', (string) $this->redirect );
+	}
+
 	public function test_create_rejects_bad_input() {
 		foreach ( array(
 			array( 'label' => '   ' ),
@@ -318,6 +437,9 @@ class SettingsPageTest extends WP_UnitTestCase {
 	}
 
 	public function test_user_select_lists_only_users_who_can_edit_posts() {
+		if ( is_multisite() ) {
+			grant_super_admin( $this->admin_id ); // Site admins cannot edit other users on multisite.
+		}
 		$author     = self::factory()->user->create( array( 'role' => 'author', 'display_name' => 'Ann Author' ) );
 		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber', 'display_name' => 'Sue Subscriber' ) );
 		$html       = $this->render();

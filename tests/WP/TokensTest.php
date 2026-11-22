@@ -411,6 +411,37 @@ class TokensTest extends WP_UnitTestCase {
 		$this->assertGreaterThanOrEqual( time() - 5, $conn['last_used'] );
 	}
 
+	public function test_revoke_between_verify_and_touch_is_401() {
+		$created = Tokens::create( 'a', $this->editor_id, 'full', null );
+		$reads   = 0;
+		// verify() is the first read; touch() re-reads (second read) and must
+		// see the connection gone, as if another request revoked it meanwhile.
+		add_filter(
+			'pre_option_wpdm_connections',
+			static function ( $pre ) use ( &$reads ) {
+				++$reads;
+				return 2 === $reads ? array() : $pre;
+			}
+		);
+		$err = Tokens::authenticate( $this->request( $created['token'] ) );
+		$this->assertGreaterThanOrEqual( 2, $reads );
+		$this->assertWPError( $err );
+		$this->assertSame( 401, $err->get_error_data()['status'] );
+		$this->assertSame( 0, get_current_user_id() );
+	}
+
+	public function test_mode_other_than_full_is_read_only() {
+		$created = Tokens::create( 'a', $this->editor_id, 'full', null );
+		$stored  = get_option( 'wpdm_connections' );
+		foreach ( array( 'FULL', 'write', '', null, 'full ' ) as $mode ) {
+			$stored[ $created['id'] ]['mode'] = $mode;
+			update_option( 'wpdm_connections', $stored, false );
+			$auth = Tokens::authenticate( $this->request( $created['token'] ) );
+			$this->assertIsArray( $auth );
+			$this->assertTrue( $auth['context']->read_only, 'mode ' . var_export( $mode, true ) );
+		}
+	}
+
 	public function test_test_context_filter_is_not_an_auth_bypass() {
 		$editor_id = $this->editor_id;
 		add_filter(
