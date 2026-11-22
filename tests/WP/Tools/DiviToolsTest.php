@@ -548,6 +548,45 @@ class DiviToolsTest extends WP_UnitTestCase {
 	/**
 	 * @group divi
 	 */
+	public function test_apply_caps_external_images_and_survives_any_image_failure() {
+		$page  = $this->page();
+		$nodes = array();
+		for ( $i = 1; $i <= 32; $i++ ) {
+			$nodes[] = array( 'image' => array( 'src' => 'http://93.184.216.34/img' . $i . '.png' ) );
+		}
+		$seen    = array();
+		$blocker = static function ( $pre, $args, $url ) use ( &$seen ) {
+			$seen[] = $url;
+			if ( false !== strpos( $url, '/img1.png' ) ) {
+				throw new \Error( 'boom in test' ); // Not a ToolError.
+			}
+			return new WP_Error( 'http_request_failed', 'blocked in test' );
+		};
+
+		$dry = $this->ok( $this->admin, 'divi_apply_layout', array( 'post_id' => $page, 'layout' => self::tree( $nodes ), 'dry_run' => true ) );
+		$this->assertSame( 30, $dry['images_to_upload'] );
+		$this->assertSame( array( 'http://93.184.216.34/img31.png', 'http://93.184.216.34/img32.png' ), $dry['images_skipped'] );
+
+		add_filter( 'pre_http_request', $blocker, 10, 3 );
+		try {
+			$out = $this->ok( $this->admin, 'divi_apply_layout', array( 'post_id' => $page, 'layout' => self::tree( $nodes ) ) );
+		} finally {
+			remove_filter( 'pre_http_request', $blocker, 10 );
+		}
+		$this->assertTrue( $out['ok'] );
+		$this->assertIsInt( $out['backup_id'] );
+		$this->assertCount( 30, $out['images_failed'] );
+		$this->assertSame( 'internal_error', $out['images_failed'][0]['code'] );
+		$this->assertSame( 'http://93.184.216.34/img1.png', $out['images_failed'][0]['url'] );
+		$this->assertSame( array( 'http://93.184.216.34/img31.png', 'http://93.184.216.34/img32.png' ), $out['images_skipped'] );
+		$this->assertCount( 30, array_unique( $seen ), 'skipped URLs are never fetched' );
+		$this->assertNotEmpty( preg_grep( '/beyond the first 30/', $out['warnings'] ) );
+		$this->assertStringContainsString( 'img32.png', get_post( $page )->post_content );
+	}
+
+	/**
+	 * @group divi
+	 */
 	public function test_apply_merges_globals_without_overwrite() {
 		Globals::merge( array( array( 'gcid-wpdm-keep', array( 'color' => '#111111' ) ) ), array(), false, false );
 		$page = $this->page();

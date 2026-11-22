@@ -52,6 +52,14 @@ final class Media {
 	const MAX_PIXELS = 50000000;
 
 	/**
+	 * Names of optional DNS functions to treat as missing (tests only; PHP
+	 * builds and disable_functions can lack gethostbynamel / dns_get_record).
+	 *
+	 * @var string[]
+	 */
+	private static $unavailable = array();
+
+	/**
 	 * Download an image from a URL into the media library.
 	 *
 	 * @param string $url   http(s) URL of an image.
@@ -252,27 +260,54 @@ final class Media {
 	/**
 	 * All addresses a host name resolves to (A and AAAA).
 	 *
+	 * gethostbynamel() and dns_get_record() are optional in PHP builds (and
+	 * can be disabled), so each is guarded; with neither, the host cannot be
+	 * checked and the URL is refused instead of throwing an Error.
+	 *
 	 * @param string $host Host or IP literal.
 	 * @return string[]
+	 * @throws ToolError dns_unavailable.
 	 */
 	private static function resolve( string $host ): array {
 		if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
 			return array( $host );
 		}
-		$ips  = array();
-		$ipv4 = gethostbynamel( $host );
-		if ( is_array( $ipv4 ) ) {
-			$ips = $ipv4;
+		$has_byname = self::can( 'gethostbynamel' );
+		$has_record = self::can( 'dns_get_record' ) && defined( 'DNS_A' ) && defined( 'DNS_AAAA' );
+		if ( ! $has_byname && ! $has_record ) {
+			throw new ToolError( 'This server cannot look up host names (PHP gethostbynamel and dns_get_record are unavailable), so the URL cannot be checked and is refused. Upload the image as base64 instead.', 'dns_unavailable' );
 		}
-		$ipv6 = @dns_get_record( $host, DNS_AAAA ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-		if ( is_array( $ipv6 ) ) {
-			foreach ( $ipv6 as $record ) {
+		$ips = array();
+		if ( $has_byname ) {
+			$ipv4 = gethostbynamel( $host );
+			if ( is_array( $ipv4 ) ) {
+				$ips = $ipv4;
+			}
+		} else {
+			$a = @dns_get_record( $host, DNS_A ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			foreach ( is_array( $a ) ? $a : array() as $record ) {
+				if ( ! empty( $record['ip'] ) ) {
+					$ips[] = $record['ip'];
+				}
+			}
+		}
+		if ( $has_record ) {
+			$ipv6 = @dns_get_record( $host, DNS_AAAA ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			foreach ( is_array( $ipv6 ) ? $ipv6 : array() as $record ) {
 				if ( ! empty( $record['ipv6'] ) ) {
 					$ips[] = $record['ipv6'];
 				}
 			}
 		}
 		return array_values( array_unique( $ips ) );
+	}
+
+	/**
+	 * @param string $fn Optional function name.
+	 * @return bool Whether it can be called here.
+	 */
+	private static function can( string $fn ): bool {
+		return function_exists( $fn ) && ! in_array( $fn, self::$unavailable, true );
 	}
 
 	/**

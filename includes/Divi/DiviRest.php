@@ -48,7 +48,11 @@ final class DiviRest {
 		for ( $attempt = 0; $attempt < 2; $attempt++ ) {
 			$response = rest_do_request( self::request( $path, $body, $method ) );
 			if ( 0 === $attempt && 'invalid_nonce' === self::error_code( $response ) ) {
-				continue; // Regenerate the nonce and retry once.
+				// Retry once with a freshly created nonce. Within one nonce tick
+				// wp_create_nonce() returns the same value, so this only helps when
+				// the first request straddled a tick boundary (or a filter changed
+				// the nonce); a persistently invalid nonce fails on the retry too.
+				continue;
 			}
 			break;
 		}

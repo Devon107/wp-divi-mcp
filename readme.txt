@@ -12,6 +12,8 @@ Built-in MCP server so Claude can manage a WordPress site and build Divi 5 pages
 
 WP Divi MCP adds a Model Context Protocol (MCP) endpoint to your site. Create a connection URL under Settings > Divi MCP and add it to Claude as a custom connector. Claude can then read and manage content, media, menus and settings, and build Divi 5 pages (Divi theme required for the Divi tools).
 
+Source code, releases and issues: https://github.com/Devon107/wp-divi-mcp (by the WP Divi MCP contributors).
+
 Connection URLs contain a secret token. Treat them like passwords, revoke them when you are done, and serve the site over HTTPS.
 
 == Installation ==

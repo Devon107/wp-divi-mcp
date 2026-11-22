@@ -547,7 +547,8 @@ The pattern defaults are generic. To match a site:
   differs from its container, normal and hover, and text that differs from its own background.
 - **Images**: use the site's media (`list_media`) or `upload_media` when you have the files;
   placeholders are fine for drafts. Always give images a meaningful `alt`. Hot-linked images
-  are imported into the media library on apply unless `upload_images: false`.
+  are imported into the media library on apply unless `upload_images: false` (at most 30
+  external URLs per apply; the rest keep their URLs and are listed in `images_skipped`).
 - **Site-specific references**: dynamic content with a `post_id` and `divi/global-layout`
   only work on the site they came from. Use plain URLs.
 - **HTML**: `text.html` is rich HTML. Without the `unfiltered_html` capability

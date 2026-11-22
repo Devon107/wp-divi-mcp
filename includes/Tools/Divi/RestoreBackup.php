@@ -26,7 +26,7 @@ final class RestoreBackup extends Tool {
 	}
 
 	public function description(): string {
-		return 'Restore a backup from divi_list_backups. Page content: the current content is backed up first (backup_id), then the stored content and page CSS are written back; published, scheduled or private pages need confirm_published=true. Globals: the site\'s global colors/variables are replaced by the snapshot (also after a backup; variables added since are archived, Divi never deletes them). Theme Builder: the stored header/footer is written back into the same template (after a backup of the current one); the Default Website Template needs confirm_default_template=true, any other enabled and assigned template confirm_live_template=true. A layout that did not exist before, or a deleted template, cannot be restored this way.';
+		return 'Restore a backup from divi_list_backups. Page content: the current content is backed up first (backup_id), then the stored content and page CSS are written back; published, scheduled or private pages need confirm_published=true. Globals: the site\'s global colors/variables are replaced by the snapshot (also after a backup): colors added after the snapshot are removed, while variables added since are archived (Divi never deletes them). Theme Builder: the stored header/footer is written back into the same template (after a backup of the current one); the Default Website Template needs confirm_default_template=true, any other enabled and assigned template confirm_live_template=true. A layout that did not exist before, or a deleted template, cannot be restored this way.';
 	}
 
 	public function input_schema(): array {

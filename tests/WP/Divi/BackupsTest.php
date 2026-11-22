@@ -104,6 +104,24 @@ class BackupsTest extends WP_UnitTestCase {
 		}
 	}
 
+	public function test_inexact_save_is_refused_and_mentions_charset() {
+		$filter = static function ( $content ) {
+			return str_replace( 'X', '?', $content ); // As a utf8 table does to emoji.
+		};
+		add_filter( 'content_save_pre', $filter );
+		try {
+			Backups::save( 'post_content', 1, 'aXb' );
+			$this->fail( 'Expected backup_failed' );
+		} catch ( ToolError $e ) {
+			$this->assertSame( 'backup_failed', $e->error_code() );
+			$this->assertStringContainsString( 'charset', $e->getMessage() );
+			$this->assertStringContainsString( 'emoji', $e->getMessage() );
+		} finally {
+			remove_filter( 'content_save_pre', $filter );
+		}
+		$this->assertSame( array(), Backups::list( 1, 'post_content' ) );
+	}
+
 	public function test_prune_keeps_20() {
 		$ids = array();
 		for ( $i = 0; $i < 23; $i++ ) {

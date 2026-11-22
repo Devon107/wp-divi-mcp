@@ -379,6 +379,34 @@ class SiteToolsTest extends WP_UnitTestCase {
 		);
 	}
 
+	public function test_sideload_refuses_when_dns_lookup_is_unavailable() {
+		$this->mock_http(
+			static function () {
+				return array( 'code' => 200, 'body' => base64_decode( SiteToolsTest::PNG ) );
+			}
+		);
+		$prop = new ReflectionProperty( Media::class, 'unavailable' );
+		$prop->setAccessible( true );
+		$prop->setValue( null, array( 'gethostbynamel', 'dns_get_record' ) );
+		wp_set_current_user( $this->admin );
+		try {
+			Media::sideload( 'https://images.example.org/a.png' );
+			$this->fail( 'Expected ToolError' );
+		} catch ( ToolError $e ) {
+			$this->assertSame( 'dns_unavailable', $e->error_code() );
+		} finally {
+			$prop->setValue( null, array() );
+		}
+		$this->assertSame( array(), $this->http_requests );
+		// An IP literal needs no lookup.
+		$prop->setValue( null, array( 'gethostbynamel', 'dns_get_record' ) );
+		try {
+			$this->assertGreaterThan( 0, Media::sideload( 'http://93.184.216.34/a.png' )['id'] );
+		} finally {
+			$prop->setValue( null, array() );
+		}
+	}
+
 	public function test_sideload_downloads_a_public_image() {
 		$this->mock_http(
 			static function () {

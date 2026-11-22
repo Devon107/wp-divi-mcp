@@ -1,12 +1,12 @@
 <?php
 /**
  * Plugin Name:       WP Divi MCP
- * Plugin URI:        https://github.com/wp-divi-mcp/wp-divi-mcp
+ * Plugin URI:        https://github.com/Devon107/wp-divi-mcp
  * Description:       Built-in MCP server so Claude can manage a WordPress site and build Divi 5 pages.
  * Version:           0.1.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
- * Author:            WP Divi MCP
+ * Author:            WP Divi MCP contributors
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       wp-divi-mcp

@@ -117,7 +117,7 @@ final class Backups {
 
 		if ( get_post_field( 'post_content', $id, 'raw' ) !== $content ) {
 			wp_delete_post( $id, true );
-			throw new ToolError( 'The backup could not be stored exactly (the database or a filter changed it); nothing was overwritten.', 'backup_failed' );
+			throw new ToolError( 'The backup could not be stored exactly (the database or a filter changed it); nothing was overwritten. The database table charset may not support some characters in the content (for example emoji on a utf8 rather than utf8mb4 table).', 'backup_failed' );
 		}
 
 		update_post_meta( $id, '_wpdm_kind', $kind );

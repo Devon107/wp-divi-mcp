@@ -27,6 +27,9 @@ final class DiviSupport {
 	/** Statuses that count as published (visitors or logged-in readers see them). */
 	const PUBLISHED = array( 'publish', 'future', 'private' );
 
+	/** External image URLs downloaded per apply; the rest are listed in images_skipped. */
+	const MAX_EXTERNAL_IMAGES = 30;
+
 	// ----- schemas -----------------------------------------------------------
 
 	/**
@@ -81,7 +84,7 @@ final class DiviSupport {
 			),
 			'upload_images'     => array(
 				'type'        => 'boolean',
-				'description' => 'Import embedded images and images hosted on other sites into the media library and rewrite their URLs. Default true.',
+				'description' => 'Import embedded images and images hosted on other sites into the media library and rewrite their URLs (at most 30 external URLs per apply; the rest keep their URLs and are listed in images_skipped). Default true.',
 			),
 		);
 	}
@@ -268,6 +271,9 @@ final class DiviSupport {
 
 		$embedded = $opts['upload_images'] ? self::embedded_images( $envelope ) : array();
 		$external = $opts['upload_images'] ? self::external_images( $resolved['images'], $embedded ) : array();
+		// Downloads are slow: cap them per apply; the rest keep their original URLs.
+		$skipped  = array_slice( $external, self::MAX_EXTERNAL_IMAGES );
+		$external = array_slice( $external, 0, self::MAX_EXTERNAL_IMAGES );
 		$css      = LayoutInput::page_css( $envelope );
 		// Media.php: callers must have checked upload_files. Refuse like the globals check.
 		$cannot_upload = ( $embedded || $external ) && ! current_user_can( 'upload_files' );
@@ -287,6 +293,9 @@ final class DiviSupport {
 			if ( $cannot_upload ) {
 				$warnings[] = 'applying would import images, but your role cannot upload media; it will be refused unless upload_images=false';
 			}
+			if ( $skipped ) {
+				$warnings[] = self::skipped_warning( count( $skipped ) );
+			}
 			return array(
 				'ok'               => true,
 				'dry_run'          => true,
@@ -294,6 +303,7 @@ final class DiviSupport {
 				'report'           => $report->to_array(),
 				'globals_preview'  => $preview,
 				'images_to_upload' => count( $embedded ) + count( $external ),
+				'images_skipped'   => $skipped,
 				'content_bytes'    => strlen( $content ),
 				'page_css'         => '' !== $css,
 				'warnings'         => $warnings,
@@ -312,7 +322,7 @@ final class DiviSupport {
 			foreach ( $embedded as $url => $encoded ) {
 				try {
 					$media = Media::from_base64( $encoded, self::file_name( $url ) );
-				} catch ( ToolError $e ) {
+				} catch ( \Throwable $e ) { // One image never fails the apply after the backup.
 					$failed[] = self::failure( $url, $e );
 					continue;
 				}
@@ -326,7 +336,7 @@ final class DiviSupport {
 			foreach ( $external as $url ) {
 				try {
 					$media = Media::sideload( $url );
-				} catch ( ToolError $e ) {
+				} catch ( \Throwable $e ) { // One image never fails the apply after the backup.
 					$failed[] = self::failure( $url, $e );
 					continue;
 				}
@@ -357,6 +367,9 @@ final class DiviSupport {
 		foreach ( $failed as $f ) {
 			$warnings[] = 'image not imported, still loads from ' . $f['url'] . ': ' . $f['error'];
 		}
+		if ( $skipped ) {
+			$warnings[] = self::skipped_warning( count( $skipped ) );
+		}
 		if ( $globals ) {
 			foreach ( array_merge( $globals['colors']['conflicts'], $globals['variables']['conflicts'] ) as $conflict ) {
 				$warnings[] = 'global ' . $conflict['id'] . ' already exists on the site with another value or type; the site value was kept';
@@ -373,6 +386,7 @@ final class DiviSupport {
 				'backup_id'       => $backup_id,
 				'images_uploaded' => $uploaded,
 				'images_failed'   => $failed,
+				'images_skipped'  => $skipped,
 				'globals'         => $globals,
 				'page_css'        => '' !== $css,
 				'warnings'        => $warnings,
@@ -519,12 +533,20 @@ final class DiviSupport {
 	 * @param ToolError $e   Error.
 	 * @return array{url: string, code: string, error: string}
 	 */
-	private static function failure( string $url, ToolError $e ): array {
+	private static function failure( string $url, \Throwable $e ): array {
 		return array(
 			'url'   => $url,
-			'code'  => $e->error_code(),
+			'code'  => $e instanceof ToolError ? $e->error_code() : 'internal_error',
 			'error' => $e->getMessage(),
 		);
+	}
+
+	/**
+	 * @param int $count Skipped external images.
+	 * @return string
+	 */
+	private static function skipped_warning( int $count ): string {
+		return $count . ' external image(s) beyond the first ' . self::MAX_EXTERNAL_IMAGES . ' were not imported and still load from their original URLs (images_skipped); upload them with upload_media and apply again to import them';
 	}
 
 	private function __construct() {}
