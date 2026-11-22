@@ -42,6 +42,10 @@ final class Registrar {
 			new RestoreBackup(),
 			new SetPageCss(),
 			new FindIcon(),
+			new ListThemeBuilderTemplates(),
+			new CreateThemeBuilderTemplate(),
+			new DeleteThemeBuilderTemplate(),
+			new SetThemeBuilderLayout(),
 		);
 	}
 

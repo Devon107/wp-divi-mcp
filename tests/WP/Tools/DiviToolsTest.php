@@ -34,6 +34,10 @@ class DiviToolsTest extends WP_UnitTestCase {
 		'divi_restore_backup',
 		'divi_set_page_css',
 		'divi_find_icon',
+		'divi_list_theme_builder_templates',
+		'divi_create_theme_builder_template',
+		'divi_delete_theme_builder_template',
+		'divi_set_theme_builder_layout',
 	);
 
 	const ALWAYS = array( 'divi_build_layout', 'divi_validate_layout', 'divi_find_icon' );
@@ -202,8 +206,8 @@ class DiviToolsTest extends WP_UnitTestCase {
 		sort( $expected );
 		$this->assertSame( $expected, $names );
 
-		$read_only   = array( 'divi_status', 'divi_get_globals', 'divi_build_layout', 'divi_validate_layout', 'divi_export_page', 'divi_inspect_page', 'divi_list_backups', 'divi_find_icon' );
-		$destructive = array( 'divi_apply_layout', 'divi_restore_backup', 'divi_merge_globals', 'divi_set_page_css' );
+		$read_only   = array( 'divi_status', 'divi_get_globals', 'divi_build_layout', 'divi_validate_layout', 'divi_export_page', 'divi_inspect_page', 'divi_list_backups', 'divi_find_icon', 'divi_list_theme_builder_templates' );
+		$destructive = array( 'divi_apply_layout', 'divi_restore_backup', 'divi_merge_globals', 'divi_set_page_css', 'divi_delete_theme_builder_template', 'divi_set_theme_builder_layout' );
 		foreach ( $tools as $name => $tool ) {
 			$this->assertSame( in_array( $name, $read_only, true ), $tool->read_only(), $name . ' read_only' );
 			$this->assertSame( in_array( $name, $destructive, true ), $tool->destructive(), $name . ' destructive' );
@@ -676,9 +680,9 @@ class DiviToolsTest extends WP_UnitTestCase {
 	/**
 	 * @group divi
 	 */
-	public function test_restore_theme_builder_not_supported_yet() {
-		$id = Backups::save( 'theme_builder', 0, 'x' );
-		$this->fails( $this->admin, 'divi_restore_backup', array( 'backup_id' => $id ), 'not_supported_yet' );
+	public function test_restore_theme_builder_without_template_is_refused() {
+		$id = Backups::save( 'theme_builder', 0, 'x', array( 'layout_type' => 'header' ) );
+		$this->fails( $this->admin, 'divi_restore_backup', array( 'backup_id' => $id ), 'template_missing' );
 	}
 
 	/**
