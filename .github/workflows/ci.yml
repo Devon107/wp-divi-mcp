@@ -43,6 +43,14 @@ jobs:
           composer install --no-interaction --prefer-dist
           npm ci
       - name: Start wp-env (PHP 8.2, from .wp-env.json)
-        run: npx wp-env start
+        # MySQL sometimes is not ready when wp-env first runs WP-CLI
+        # ("Error establishing a database connection"), so retry a few times.
+        run: |
+          for attempt in 1 2 3; do
+            npx wp-env start && exit 0
+            echo "wp-env start failed (attempt $attempt), retrying in 15s"
+            sleep 15
+          done
+          exit 1
       - name: Run tests (Divi group excluded)
         run: bin/test
