@@ -80,7 +80,7 @@ Todo se hace en **Ajustes → Divi MCP**:
 
 - **Connections**: la lista de conexiones con su usuario, modo, caducidad y último uso. El botón **Revoke** corta una conexión al instante: la URL deja de funcionar y no se puede reactivar (se crea otra nueva).
 - **Endpoint**: la casilla **Disable endpoint** apaga el servidor entero. Mientras esté marcada, todas las conexiones reciben un error 503. Es el interruptor de emergencia; al desmarcarla todo vuelve a funcionar con las mismas URLs.
-- **Activity**: el registro de actividad con cada llamada de Claude (herramienta, usuario, resultado). Se conserva 30 días. Revísalo después de una sesión de trabajo para ver qué se hizo.
+- **Activity**: el registro de actividad con cada llamada de Claude. Las columnas son Time (fecha y hora), Connection (la etiqueta de la conexión), Tool (la herramienta), Target (sobre qué actuó), OK (si salió bien) y ms (duración). No hay columna de usuario: para saber con qué usuario actuó, mira la conexión en la lista. Se conserva 30 días. Revísalo después de una sesión de trabajo para ver qué se hizo.
 
 ## 5. Qué puede y qué no puede hacer Claude
 
@@ -94,9 +94,11 @@ Todo se hace en **Ajustes → Divi MCP**:
 
 - Instalar, activar, actualizar ni borrar plugins o temas.
 - Crear, editar ni borrar usuarios.
-- Borrar nada de forma definitiva: solo manda a la papelera (y puede restaurar desde ella).
+- Borrar entradas o páginas de forma definitiva: solo van a la papelera y se pueden restaurar (no hay herramienta para borrar medios ni términos). Hay dos excepciones que debes conocer:
+  - **Elementos de menú**: al editar un menú, `update_menu_items` borra de verdad los elementos que Claude quite. Esa edición **no se puede deshacer** desde WordPress; para recuperarlos tendrías que volver a crearlos a mano. Antes de dejar que Claude reorganice un menú importante, apunta cómo está o pídele que te lo describa primero.
+  - **Plantillas del Theme Builder**: `divi_delete_theme_builder_template` manda la plantilla a la papelera de Divi y la desvincula del sitio. La plantilla en sí no se restaura con `divi_restore_backup` (el contenido de sus diseños de cabecera, cuerpo y pie sí queda guardado en las copias de seguridad). La plantilla por defecto del sitio no se puede borrar.
 - Cambiar ajustes que no estén en la lista permitida (por ejemplo, la estructura de enlaces permanentes es solo de lectura).
-- Tocar otras partes del Theme Builder que no sean cabecera y pie: solo permite establecer el diseño de la cabecera y el pie.
+- Tocar otras partes del Theme Builder que no sean cabecera y pie: solo permite establecer el diseño de la cabecera y el pie de una plantilla (más crear, listar y borrar plantillas).
 
 **Seguridad añadida en Divi**:
 
@@ -111,7 +113,12 @@ Claude debería preguntarte antes de usar cualquiera de estas dos confirmaciones
 - **La URL lleva el secreto en la propia dirección.** Eso significa que el token puede acabar en los registros de acceso del servidor (y de cualquier proxy o CDN intermedio). Quien pueda leer esos registros podría reutilizarlo. Por eso conviene dar caducidad a las conexiones y revocarlas al terminar.
 - **Revoca la conexión cuando termines** el trabajo, sobre todo si compartiste la URL o la pegaste en una herramienta que no controlas.
 - **Usa modo solo lectura para auditorías**, revisiones de contenido o cuando solo quieras que Claude analice el sitio.
-- **Prefiere un usuario editor a un administrador** cuando no necesites que Claude toque los ajustes globales ni las opciones del tema. Las herramientas de ajustes (`get_options`, `update_options`) y las de globales y Theme Builder de Divi requieren permisos de administrador; con un usuario editor ni siquiera aparecen.
+- **Prefiere un usuario editor a un administrador** cuando no necesites que Claude toque los ajustes globales ni las opciones del tema. Con un usuario editor, estas herramientas ni siquiera aparecen, porque requieren permisos de administrador:
+  - ajustes del sitio: `get_options`, `update_options`;
+  - menús: `list_menus`, `get_menu`, `update_menu_items`;
+  - globales y Theme Builder de Divi: `divi_get_globals`, `divi_merge_globals` y las cuatro herramientas de plantillas del Theme Builder.
+
+  Con un editor siguen disponibles el contenido, los medios, los términos, los comentarios y las herramientas de páginas de Divi (`divi_create_page`, `divi_apply_layout`, `divi_export_page` y similares). Dos matices: `divi_list_backups` solo muestra copias de las páginas que ese usuario puede editar (las copias de plantillas del Theme Builder requieren permisos de administrador), y un diseño que añada o cambie colores o variables globales se rechaza para un editor salvo que se aplique sin sincronizar los globales.
 - **HTTPS es obligatorio.** Sin HTTPS el endpoint rechaza las peticiones, y la pantalla de ajustes te lo indica.
 - **Detrás de un proxy o un CDN**, el límite de intentos fallidos (10 por minuto y por IP) se aplica a la IP que ve WordPress. Si todas las peticiones llegan con la misma IP del proxy, un atacante que falle muchas veces puede bloquear también a los clientes legítimos durante un minuto. Si te pasa, configura el proxy para que WordPress vea la IP real del visitante.
 - **No pegues la URL en chats, tickets ni repositorios.** Si crees que se ha filtrado, revócala y crea otra.
@@ -139,5 +146,5 @@ Después de cada sesión, abre **Ajustes → Divi MCP → Activity** para ver lo
 | Claude dice que no puede conectar | La URL está incompleta (falta `key=...`), la conexión está revocada o caducada, o el sitio no usa HTTPS. |
 | Error 503 | Está marcada la casilla **Disable endpoint**. |
 | Error 429 | Demasiados intentos fallidos desde la misma IP; espera un minuto. |
-| No aparecen las herramientas de Divi | El tema Divi 5 no está activo, o el usuario de la conexión no tiene permisos de administrador. |
+| No aparecen las herramientas de Divi | El tema Divi 5 no está activo (solo quedan `divi_build_layout`, `divi_validate_layout` y `divi_find_icon`), o el usuario de la conexión no tiene permisos de administrador (faltan las de globales y Theme Builder). |
 | No puede modificar una página | La conexión está en modo **Read only**, o la página está publicada y falta la confirmación. |

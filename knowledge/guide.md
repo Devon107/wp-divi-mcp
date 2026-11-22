@@ -31,7 +31,7 @@ attribute shapes are in `divi://attributes`, and each module's settings are in
 | `divi_list_theme_builder_templates`, `divi_create_theme_builder_template`, `divi_set_theme_builder_layout`, `divi_delete_theme_builder_template` | Theme Builder headers and footers |
 
 WordPress tools: `site_info`, `list_posts` (default post type page), `get_post`, `create_post`,
-`update_post`, `trash_post` / `restore_post` (deletes are trash-only), `search`, `list_media` /
+`update_post`, `trash_post` / `restore_post` (posts and pages are only trashed), `search`, `list_media` /
 `upload_media` / `update_media`, menus (`list_menus`, `get_menu`, `update_menu_items`), terms,
 comments, options, users. Do not edit a Divi page's content with `update_post`; use the Divi tools.
 
@@ -571,8 +571,10 @@ The pattern defaults are generic. To match a site:
   every change. `divi_list_backups` lists them; `divi_restore_backup` with `backup_id` restores
   one (after backing up the current state). Tell the user the `backup_id` when you change an
   existing page.
-- **Deletes are trash-only**: `trash_post` moves to the trash, `restore_post` brings it back.
-  Nothing is deleted permanently.
+- **Posts and pages are trash-only**: `trash_post` moves to the trash, `restore_post` brings it back.
+  Two exceptions: `update_menu_items` permanently deletes the menu items it removes (confirm with
+  the user before removing items), and `divi_delete_theme_builder_template` moves a Theme Builder
+  template to Divi's trash (the layouts' content stays in the backups).
 - **Globals**: `divi_apply_layout` never overwrites an existing global value unless you pass
   `overwrite_globals: true`; do that only when the user asked to change a site color.
 

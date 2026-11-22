@@ -158,6 +158,52 @@ class Server {
 	}
 
 	/**
+	 * Prepare a JSON Schema for the wire. PHP encodes an empty array as JSON [], but an
+	 * empty subschema or an empty "properties" map must be an object ({}); strict clients
+	 * reject the tool otherwise. Only schema positions are touched: genuine lists such as
+	 * "required", "enum" or "examples" and values such as "const" or "default" are kept.
+	 *
+	 * @param mixed $schema A schema (array) or a boolean schema.
+	 * @return mixed
+	 */
+	public static function wire_schema( $schema ) {
+		if ( ! is_array( $schema ) ) {
+			return $schema;
+		}
+		if ( array() === $schema ) {
+			return new \stdClass();
+		}
+		// Keywords holding one subschema.
+		foreach ( array( 'items', 'additionalProperties', 'unevaluatedProperties', 'unevaluatedItems', 'not', 'if', 'then', 'else', 'contains', 'propertyNames' ) as $key ) {
+			if ( array_key_exists( $key, $schema ) ) {
+				$schema[ $key ] = self::wire_schema( $schema[ $key ] );
+			}
+		}
+		// Keywords holding a map name => subschema.
+		foreach ( array( 'properties', 'patternProperties', '$defs', 'definitions', 'dependentSchemas' ) as $key ) {
+			if ( ! array_key_exists( $key, $schema ) || ! is_array( $schema[ $key ] ) ) {
+				continue;
+			}
+			if ( array() === $schema[ $key ] ) {
+				$schema[ $key ] = new \stdClass();
+				continue;
+			}
+			foreach ( $schema[ $key ] as $name => $sub ) {
+				$schema[ $key ][ $name ] = self::wire_schema( $sub );
+			}
+		}
+		// Keywords holding a list of subschemas.
+		foreach ( array( 'anyOf', 'oneOf', 'allOf', 'prefixItems' ) as $key ) {
+			if ( isset( $schema[ $key ] ) && is_array( $schema[ $key ] ) ) {
+				foreach ( $schema[ $key ] as $i => $sub ) {
+					$schema[ $key ][ $i ] = self::wire_schema( $sub );
+				}
+			}
+		}
+		return $schema;
+	}
+
+	/**
 	 * @param Context $ctx Context.
 	 * @return array
 	 */
@@ -171,10 +217,7 @@ class Server {
 					'properties' => new \stdClass(),
 				);
 			}
-			// An empty PHP array encodes as JSON [], which strict clients reject ("properties" must be an object).
-			if ( isset( $schema['properties'] ) && array() === $schema['properties'] ) {
-				$schema['properties'] = new \stdClass();
-			}
+			$schema = self::wire_schema( $schema );
 			$out[] = array(
 				'name'        => $tool->name(),
 				'description' => $tool->description(),
