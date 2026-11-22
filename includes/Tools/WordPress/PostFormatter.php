@@ -43,7 +43,7 @@ final class PostFormatter {
 			'title'    => $post->post_title,
 			'slug'     => $post->post_name,
 			'link'     => $link,
-			'modified' => (string) get_post_modified_time( 'c', true, $post ),
+			'modified' => self::modified( $post ),
 			'parent'   => (int) $post->post_parent,
 			'divi'     => $divi,
 		);
@@ -51,6 +51,26 @@ final class PostFormatter {
 			$out['edit_divi'] = add_query_arg( 'et_fb', '1', $link );
 		}
 		return $out;
+	}
+
+	/**
+	 * Last-modified time in UTC, ISO 8601.
+	 *
+	 * New drafts keep a zeroed post_modified_gmt until they are published, so fall
+	 * back to the local post_modified (interpreted in the site timezone).
+	 *
+	 * @param \WP_Post $post Post.
+	 * @return string Empty only when the post has no modified date at all.
+	 */
+	private static function modified( \WP_Post $post ): string {
+		$datetime = get_post_datetime( $post, 'modified', 'gmt' );
+		if ( false === $datetime ) {
+			$datetime = get_post_datetime( $post, 'modified', 'local' );
+		}
+		if ( false === $datetime ) {
+			return '';
+		}
+		return $datetime->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'c' );
 	}
 
 	/**
@@ -87,6 +107,7 @@ final class PostFormatter {
 			self::summary( $post ),
 			array(
 				'content_raw'    => $post->post_content,
+				'content_length' => strlen( $post->post_content ),
 				'excerpt'        => $post->post_excerpt,
 				'terms'          => $terms ? $terms : new \stdClass(),
 				'featured_media' => (int) get_post_thumbnail_id( $post->ID ),

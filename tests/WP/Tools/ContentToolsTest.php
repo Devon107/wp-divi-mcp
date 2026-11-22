@@ -675,6 +675,35 @@ class ContentToolsTest extends WP_UnitTestCase {
 		$this->assertArrayNotHasKey( 'edit_divi', $plain );
 	}
 
+	public function test_get_post_can_leave_out_the_content() {
+		$id = $this->make_divi_page();
+		$len = strlen( get_post( $id )->post_content );
+		$this->assertGreaterThan( 0, $len );
+
+		$full = $this->ok( $this->admin, 'get_post', array( 'id' => $id ) );
+		$this->assertSame( get_post( $id )->post_content, $full['content_raw'] );
+		$this->assertSame( $len, $full['content_length'] );
+
+		$lean = $this->ok( $this->admin, 'get_post', array( 'id' => $id, 'include_content' => false ) );
+		$this->assertArrayNotHasKey( 'content_raw', $lean );
+		$this->assertSame( $len, $lean['content_length'] );
+		$this->assertSame( $id, $lean['id'] );
+		$this->assertArrayHasKey( 'meta', $lean );
+	}
+
+	public function test_modified_is_set_for_new_drafts() {
+		$data = $this->ok( $this->admin, 'create_post', array( 'post_type' => 'post', 'title' => 'Draft date' ) );
+		$this->assertSame( 'draft', $data['status'] );
+		$this->assertNotSame( '', $data['modified'] );
+		$parsed = strtotime( $data['modified'] );
+		$this->assertNotFalse( $parsed );
+		$this->assertLessThan( 120, abs( time() - $parsed ) );
+		$this->assertStringEndsWith( '+00:00', $data['modified'] );
+
+		$listed = $this->ok( $this->admin, 'list_posts', array( 'post_type' => 'post', 'status' => 'draft' ) );
+		$this->assertNotSame( '', $listed['items'][0]['modified'] );
+	}
+
 	public function test_get_post_missing_and_unexposed_types() {
 		$this->fails( $this->admin, 'get_post', array( 'id' => 999999 ) );
 		$this->assertSame( 'not_found', $this->error_code( $this->admin, 'get_post', array( 'id' => 999999 ) ) );
