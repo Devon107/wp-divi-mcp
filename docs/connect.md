@@ -105,8 +105,9 @@ Todo se hace en **Ajustes → Divi MCP**:
 - Antes de cambiar una página Divi se guarda una copia (copia de seguridad) que se puede restaurar.
 - Para modificar una página que ya está publicada, programada o privada, Claude tiene que pedir confirmación explícita (`confirm_published`). Los diseños nuevos van siempre a un borrador.
 - Para cambiar la plantilla por defecto del sitio (la cabecera y el pie de todo el sitio) también hace falta una confirmación expresa (`confirm_default_template`).
+- Para cambiar, restaurar o borrar cualquier otra plantilla del Theme Builder que esté activa y asignada a alguna parte del sitio (`use_on`), hace falta `confirm_live_template`. Si falta, Claude recibe un error que dice en qué páginas está en uso la plantilla.
 
-Claude debería preguntarte antes de usar cualquiera de estas dos confirmaciones. Si no quieres que las use, dilo al empezar la conversación.
+Claude debería preguntarte antes de usar cualquiera de estas confirmaciones. Si no quieres que las use, dilo al empezar la conversación.
 
 ## 6. Notas de seguridad
 

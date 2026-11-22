@@ -180,7 +180,7 @@ class KnowledgeTest extends WP_UnitTestCase {
 	public function test_instructions_under_1500_chars() {
 		$text = Instructions::text();
 		$this->assertLessThanOrEqual( 1500, strlen( $text ) );
-		foreach ( array( 'divi://guide', 'divi_status', 'divi_get_globals', 'divi_validate_layout', 'divi_create_page', 'divi_apply_layout', 'dry_run', 'draft', 'confirm_published', 'confirm_default_template', 'trash', 'blurb' ) as $needle ) {
+		foreach ( array( 'divi://guide', 'divi_status', 'divi_get_globals', 'divi_validate_layout', 'divi_create_page', 'divi_apply_layout', 'dry_run', 'draft', 'confirm_published', 'confirm_default_template', 'confirm_live_template', 'trash', 'blurb' ) as $needle ) {
 			$this->assertStringContainsString( $needle, $text );
 		}
 		$this->assertSame( $text, apply_filters( 'wpdm_instructions', '' ), 'hooked on wpdm_instructions' );

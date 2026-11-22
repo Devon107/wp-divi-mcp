@@ -26,7 +26,7 @@ final class RestoreBackup extends Tool {
 	}
 
 	public function description(): string {
-		return 'Restore a backup from divi_list_backups. Page content: the current content is backed up first (backup_id), then the stored content and page CSS are written back; published, scheduled or private pages need confirm_published=true. Globals: the site\'s global colors/variables are replaced by the snapshot (also after a backup; variables added since are archived, Divi never deletes them). Theme Builder: the stored header/footer is written back into the same template (after a backup of the current one); the Default Website Template needs confirm_default_template=true. A layout that did not exist before, or a deleted template, cannot be restored this way.';
+		return 'Restore a backup from divi_list_backups. Page content: the current content is backed up first (backup_id), then the stored content and page CSS are written back; published, scheduled or private pages need confirm_published=true. Globals: the site\'s global colors/variables are replaced by the snapshot (also after a backup; variables added since are archived, Divi never deletes them). Theme Builder: the stored header/footer is written back into the same template (after a backup of the current one); the Default Website Template needs confirm_default_template=true, any other enabled and assigned template confirm_live_template=true. A layout that did not exist before, or a deleted template, cannot be restored this way.';
 	}
 
 	public function input_schema(): array {
@@ -39,6 +39,7 @@ final class RestoreBackup extends Tool {
 				),
 				'confirm_published'        => DiviSupport::confirm_property(),
 				'confirm_default_template' => ThemeBuilderSupport::confirm_property(),
+				'confirm_live_template'    => ThemeBuilderSupport::confirm_live_property(),
 			),
 			array( 'backup_id' )
 		);
@@ -77,7 +78,7 @@ final class RestoreBackup extends Tool {
 					Globals::restore( $snapshot, $label )
 				);
 			case 'theme_builder':
-				return self::restore_theme_builder( $backup, (bool) ( $args['confirm_default_template'] ?? false ), $ctx );
+				return self::restore_theme_builder( $backup, $args, $ctx );
 			default:
 				throw new ToolError( 'Restoring ' . $backup['kind'] . ' backups is not supported.', 'not_supported' );
 		}
@@ -144,13 +145,13 @@ final class RestoreBackup extends Tool {
 	/**
 	 * Upsert a stored header/footer back into the same template slot (live=true).
 	 *
-	 * @param array   $backup  Backup with content.
-	 * @param bool    $confirm confirm_default_template.
-	 * @param Context $ctx     Context.
+	 * @param array   $backup Backup with content.
+	 * @param array   $args   Validated args (confirm_default_template, confirm_live_template).
+	 * @param Context $ctx    Context.
 	 * @return array
 	 * @throws ToolError template_missing, not_supported, confirmation_required, or a Divi failure.
 	 */
-	private static function restore_theme_builder( array $backup, bool $confirm, Context $ctx ): array {
+	private static function restore_theme_builder( array $backup, array $args, Context $ctx ): array {
 		$meta        = $backup['meta'];
 		$template_id = (int) $backup['source_id'];
 		$type        = (string) ( $meta['layout_type'] ?? '' );
@@ -175,7 +176,7 @@ final class RestoreBackup extends Tool {
 		if ( ! in_array( $type, ThemeBuilderSupport::LAYOUT_TYPES, true ) ) {
 			throw new ToolError( 'Divi can only write header and footer layouts; the ' . ( '' === $type ? 'unknown' : $type ) . ' layout in backup ' . $backup['id'] . ' must be restored in Divi > Theme Builder.', 'not_supported', array( 'template_id' => $template_id ) );
 		}
-		ThemeBuilderSupport::check_default( $template, $confirm );
+		ThemeBuilderSupport::check_writable( $template, $args );
 
 		$safety = ThemeBuilderSupport::backup_slot( $template, $type, $ctx, array( 'reason' => 'before_restore' ) );
 		try {

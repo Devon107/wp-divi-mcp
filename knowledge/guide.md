@@ -160,7 +160,9 @@ Build them like any layout (one section; a header usually needs the `divi/menu` 
 that applies nowhere) → `divi_set_theme_builder_layout` with `template_id`, `layout_type`
 (`header` or `footer` only) and `layout`. The user assigns it in Divi > Theme Builder.
 The Default Website Template changes the whole site: touch it only after the user explicitly
-agrees, with `confirm_default_template: true`.
+agrees, with `confirm_default_template: true`. Any other template that is enabled and assigned
+(`use_on` not empty in `divi_list_theme_builder_templates`) is live on those pages: setting its
+layout, restoring into it or deleting it needs `confirm_live_template: true`, after asking.
 
 ## 4. The layout tree
 
@@ -565,6 +567,9 @@ The pattern defaults are generic. To match a site:
 - **`confirm_default_template: true`** is required to change the Default Website Template
   (`divi_set_theme_builder_layout`, `divi_restore_backup`): it changes the header/footer of the
   whole site. Ask first; prefer a new template (`divi_create_theme_builder_template`).
+- **`confirm_live_template: true`** is required to change or delete any other Theme Builder
+  template that is enabled and assigned (`use_on`): `divi_set_theme_builder_layout`,
+  `divi_restore_backup`, `divi_delete_theme_builder_template`. The error lists where it is live.
 - **Theme Builder**: only `header` and `footer` layouts can be set; deleting a template backs up
   its layouts, and the Default Website Template cannot be deleted.
 - **Backups**: page content, page CSS, globals and Theme Builder layouts are backed up before

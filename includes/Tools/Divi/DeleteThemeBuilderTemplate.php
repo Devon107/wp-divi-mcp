@@ -24,7 +24,7 @@ final class DeleteThemeBuilderTemplate extends Tool {
 	}
 
 	public function description(): string {
-		return 'Delete a template of the published Divi Theme Builder (Divi moves it to the trash and detaches it). The Default Website Template is refused. The content of each of its header/body/footer layouts is backed up first (backups); the template itself cannot be restored by divi_restore_backup, but the layout content stays recoverable.';
+		return 'Delete a template of the published Divi Theme Builder (Divi moves it to the trash and detaches it). The Default Website Template is refused; a template that is enabled and assigned (use_on) needs confirm_live_template=true. The content of each of its header/body/footer layouts is backed up first (backups); the template itself cannot be restored by divi_restore_backup, but the layout content stays recoverable.';
 	}
 
 	public function input_schema(): array {
@@ -35,6 +35,7 @@ final class DeleteThemeBuilderTemplate extends Tool {
 					'minimum'     => 1,
 					'description' => 'Template id (divi_list_theme_builder_templates).',
 				),
+				'confirm_live_template' => ThemeBuilderSupport::confirm_live_property(),
 			),
 			array( 'template_id' )
 		);
@@ -55,6 +56,8 @@ final class DeleteThemeBuilderTemplate extends Tool {
 		if ( ThemeBuilderSupport::is_default( $template ) ) {
 			throw new ToolError( 'Refusing to delete the Default Website Template (template ' . $args['template_id'] . '): it holds the header and footer of the whole site.', 'refused', array( 'template_id' => $args['template_id'] ) );
 		}
+
+		ThemeBuilderSupport::check_live( $template, (bool) ( $args['confirm_live_template'] ?? false ) );
 
 		$backups = array();
 		foreach ( ThemeBuilderSupport::SLOTS as $slot ) {

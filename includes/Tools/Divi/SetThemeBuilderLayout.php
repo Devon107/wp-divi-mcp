@@ -25,7 +25,7 @@ final class SetThemeBuilderLayout extends Tool {
 	}
 
 	public function description(): string {
-		return 'Create or replace the header or footer of a template of the published Divi Theme Builder, from a layout (tree, markup or Portability export; it needs a section with Divi modules and no Post Content module). Order: template must exist -> the Default Website Template needs confirm_default_template=true (it changes the whole site) -> validate (errors: nothing changes) -> back up the current layout (backup_id) -> write through Divi. Safer: divi_create_theme_builder_template, set the layout there, review, then assign it in Divi > Theme Builder. Undo with divi_restore_backup. Body layouts are not supported by Divi\'s API.';
+		return 'Create or replace the header or footer of a template of the published Divi Theme Builder, from a layout (tree, markup or Portability export; it needs a section with Divi modules and no Post Content module). Order: template must exist -> the Default Website Template needs confirm_default_template=true (it changes the whole site); any other template that is enabled and assigned (use_on) needs confirm_live_template=true -> validate (errors: nothing changes) -> back up the current layout (backup_id) -> write through Divi. Safer: divi_create_theme_builder_template, set the layout there, review, then assign it in Divi > Theme Builder. Undo with divi_restore_backup. Body layouts are not supported by Divi\'s API.';
 	}
 
 	public function input_schema(): array {
@@ -42,6 +42,7 @@ final class SetThemeBuilderLayout extends Tool {
 					'description' => 'Which slot to set: header or footer.',
 				),
 				'confirm_default_template' => ThemeBuilderSupport::confirm_property(),
+				'confirm_live_template'    => ThemeBuilderSupport::confirm_live_property(),
 			),
 			array( 'template_id', 'layout_type' ),
 			true
@@ -61,7 +62,7 @@ final class SetThemeBuilderLayout extends Tool {
 		$args     = PostSupport::validate( $this->input_schema(), $args );
 		$type     = $args['layout_type'];
 		$template = ThemeBuilderSupport::require_template( $args['template_id'] );
-		ThemeBuilderSupport::check_default( $template, (bool) ( $args['confirm_default_template'] ?? false ) );
+		ThemeBuilderSupport::check_writable( $template, $args );
 		$resolved = LayoutInput::resolve( $args );
 
 		$backup = ThemeBuilderSupport::backup_slot( $template, $type, $ctx );

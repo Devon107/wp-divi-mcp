@@ -17,6 +17,7 @@ use WPDM\Mcp\Context;
 use WPDM\Mcp\Registry;
 use WPDM\Mcp\Server;
 use WPDM\Tools\Divi\Registrar;
+use WPDM\Tools\Divi\ThemeBuilderSupport;
 
 class ThemeBuilderToolsTest extends WP_UnitTestCase {
 
@@ -62,6 +63,7 @@ class ThemeBuilderToolsTest extends WP_UnitTestCase {
 	public function tear_down() {
 		wp_set_current_user( $this->admin );
 		foreach ( $this->sandboxes as $id ) {
+			delete_post_meta( $id, '_et_use_on' );
 			if ( 'publish' === get_post_status( $id ) ) {
 				DiviRest::call( '/outside-vb/theme-builder/delete-template', array( 'live' => true, 'template_id' => $id ) );
 			}
@@ -180,6 +182,48 @@ class ThemeBuilderToolsTest extends WP_UnitTestCase {
 		}
 		foreach ( self::TB_TOOLS as $name ) {
 			$this->assertNotContains( $name, $names );
+		}
+	}
+
+	public function test_is_default_fails_closed_without_default_key() {
+		$this->assertTrue( ThemeBuilderSupport::is_default( array( 'id' => 123 ) ), 'missing key => default' );
+		$this->assertTrue( ThemeBuilderSupport::is_default( array( 'id' => 123, 'default' => true ) ) );
+		$this->assertFalse( ThemeBuilderSupport::is_default( array( 'id' => 0, 'default' => false ) ) );
+
+		$post = self::factory()->post->create();
+		$this->assertFalse( ThemeBuilderSupport::is_default( array( 'id' => $post, 'default' => false ) ) );
+		update_post_meta( $post, '_et_default', '1' );
+		$this->assertTrue( ThemeBuilderSupport::is_default( array( 'id' => $post, 'default' => false ) ), '_et_default meta wins' );
+	}
+
+	public function test_live_on_needs_enabled_and_use_on() {
+		$this->assertSame( array(), ThemeBuilderSupport::live_on( array( 'id' => 1, 'enabled' => true, 'use_on' => array() ) ) );
+		$this->assertSame( array(), ThemeBuilderSupport::live_on( array( 'id' => 1, 'enabled' => false, 'use_on' => array( 'singular:post_type:page:all' ) ) ) );
+		$this->assertSame( array( 'singular:post_type:page:all' ), ThemeBuilderSupport::live_on( array( 'id' => 1, 'enabled' => true, 'use_on' => array( 'singular:post_type:page:all' ) ) ) );
+		$this->assertSame( array( 'archive:all' ), ThemeBuilderSupport::live_on( array( 'id' => 1, 'use_on' => array( 'archive:all' ) ) ), 'missing enabled => enabled' );
+
+		$template = array( 'id' => 1, 'default' => false, 'enabled' => true, 'use_on' => array( 'archive:all' ) );
+		try {
+			ThemeBuilderSupport::check_live( $template, false );
+			$this->fail( 'Expected confirmation_required' );
+		} catch ( \WPDM\Mcp\ToolError $e ) {
+			$this->assertSame( 'confirmation_required', $e->error_code() );
+			$this->assertStringContainsString( 'live on: archive:all', $e->getMessage() );
+		}
+		ThemeBuilderSupport::check_live( $template, true );
+		// The default template is guarded by confirm_default_template alone.
+		ThemeBuilderSupport::check_live( array_merge( $template, array( 'default' => true ) ), false );
+		$this->assertTrue( true );
+	}
+
+	public function test_live_flag_in_schemas() {
+		$tools = array();
+		foreach ( Registrar::tools() as $tool ) {
+			$tools[ $tool->name() ] = $tool;
+		}
+		foreach ( array( 'divi_set_theme_builder_layout', 'divi_delete_theme_builder_template', 'divi_restore_backup' ) as $name ) {
+			$schema = json_decode( wp_json_encode( $tools[ $name ]->input_schema() ), true );
+			$this->assertSame( 'boolean', $schema['properties']['confirm_live_template']['type'], $name );
 		}
 	}
 
@@ -328,6 +372,75 @@ class ThemeBuilderToolsTest extends WP_UnitTestCase {
 		$err = $this->fails( $this->admin, 'divi_restore_backup', array( 'backup_id' => $id ), 'confirmation_required' );
 		$this->assertStringContainsString( 'whole site', $err['message'] );
 		$this->assertSame( $before, self::layout_content( $default, 'header' ) );
+	}
+
+	/**
+	 * Assign a sandbox to one test page (as the Theme Builder screen would).
+	 */
+	private function assign( int $template_id ): string {
+		$page      = self::factory()->post->create( array( 'post_type' => 'page' ) );
+		$condition = 'singular:post_type:page:id:' . $page;
+		add_post_meta( $template_id, '_et_use_on', $condition );
+		return $condition;
+	}
+
+	/**
+	 * @group divi
+	 */
+	public function test_set_layout_on_live_template_requires_confirm_live() {
+		$id        = $this->sandbox( 'WPDM live' );
+		$condition = $this->assign( $id );
+		$t         = $this->find( $id );
+		$this->assertTrue( (bool) $t['enabled'] );
+		$this->assertSame( array( $condition ), $t['use_on'] );
+
+		$count = count( Backups::list( $id, 'theme_builder' ) );
+		$err   = $this->fails( $this->admin, 'divi_set_theme_builder_layout', array( 'template_id' => $id, 'layout_type' => 'header', 'layout' => self::header_tree( 'Live header' ) ), 'confirmation_required' );
+		$this->assertStringContainsString( 'live on: ' . $condition, $err['message'] );
+		$this->assertSame( array( $condition ), $err['data']['use_on'] );
+		$this->assertCount( $count, Backups::list( $id, 'theme_builder' ), 'no backup, no write' );
+		$this->assertSame( '', self::layout_content( $id, 'header' ) );
+
+		// confirm_default_template does not stand in for it.
+		$this->fails( $this->admin, 'divi_set_theme_builder_layout', array( 'template_id' => $id, 'layout_type' => 'header', 'layout' => self::header_tree( 'Live header' ), 'confirm_default_template' => true ), 'confirmation_required' );
+
+		$first  = $this->ok( $this->admin, 'divi_set_theme_builder_layout', array( 'template_id' => $id, 'layout_type' => 'header', 'layout' => self::header_tree( 'Live header' ), 'confirm_live_template' => true ) );
+		$this->assertStringContainsString( 'Live header', self::layout_content( $id, 'header' ) );
+		$second = $this->ok( $this->admin, 'divi_set_theme_builder_layout', array( 'template_id' => $id, 'layout_type' => 'header', 'layout' => self::header_tree( 'Live header 2' ), 'confirm_live_template' => true ) );
+
+		// Restore into the live template needs the flag too.
+		$this->fails( $this->admin, 'divi_restore_backup', array( 'backup_id' => $second['backup_id'] ), 'confirmation_required' );
+		$this->assertStringContainsString( 'Live header 2', self::layout_content( $id, 'header' ) );
+		$this->ok( $this->admin, 'divi_restore_backup', array( 'backup_id' => $second['backup_id'], 'confirm_live_template' => true ) );
+		$this->assertStringContainsString( 'Live header', self::layout_content( $id, 'header' ) );
+		$this->assertStringNotContainsString( 'Live header 2', self::layout_content( $id, 'header' ) );
+		$this->assertGreaterThan( 0, $first['layout_id'] );
+	}
+
+	/**
+	 * @group divi
+	 */
+	public function test_delete_live_template_requires_confirm_live() {
+		$id = $this->sandbox( 'WPDM live delete' );
+		$this->assign( $id );
+		$this->fails( $this->admin, 'divi_delete_theme_builder_template', array( 'template_id' => $id ), 'confirmation_required' );
+		$this->assertNotNull( $this->find( $id ) );
+		$this->ok( $this->admin, 'divi_delete_theme_builder_template', array( 'template_id' => $id, 'confirm_live_template' => true ) );
+		$this->assertNull( $this->find( $id ) );
+	}
+
+	/**
+	 * @group divi
+	 */
+	public function test_unassigned_or_disabled_template_needs_no_confirm_live() {
+		$id = $this->sandbox( 'WPDM unassigned write' );
+		$this->ok( $this->admin, 'divi_set_theme_builder_layout', array( 'template_id' => $id, 'layout_type' => 'footer', 'layout' => self::header_tree( 'Free footer' ) ) );
+
+		// Assigned but disabled: nothing on the site uses it.
+		$this->assign( $id );
+		update_post_meta( $id, '_et_enabled', '0' );
+		$this->ok( $this->admin, 'divi_set_theme_builder_layout', array( 'template_id' => $id, 'layout_type' => 'footer', 'layout' => self::header_tree( 'Disabled footer' ) ) );
+		$this->ok( $this->admin, 'divi_delete_theme_builder_template', array( 'template_id' => $id ) );
 	}
 
 	/**

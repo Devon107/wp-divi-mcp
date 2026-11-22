@@ -89,11 +89,98 @@ final class ThemeBuilderSupport {
 	}
 
 	/**
+	 * Whether a template is the Default Website Template. Fails closed: a
+	 * template without a "default" key is treated as the default too.
+	 *
+	 * Fields from Divi 5.19.1 et_theme_builder_get_template()
+	 * (includes/builder/frontend-builder/theme-builder/theme-builder.php:495
+	 * 'default' <= post meta _et_default === '1').
+	 *
 	 * @param array $template Template.
-	 * @return bool Whether it is the Default Website Template.
+	 * @return bool
 	 */
 	public static function is_default( array $template ): bool {
-		return ! empty( $template['default'] );
+		if ( ! array_key_exists( 'default', $template ) || ! empty( $template['default'] ) ) {
+			return true;
+		}
+		$id = (int) ( $template['id'] ?? 0 );
+		return $id > 0 && '1' === (string) get_post_meta( $id, '_et_default', true );
+	}
+
+	/**
+	 * Where an enabled template is assigned (its use_on conditions); empty
+	 * when it is disabled or unassigned, so nothing on the site uses it.
+	 *
+	 * Fields from theme-builder.php:496 'enabled' (post meta _et_enabled ===
+	 * '1') and :518 'use_on' (post meta _et_use_on, one row per condition).
+	 * A missing "enabled" key counts as enabled (fail closed).
+	 *
+	 * @param array $template Template.
+	 * @return string[]
+	 */
+	public static function live_on( array $template ): array {
+		$enabled = ! array_key_exists( 'enabled', $template ) || ! empty( $template['enabled'] );
+		if ( ! $enabled ) {
+			return array();
+		}
+		$use_on = $template['use_on'] ?? null;
+		if ( ! is_array( $use_on ) ) {
+			$id     = (int) ( $template['id'] ?? 0 );
+			$use_on = $id > 0 ? get_post_meta( $id, '_et_use_on', false ) : array();
+		}
+		return array_values( array_filter( array_map( 'strval', is_array( $use_on ) ? $use_on : array() ), 'strlen' ) );
+	}
+
+	/**
+	 * Refuse a write to a live (enabled and assigned) non-default template
+	 * without confirmation. The Default Website Template is covered by
+	 * check_default() instead.
+	 *
+	 * @param array $template Template.
+	 * @param bool  $confirm  confirm_live_template.
+	 * @return void
+	 * @throws ToolError confirmation_required.
+	 */
+	public static function check_live( array $template, bool $confirm ): void {
+		if ( self::is_default( $template ) || $confirm ) {
+			return;
+		}
+		$live_on = self::live_on( $template );
+		if ( array() === $live_on ) {
+			return;
+		}
+		throw new ToolError(
+			'Template ' . (int) $template['id'] . ' is live on: ' . implode( ', ', $live_on ) . '. The change shows on those pages at once. Ask the user, then pass confirm_live_template=true; or build on a new unassigned template (divi_create_theme_builder_template).',
+			'confirmation_required',
+			array(
+				'template_id' => (int) $template['id'],
+				'use_on'      => $live_on,
+			)
+		);
+	}
+
+	/**
+	 * Both guards: the Default Website Template needs confirm_default_template,
+	 * any other live template needs confirm_live_template.
+	 *
+	 * @param array $template Template.
+	 * @param array $args     Validated tool args.
+	 * @return void
+	 * @throws ToolError confirmation_required.
+	 */
+	public static function check_writable( array $template, array $args ): void {
+		self::check_default( $template, (bool) ( $args['confirm_default_template'] ?? false ) );
+		self::check_live( $template, (bool) ( $args['confirm_live_template'] ?? false ) );
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function confirm_live_property(): array {
+		return array(
+			'type'        => 'boolean',
+			'description' => 'Required (true) when the template is enabled and assigned (use_on not empty): the change shows on those pages at once. Not needed for the Default Website Template (confirm_default_template covers it).',
+		);
 	}
 
 	/**
