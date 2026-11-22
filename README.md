@@ -15,6 +15,10 @@ WordPress plugin with a built-in MCP server. Install it, create a connection URL
 
 Step-by-step guide for site owners (Spanish): [docs/connect.md](docs/connect.md).
 
+## Uninstall
+
+Deleting the plugin from *Plugins* runs `uninstall.php`, on every site of a multisite network. It removes the options `wpdm_connections` (all connections), `wpdm_disabled` and `wpdm_db_version`, every `wpdm_*` transient, the `{prefix}wpdm_log` activity table and the `wpdm_prune_log` cron event. The backups (`wpdm_backup` posts) are kept, so a reinstall can still restore them; to delete them too, add `define( 'WPDM_UNINSTALL_DELETE_BACKUPS', true );` to `wp-config.php` before deleting the plugin. Deactivating the plugin removes nothing except the cron event.
+
 ## Features
 
 41 tools, 4 resources (plus one resource template) and 2 prompts.

@@ -140,6 +140,16 @@ Cuando todo funcione, pide algo más ambicioso:
 
 Después de cada sesión, abre **Ajustes → Divi MCP → Activity** para ver lo que se hizo, y borra las páginas de prueba que ya no necesites.
 
+## Desinstalar
+
+Al borrar el plugin desde **Plugins** (no basta con desactivarlo), WordPress ejecuta `uninstall.php`, en cada sitio si es una red multisitio. Se borran todas las conexiones (opción `wpdm_connections`), los ajustes `wpdm_disabled` y `wpdm_db_version`, los transitorios `wpdm_*`, la tabla del registro de actividad (`{prefijo}wpdm_log`) y la tarea programada `wpdm_prune_log`.
+
+Las **copias de seguridad** (entradas de tipo `wpdm_backup`) se conservan, para poder restaurarlas si vuelves a instalar el plugin. Si también quieres borrarlas, añade esta línea a `wp-config.php` antes de borrar el plugin:
+
+```php
+define( 'WPDM_UNINSTALL_DELETE_BACKUPS', true );
+```
+
 ## Problemas frecuentes
 
 | Síntoma | Causa probable |
