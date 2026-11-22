@@ -6,7 +6,7 @@
  * `module.json` under includes/builder-5/visual-builder/packages/ and returns the
  * same structure as references/module-catalog.json (the bundled
  * knowledge/module-catalog.json). The Markdown docs and icons.json that
- * generate_catalog.py also writes are not built here.
+ * generate_catalog.py also writes are rendered by CatalogDocs.
  *
  * Divi 5.19.1 keeps the layout generate_catalog.py expects (checked against the
  * installed theme): packages/module-library/src/components/<slug>/module.json,
@@ -120,12 +120,12 @@ final class CatalogBuilder {
 
 	/**
 	 * Every module.json below $root, sorted by path (Python's sorted(glob(..., recursive=True))).
-	 * Hidden folders are skipped, as glob skips them.
+	 * Hidden folders are skipped, as glob skips them. Also used by CatalogDocs.
 	 *
 	 * @param string $root Packages folder.
 	 * @return string[]
 	 */
-	private static function module_files( string $root ): array {
+	public static function module_files( string $root ): array {
 		if ( ! is_dir( $root ) ) {
 			return array();
 		}
@@ -147,13 +147,14 @@ final class CatalogBuilder {
 	}
 
 	/**
-	 * Decode a JSON file (objects as stdClass so {} and [] stay distinct); null on error.
+	 * Decode a JSON file (objects as stdClass so {} and [] stay distinct); null on error
+	 * or when the file is missing. Also used by CatalogDocs.
 	 *
 	 * @param string $path File.
 	 * @return mixed
 	 */
-	private static function load( string $path ) {
-		$json = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+	public static function load( string $path ) {
+		$json = is_readable( $path ) ? file_get_contents( $path ) : false; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		if ( false === $json ) {
 			return null;
 		}

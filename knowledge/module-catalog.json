@@ -28,7 +28,7 @@
   "transition",
   "zIndex"
  ],
- "diviVersion": "5.11.0",
+ "diviVersion": "5.19.1",
  "modules": {
   "divi/accordion": {
    "category": "module",
@@ -537,6 +537,15 @@
    "elements": [],
    "title": "Global Layout"
   },
+  "divi/global-slot": {
+   "category": "structure",
+   "children": [],
+   "d4Shortcode": "",
+   "elements": [
+    "module"
+   ],
+   "title": "Slot"
+  },
   "divi/gravity-forms": {
    "category": "module",
    "children": [],
@@ -740,6 +749,9 @@
    "elements": [
     "cartIcon",
     "cartQuantity",
+    "collapsibleMenu",
+    "collapsibleMenuCloseIcon",
+    "collapsibleMenuOpenIcon",
     "hamburgerMenuIcon",
     "logo",
     "menu",
@@ -972,6 +984,7 @@
     "module",
     "overlay",
     "overlayIcon",
+    "pagination",
     "price",
     "rating",
     "saleBadge",

@@ -5,8 +5,11 @@
  * tests/golden/validator/<name>.json are layout exports; build_validator_fixtures.py
  * ran validate.py's validate_doc on each and wrote <name>.expected.json. The PHP
  * report must match it exactly: same messages, same classification, same order.
- * Both sides use the bundled catalog (knowledge/module-catalog.json, a byte copy of
- * the skill's), passed explicitly here; nocatalog_* fixtures run with no catalog.
+ * Both sides use the Divi 5.11.0 catalog the expectations were built with
+ * (module-catalog-5.11.json, a byte copy of the skill's), passed explicitly here;
+ * nocatalog_* fixtures run with no catalog. The runtime bundle
+ * (knowledge/module-catalog.json) is regenerated from Divi 5.19.1 by
+ * tools/generate-catalog.php and only checked by test_catalog_falls_back_to_bundled.
  *
  * @package WPDM
  */
@@ -29,10 +32,20 @@ class ValidatorTest extends TestCase {
 		return dirname( __DIR__, 2 ) . '/golden/validator';
 	}
 
+	/** The catalog the Python expectations were generated with (not a fixture). */
+	const PARITY_CATALOG = 'module-catalog-5.11.json';
+
 	/**
 	 * @return array
 	 */
 	private static function bundled() {
+		return json_decode( (string) file_get_contents( self::dir() . '/' . self::PARITY_CATALOG ), true );
+	}
+
+	/**
+	 * @return array The runtime bundle.
+	 */
+	private static function runtime_bundle() {
 		return json_decode( (string) file_get_contents( dirname( __DIR__, 3 ) . '/knowledge/module-catalog.json' ), true );
 	}
 
@@ -42,7 +55,7 @@ class ValidatorTest extends TestCase {
 	public function fixture_provider() {
 		$out = array();
 		foreach ( glob( self::dir() . '/*.json' ) as $file ) {
-			if ( '.expected.json' === substr( $file, -14 ) ) {
+			if ( '.expected.json' === substr( $file, -14 ) || self::PARITY_CATALOG === basename( $file ) ) {
 				continue;
 			}
 			$name         = basename( $file, '.json' );
@@ -161,8 +174,8 @@ class ValidatorTest extends TestCase {
 			remove_filter( 'wpdm_catalog_theme_dir', '__return_empty_string' );
 			Catalog::reset();
 		}
-		$this->assertSame( self::bundled(), $catalog );
-		$this->assertSame( '5.11.0', $catalog['diviVersion'] );
+		$this->assertSame( self::runtime_bundle(), $catalog );
+		$this->assertSame( '5.19.1', $catalog['diviVersion'] );
 		$this->assertArrayHasKey( 'divi/text', $catalog['modules'] );
 	}
 
@@ -370,7 +383,7 @@ class ValidatorTest extends TestCase {
 	public function scanner_input_provider() {
 		$out = array();
 		foreach ( glob( self::dir() . '/*.json' ) as $file ) {
-			if ( '.expected.json' === substr( $file, -14 ) ) {
+			if ( '.expected.json' === substr( $file, -14 ) || self::PARITY_CATALOG === basename( $file ) ) {
 				continue;
 			}
 			$doc = json_decode( (string) file_get_contents( $file ), true );
