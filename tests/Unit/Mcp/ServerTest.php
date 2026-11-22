@@ -50,7 +50,7 @@ class WPDM_Test_Write_Tool extends Tool {
 	}
 	public function execute( array $args, Context $ctx ): array {
 		if ( 'tool_error' === $this->mode ) {
-			throw new ToolError( 'Nope, bad input', 'bad_input' );
+			throw new ToolError( 'Nope, bad input', 'bad_input', array( 'field' => 'x' ) );
 		}
 		if ( 'exception' === $this->mode ) {
 			throw new \RuntimeException( 'Boom' );
@@ -166,7 +166,15 @@ class ServerTest extends WP_UnitTestCase {
 		$this->assertArrayNotHasKey( 'error', $res );
 		$this->assertTrue( $res['result']['isError'] );
 		$this->assertSame( 'text', $res['result']['content'][0]['type'] );
-		$this->assertSame( 'Nope, bad input', $res['result']['content'][0]['text'] );
+		$this->assertSame( 'bad_input: Nope, bad input', $res['result']['content'][0]['text'] );
+		$this->assertSame(
+			array(
+				'error'   => 'bad_input',
+				'message' => 'Nope, bad input',
+				'data'    => array( 'field' => 'x' ),
+			),
+			$res['result']['structuredContent']
+		);
 	}
 
 	public function test_tools_call_generic_exception_is_iserror_without_trace() {
@@ -176,7 +184,9 @@ class ServerTest extends WP_UnitTestCase {
 			$this->admin_ctx()
 		);
 		$this->assertTrue( $res['result']['isError'] );
-		$this->assertSame( 'Boom', $res['result']['content'][0]['text'] );
+		$this->assertSame( 'internal_error: Boom', $res['result']['content'][0]['text'] );
+		$this->assertSame( 'internal_error', $res['result']['structuredContent']['error'] );
+		$this->assertEquals( new stdClass(), $res['result']['structuredContent']['data'], 'empty data is a JSON object' );
 		$this->assertStringNotContainsString( '#0', $res['result']['content'][0]['text'] );
 	}
 
@@ -244,6 +254,7 @@ class ServerTest extends WP_UnitTestCase {
 		);
 		$this->assertTrue( $res['result']['isError'] );
 		$this->assertStringContainsString( 'read-only', $res['result']['content'][0]['text'] );
+		$this->assertSame( 'read_only', $res['result']['structuredContent']['error'] );
 	}
 
 	public function test_tools_list_entry_shape() {
@@ -275,6 +286,7 @@ class ServerTest extends WP_UnitTestCase {
 		);
 		$this->assertTrue( $res['result']['isError'] );
 		$this->assertStringContainsString( 'capability', $res['result']['content'][0]['text'] );
+		$this->assertSame( 'forbidden', $res['result']['structuredContent']['error'] );
 	}
 
 	public function test_notification_returns_null() {

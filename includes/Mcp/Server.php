@@ -209,20 +209,20 @@ class Server {
 
 		// Re-check at call time: listing is advisory, this is the enforcement point.
 		if ( $ctx->read_only && ! $tool->read_only() ) {
-			return $this->tool_failure( $id, $name, $args, $ctx, 'This connection is read-only; the tool "' . $name . '" can modify the site.' );
+			return $this->tool_failure( $id, $name, $args, $ctx, 'read_only', 'This connection is read-only; the tool "' . $name . '" can modify the site.' );
 		}
 		if ( ! user_can( $ctx->user_id, $tool->capability() ) ) {
-			return $this->tool_failure( $id, $name, $args, $ctx, 'The current user lacks the required capability: ' . $tool->capability() );
+			return $this->tool_failure( $id, $name, $args, $ctx, 'forbidden', 'The current user lacks the required capability: ' . $tool->capability() );
 		}
 
 		$start = microtime( true );
 		try {
 			$result = $tool->execute( $args, $ctx );
 		} catch ( ToolError $e ) {
-			return $this->tool_failure( $id, $name, $args, $ctx, $e->getMessage(), $start );
+			return $this->tool_failure( $id, $name, $args, $ctx, $e->error_code(), $e->getMessage(), $start, $e->data() );
 		} catch ( \Throwable $e ) {
 			// Message only: never leak a stack trace to the client.
-			return $this->tool_failure( $id, $name, $args, $ctx, $e->getMessage(), $start );
+			return $this->tool_failure( $id, $name, $args, $ctx, 'internal_error', $e->getMessage(), $start );
 		}
 
 		$ms = ( microtime( true ) - $start ) * 1000;
@@ -248,28 +248,39 @@ class Server {
 	/**
 	 * Build an isError tool result and fire the log action.
 	 *
+	 * The text content is "<code>: <message>"; structuredContent carries
+	 * {error: code, message, data} so clients can act on the code.
+	 *
 	 * @param mixed      $id      Request id.
 	 * @param string     $name    Tool name.
 	 * @param array      $args    Arguments.
 	 * @param Context    $ctx     Context.
+	 * @param string     $code    Machine-readable error code.
 	 * @param string     $message Message for the client.
 	 * @param float|null $start   microtime() at start, null when never ran.
+	 * @param array      $data    Extra structured data.
 	 * @return array
 	 */
-	private function tool_failure( $id, string $name, array $args, Context $ctx, string $message, ?float $start = null ): array {
+	private function tool_failure( $id, string $name, array $args, Context $ctx, string $code, string $message, ?float $start = null, array $data = array() ): array {
 		$ms = null === $start ? 0.0 : ( microtime( true ) - $start ) * 1000;
 		do_action( 'wpdm_tool_called', $name, $args, false, $ms, $ctx );
 
 		return $this->ok(
 			$id,
 			array(
-				'content' => array(
+				'content'           => array(
 					array(
 						'type' => 'text',
-						'text' => $message,
+						'text' => $code . ': ' . $message,
 					),
 				),
-				'isError' => true,
+				'structuredContent' => array(
+					'error'   => $code,
+					'message' => $message,
+					// Must encode as a JSON object, even when empty.
+					'data'    => empty( $data ) ? new \stdClass() : $data,
+				),
+				'isError'           => true,
 			)
 		);
 	}

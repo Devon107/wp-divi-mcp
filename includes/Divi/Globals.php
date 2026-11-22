@@ -51,6 +51,9 @@ final class Globals {
 	 *
 	 * Ported from the divi5-mcp-companion /globals/merge route; the report shape
 	 * is identical, plus backup_id (int when a backup was taken, else null).
+	 * A variable whose id exists on the site with another type is reported in
+	 * variables.conflicts as {id, site_type, file_type} and never written, even
+	 * with overwrite. Duplicate ids in one input are invalid_globals.
 	 *
 	 * @param array  $colors           List of [gcid, {color, label?}].
 	 * @param array  $variables        List of {id, type, value, label?, status?}.
@@ -120,16 +123,27 @@ final class Globals {
 		}
 
 		// ---- variables -------------------------------------------------------
-		$flat = array();
-		foreach ( (array) $global_data::get_global_variables() as $group ) {
+		$flat      = array();
+		$site_type = array();
+		foreach ( (array) $global_data::get_global_variables() as $type => $group ) {
 			foreach ( (array) $group as $vid => $v ) {
-				$flat[ $vid ] = (array) $v;
+				$flat[ $vid ]      = (array) $v;
+				$site_type[ $vid ] = (string) $type;
 			}
 		}
 		$vars_to_import = array();
 		foreach ( $variables as $v ) {
 			$id    = $v['id'];
 			$value = (string) $v['value'];
+			if ( isset( $flat[ $id ] ) && $site_type[ $id ] !== $v['type'] ) {
+				// Same id, different type: never written, not even with overwrite.
+				$report['variables']['conflicts'][] = array(
+					'id'        => $id,
+					'site_type' => $site_type[ $id ],
+					'file_type' => $v['type'],
+				);
+				continue;
+			}
 			if ( isset( $flat[ $id ] ) ) {
 				$current = isset( $flat[ $id ]['value'] ) ? (string) $flat[ $id ]['value'] : '';
 				if ( $current === $value ) {
@@ -336,6 +350,7 @@ final class Globals {
 		if ( ! self::is_list( $colors ) ) {
 			throw new ToolError( 'colors must be a list of [gcid, {color, label?}] pairs.', 'invalid_globals' );
 		}
+		$seen = array();
 		foreach ( $colors as $i => $entry ) {
 			$where = 'colors[' . $i . ']';
 			if ( ! is_array( $entry ) || ! self::is_list( $entry ) || 2 !== count( $entry ) || ! is_string( $entry[0] ) || ! is_array( $entry[1] ) ) {
@@ -350,6 +365,10 @@ final class Globals {
 			if ( isset( $entry[1]['label'] ) && ! is_string( $entry[1]['label'] ) ) {
 				throw new ToolError( $where . ': label must be a string.', 'invalid_globals' );
 			}
+			if ( isset( $seen[ $entry[0] ] ) ) {
+				throw new ToolError( $where . ': duplicate id "' . $entry[0] . '".', 'invalid_globals' );
+			}
+			$seen[ $entry[0] ] = true;
 		}
 	}
 
@@ -362,6 +381,7 @@ final class Globals {
 		if ( ! self::is_list( $variables ) ) {
 			throw new ToolError( 'variables must be a list of {id, type, value} objects.', 'invalid_globals' );
 		}
+		$seen = array();
 		foreach ( $variables as $i => $v ) {
 			$where = 'variables[' . $i . ']';
 			if ( ! is_array( $v ) || ! isset( $v['id'], $v['type'] ) || ! array_key_exists( 'value', $v ) || ! is_string( $v['id'] ) || ! is_string( $v['type'] ) ) {
@@ -386,6 +406,10 @@ final class Globals {
 			if ( isset( $v['label'] ) && ! is_string( $v['label'] ) ) {
 				throw new ToolError( $where . ': label must be a string.', 'invalid_globals' );
 			}
+			if ( isset( $seen[ $v['id'] ] ) ) {
+				throw new ToolError( $where . ': duplicate id "' . $v['id'] . '".', 'invalid_globals' );
+			}
+			$seen[ $v['id'] ] = true;
 		}
 	}
 

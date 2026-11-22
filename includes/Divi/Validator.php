@@ -92,6 +92,20 @@ final class Validator {
 	private $strict_tree_hints;
 
 	/**
+	 * Global color ids that already exist on the target site (set).
+	 *
+	 * @var array<string, true>
+	 */
+	private $site_colors = array();
+
+	/**
+	 * Global variable ids that already exist on the target site (set).
+	 *
+	 * @var array<string, true>
+	 */
+	private $site_variables = array();
+
+	/**
 	 * @param array|null $catalog           Catalog document (module-catalog.json shape); null = Catalog::load().
 	 * @param bool       $strict_tree_hints Flag unprefixed value helpers in icon values.
 	 */
@@ -118,10 +132,12 @@ final class Validator {
 	 * @param array|\stdClass|mixed $doc               Decoded export: json_decode() objects or assoc arrays.
 	 * @param array|null            $catalog           Catalog document; null = Catalog::load().
 	 * @param bool                  $strict_tree_hints Flag unprefixed LayoutTree helpers in icon values.
+	 * @param array                 $site_globals      Ids the target site already has: {colors: [], variables: []}.
 	 * @return Report Report with counts = block name => count.
 	 */
-	public static function validate_doc( $doc, ?array $catalog = null, bool $strict_tree_hints = false ): Report {
+	public static function validate_doc( $doc, ?array $catalog = null, bool $strict_tree_hints = false, array $site_globals = array() ): Report {
 		$v = new self( $catalog, $strict_tree_hints );
+		$v->site_globals( $site_globals );
 		$v->doc( self::normalize( $doc, self::has_object( $doc ) ) );
 		return $v->rep;
 	}
@@ -133,12 +149,30 @@ final class Validator {
 	 * @param string     $content           Block markup.
 	 * @param array|null $catalog           Catalog document; null = Catalog::load().
 	 * @param bool       $strict_tree_hints Flag unprefixed LayoutTree helpers in icon values.
+	 * @param array      $site_globals      Ids the target site already has: {colors: [], variables: []}.
 	 * @return Report
 	 */
-	public static function validate_content( string $content, ?array $catalog = null, bool $strict_tree_hints = false ): Report {
+	public static function validate_content( string $content, ?array $catalog = null, bool $strict_tree_hints = false, array $site_globals = array() ): Report {
 		$v = new self( $catalog, $strict_tree_hints );
+		$v->site_globals( $site_globals );
 		$v->post( 'content', Py::scrub( $content ), array(), array(), array() );
 		return $v->rep;
+	}
+
+	/**
+	 * Remember the ids the target site already has, so references to them are
+	 * not reported as missing.
+	 *
+	 * @param array $site_globals {colors?: string[], variables?: string[]} (ids).
+	 * @return void
+	 */
+	private function site_globals( array $site_globals ): void {
+		foreach ( (array) ( $site_globals['colors'] ?? array() ) as $id ) {
+			$this->site_colors[ (string) $id ] = true;
+		}
+		foreach ( (array) ( $site_globals['variables'] ?? array() ) as $id ) {
+			$this->site_variables[ (string) $id ] = true;
+		}
 	}
 
 	// ---- envelope ----------------------------------------------------------------- //
@@ -246,13 +280,13 @@ final class Validator {
 
 		$colors = isset( $used['color'] ) ? $used['color'] : array();
 		foreach ( Py::sorted( array_keys( $colors ) ) as $gcid ) {
-			if ( ! isset( $gc_ids[ $gcid ] ) && ! in_array( $gcid, self::CUSTOMIZER_COLORS, true ) ) {
+			if ( ! isset( $gc_ids[ $gcid ] ) && ! isset( $this->site_colors[ $gcid ] ) && ! in_array( $gcid, self::CUSTOMIZER_COLORS, true ) ) {
 				$rep->warn( "global color {$gcid} is referenced but not included in global_colors — it must already exist on the target site" );
 			}
 		}
 		$vars = isset( $used['content'] ) ? $used['content'] : array();
 		foreach ( Py::sorted( array_keys( $vars ) ) as $gvid ) {
-			if ( ! isset( $gv_ids[ $gvid ] ) && 0 === strpos( $gvid, 'gvid-' ) ) {
+			if ( ! isset( $gv_ids[ $gvid ] ) && ! isset( $this->site_variables[ $gvid ] ) && 0 === strpos( $gvid, 'gvid-' ) ) {
 				$rep->warn( "global variable {$gvid} is referenced but not included in global_variables" );
 			}
 		}

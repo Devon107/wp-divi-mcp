@@ -384,4 +384,37 @@ class DiviLayerTest extends WP_UnitTestCase {
 		$this->assertIsInt( $restored['backup_id'], 'restore backs up the state it replaces' );
 		$this->assertSame( self::color_ids( $snapshot['colors'] ), self::color_ids( $now['colors'] ) );
 	}
+
+	public function test_merge_type_mismatch_is_conflict() {
+		Globals::merge( array(), array( array( 'id' => 'gvid-wpdm-test-t', 'type' => 'numbers', 'value' => '10px', 'label' => 'T' ) ), false, false );
+		$backups = count( Backups::list( 0, 'globals' ) );
+
+		foreach ( array( false, true ) as $overwrite ) {
+			$report = Globals::merge( array(), array( array( 'id' => 'gvid-wpdm-test-t', 'type' => 'strings', 'value' => 'ten' ) ), $overwrite, false );
+			$this->assertSame( array( array( 'id' => 'gvid-wpdm-test-t', 'site_type' => 'numbers', 'file_type' => 'strings' ) ), $report['variables']['conflicts'], 'overwrite=' . var_export( $overwrite, true ) );
+			$this->assertSame( array(), $report['variables']['overwritten'] );
+			$this->assertNull( $report['backup_id'] );
+		}
+		$now = Globals::read()['variables'];
+		$this->assertSame( '10px', $now['numbers']['gvid-wpdm-test-t']['value'] );
+		$this->assertArrayNotHasKey( 'gvid-wpdm-test-t', $now['strings'] );
+		$this->assertCount( $backups, Backups::list( 0, 'globals' ) );
+	}
+
+	public function test_merge_rejects_duplicate_ids() {
+		$cases = array(
+			'colors'    => array( array( array( 'gcid-wpdm-test-d', array( 'color' => '#111111' ) ), array( 'gcid-wpdm-test-d', array( 'color' => '#222222' ) ) ), array() ),
+			'variables' => array( array(), array( array( 'id' => 'gvid-wpdm-test-d', 'type' => 'numbers', 'value' => '1px' ), array( 'id' => 'gvid-wpdm-test-d', 'type' => 'strings', 'value' => 'x' ) ) ),
+		);
+		foreach ( $cases as $name => $case ) {
+			try {
+				Globals::merge( $case[0], $case[1], true, false );
+				$this->fail( 'Expected invalid_globals for duplicate ' . $name );
+			} catch ( ToolError $e ) {
+				$this->assertSame( 'invalid_globals', $e->error_code(), $name );
+				$this->assertStringContainsString( 'duplicate', strtolower( $e->getMessage() ) );
+			}
+		}
+		$this->assertArrayNotHasKey( 'gcid-wpdm-test-d', Globals::read()['colors'] );
+	}
 }
