@@ -19,12 +19,15 @@ defined( 'ABSPATH' ) || exit;
  */
 final class UpdatePost extends Tool {
 
+	/** Statuses whose content change is visible at once (as DiviSupport::PUBLISHED). */
+	const PUBLISHED = array( 'publish', 'future', 'private' );
+
 	public function name(): string {
 		return 'update_post';
 	}
 
 	public function description(): string {
-		return 'Update a post or page by ID. Only the fields you pass change; terms listed per taxonomy replace that taxonomy\'s terms, meta null deletes a key. Overwrites existing values. Content of a Divi post is protected: use the Divi layout tools, or pass force=true to replace it anyway (the current content is backed up first and backup_id is returned).';
+		return 'Update a post or page by ID. Only the fields you pass change; terms listed per taxonomy replace that taxonomy\'s terms, meta null deletes a key. Overwrites existing values. Whenever content is passed, the current content is backed up first and backup_id is returned (divi_restore_backup restores it when Divi is active). Changing the content of a published, scheduled or private post needs confirm_published=true (with or without force). Content of a Divi post is protected: use the Divi layout tools, or pass force=true to replace it anyway.';
 	}
 
 	public function input_schema(): array {
@@ -44,9 +47,13 @@ final class UpdatePost extends Tool {
 				),
 				PostSupport::write_properties(),
 				array(
-					'force' => array(
+					'force'             => array(
 						'type'        => 'boolean',
-						'description' => 'Replace the content of a Divi post anyway. The current content is backed up first; the result includes backup_id.',
+						'description' => 'Replace the content of a Divi post anyway (the current content is backed up first).',
+					),
+					'confirm_published' => array(
+						'type'        => 'boolean',
+						'description' => 'Required (true) to change the content of a published, scheduled or private post: the change is visible at once.',
 					),
 				)
 			),
@@ -78,12 +85,19 @@ final class UpdatePost extends Tool {
 			throw new ToolError( 'Post ' . $post->ID . ' is a "' . $post->post_type . '"; the post type cannot be changed.', 'invalid_argument' );
 		}
 
-		$backup_needed = false;
-		if ( isset( $args['content'] ) && PostFormatter::is_divi( $post ) ) {
-			if ( empty( $args['force'] ) ) {
-				throw new ToolError( 'This post is built with Divi; its content cannot be replaced here. Use divi_apply_layout to change the design, or pass force=true to overwrite it after a backup.', 'divi_content_protected' );
-			}
-			$backup_needed = true;
+		$content_change = isset( $args['content'] );
+		if ( $content_change && PostFormatter::is_divi( $post ) && empty( $args['force'] ) ) {
+			throw new ToolError( 'This post is built with Divi; its content cannot be replaced here. Use divi_apply_layout to change the design, or pass force=true to overwrite it after a backup.', 'divi_content_protected' );
+		}
+		if ( $content_change && empty( $args['confirm_published'] ) && in_array( $post->post_status, self::PUBLISHED, true ) ) {
+			throw new ToolError(
+				'Post ' . $post->ID . ' is ' . $post->post_status . '; changing its content would be visible at once. Ask the user, then pass confirm_published=true (the current content is backed up first).',
+				'confirmation_required',
+				array(
+					'post_id' => $post->ID,
+					'status'  => $post->post_status,
+				)
+			);
 		}
 
 		$type = PostSupport::post_type( $post->post_type );
@@ -91,14 +105,16 @@ final class UpdatePost extends Tool {
 
 		// Back up only once every check has passed, right before the write.
 		$backup_id = null;
-		if ( $backup_needed ) {
+		if ( $content_change ) {
+			clean_post_cache( $post->ID );
 			$backup_id = Backups::save(
 				'post_content',
 				$post->ID,
-				$post->post_content,
+				(string) get_post_field( 'post_content', $post->ID, 'raw' ),
 				array(
-					'post_title'  => $post->post_title,
-					'post_status' => $post->post_status,
+					'post_type' => $post->post_type,
+					'status'    => $post->post_status,
+					'reason'    => 'update_post',
 				),
 				(string) ( $ctx->connection['label'] ?? '' )
 			);

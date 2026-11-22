@@ -506,7 +506,12 @@ class ContentToolsTest extends WP_UnitTestCase {
 		$id = $this->make_divi_page( array( 'post_content' => wp_slash( $original ) ) );
 		$this->assertSame( $original, get_post( $id )->post_content );
 
-		$data = $this->ok( $this->admin, 'update_post', array( 'id' => $id, 'content' => '<p>clobber</p>', 'force' => true ) );
+		// Published: force alone is not enough.
+		$this->assertSame( 'confirmation_required', $this->error_code( $this->admin, 'update_post', array( 'id' => $id, 'content' => '<p>clobber</p>', 'force' => true ) ) );
+		$this->assertSame( $original, get_post( $id )->post_content );
+		$this->assertSame( array(), Backups::list( $id ) );
+
+		$data = $this->ok( $this->admin, 'update_post', array( 'id' => $id, 'content' => '<p>clobber</p>', 'force' => true, 'confirm_published' => true ) );
 
 		$this->assertSame( '<p>clobber</p>', get_post( $id )->post_content );
 		$this->assertIsInt( $data['backup_id'] );
@@ -523,8 +528,10 @@ class ContentToolsTest extends WP_UnitTestCase {
 		$this->assertCount( 1, Backups::list( $id ) );
 
 		// A user who cannot edit the post gets no backup either.
-		$this->fails( $this->author, 'update_post', array( 'id' => $id, 'content' => 'x', 'force' => true ) );
+		$this->fails( $this->author, 'update_post', array( 'id' => $id, 'content' => 'x', 'force' => true, 'confirm_published' => true ) );
 		$this->assertCount( 1, Backups::list( $id ) );
+		$this->assertSame( 'page', $backup['meta']['post_type'] );
+		$this->assertSame( 'publish', $backup['meta']['status'] );
 	}
 
 	public function test_update_detects_divi_by_block_markup_without_meta() {
@@ -538,9 +545,57 @@ class ContentToolsTest extends WP_UnitTestCase {
 	}
 
 	public function test_update_content_on_plain_post_and_force_is_ignored() {
-		$id = self::factory()->post->create( array( 'post_type' => 'page', 'post_content' => 'plain' ) );
-		$this->ok( $this->admin, 'update_post', array( 'id' => $id, 'content' => 'updated', 'force' => true ) );
+		$id = self::factory()->post->create( array( 'post_type' => 'page', 'post_status' => 'draft', 'post_content' => 'plain' ) );
+		$data = $this->ok( $this->admin, 'update_post', array( 'id' => $id, 'content' => 'updated', 'force' => true ) );
 		$this->assertSame( 'updated', get_post( $id )->post_content );
+		$this->assertIsInt( $data['backup_id'] );
+	}
+
+	public function test_update_content_of_plain_post_is_backed_up_and_restorable() {
+		$id   = self::factory()->post->create( array( 'post_type' => 'post', 'post_status' => 'draft', 'post_content' => '<p>old plain</p>' ) );
+		$data = $this->ok( $this->editor, 'update_post', array( 'id' => $id, 'content' => '<p>new plain</p>' ) );
+		$this->assertSame( '<p>new plain</p>', get_post( $id )->post_content );
+
+		$backup = Backups::get( $data['backup_id'] );
+		$this->assertSame( 'post_content', $backup['kind'] );
+		$this->assertSame( $id, $backup['source_id'] );
+		$this->assertSame( '<p>old plain</p>', $backup['content'] );
+		$this->assertSame( 'post', $backup['meta']['post_type'] );
+		$this->assertSame( 'draft', $backup['meta']['status'] );
+
+		// No content in the call: no backup.
+		$this->assertArrayNotHasKey( 'backup_id', $this->ok( $this->editor, 'update_post', array( 'id' => $id, 'title' => 'T' ) ) );
+		$this->assertCount( 1, Backups::list( $id ) );
+
+		// divi_restore_backup puts plain content back with wp_update_post.
+		$restore  = new \WPDM\Tools\Divi\RestoreBackup();
+		wp_set_current_user( $this->admin );
+		$restored = $restore->execute( array( 'backup_id' => $data['backup_id'] ), $this->context( $this->admin ) );
+		$this->assertSame( 'wp_update_post', $restored['method'] );
+		$this->assertSame( '<p>old plain</p>', get_post( $id )->post_content );
+	}
+
+	public function test_update_content_of_published_post_needs_confirm_published() {
+		foreach ( array( 'publish', 'future', 'private' ) as $status ) {
+			$args = array( 'post_type' => 'post', 'post_status' => $status, 'post_content' => 'live' );
+			if ( 'future' === $status ) {
+				$args['post_date'] = gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS );
+			}
+			$id = self::factory()->post->create( $args );
+			$this->assertSame( $status, get_post_status( $id ) );
+
+			$this->assertSame( 'confirmation_required', $this->error_code( $this->admin, 'update_post', array( 'id' => $id, 'content' => 'changed' ) ), $status );
+			$this->assertSame( 'confirmation_required', $this->error_code( $this->admin, 'update_post', array( 'id' => $id, 'content' => 'changed', 'force' => true ) ), $status . ' + force' );
+			$this->assertSame( 'live', get_post( $id )->post_content );
+			$this->assertSame( array(), Backups::list( $id ), 'refused: no backup' );
+
+			// Other fields need no confirmation.
+			$this->ok( $this->admin, 'update_post', array( 'id' => $id, 'title' => 'Retitled' ) );
+
+			$data = $this->ok( $this->admin, 'update_post', array( 'id' => $id, 'content' => 'changed', 'confirm_published' => true ) );
+			$this->assertSame( 'changed', get_post( $id )->post_content );
+			$this->assertSame( 'live', Backups::get( $data['backup_id'] )['content'] );
+		}
 	}
 
 	public function test_update_cannot_change_trashed_post() {
