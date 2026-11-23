@@ -1,4 +1,4 @@
-// Tests for assets/mcpb/server.js, the Claude Desktop stdio-to-HTTP proxy.
+// Tests for assets/mcpb/bridge.js and server.js, the Claude Desktop stdio-to-HTTP proxy.
 // Run: node --test tests/node/
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -7,7 +7,7 @@ import { PassThrough } from 'node:stream';
 import { createRequire } from 'node:module';
 
 const require = createRequire( import.meta.url );
-const { start } = require( '../../assets/mcpb/server.js' );
+const { start } = require( '../../assets/mcpb/bridge.js' );
 
 /**
  * Fake MCP endpoint. handler(req, body, res) answers each request.
@@ -224,4 +224,31 @@ test( '2xx json without a json-rpc answer still answers every request', async ()
 	assert.equal( lines.length, 1 );
 	assert.equal( lines[ 0 ].id, 5 );
 	assert.equal( lines[ 0 ].error.code, -32000 );
+} );
+
+test( 'starts when loaded by another script (Claude Desktop launcher)', async () => {
+	const { spawn } = await import( 'node:child_process' );
+	const path = await import( 'node:path' );
+	const srv = await fakeServer( ( r, body, res ) => {
+		if ( r.method === 'DELETE' ) {
+			res.writeHead( 204 );
+			return res.end();
+		}
+		json( res, 200, { jsonrpc: '2.0', id: 0, result: { ok: true } } );
+	} );
+	const entry = path.resolve( 'assets/mcpb/server.js' );
+	// A launcher that require()s the entry, so require.main is not the entry.
+	const child = spawn( process.execPath, [ '-e', `require(${ JSON.stringify( entry ) })` ], {
+		env: { ...process.env, WPDM_URL: srv.url },
+		stdio: [ 'pipe', 'pipe', 'pipe' ],
+	} );
+	let out = '';
+	child.stdout.on( 'data', ( c ) => ( out += c ) );
+	child.stdin.end( req( 0, 'initialize' ) + '\n' );
+	const code = await new Promise( ( r ) => child.on( 'close', r ) );
+	await srv.close();
+	assert.equal( code, 0 );
+	const lines = out.split( '\n' ).filter( Boolean ).map( ( l ) => JSON.parse( l ) );
+	assert.equal( lines.length, 1 );
+	assert.equal( lines[ 0 ].id, 0 );
 } );

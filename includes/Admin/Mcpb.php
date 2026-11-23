@@ -2,7 +2,7 @@
 /**
  * Claude Desktop extension (.mcpb) for one connection.
  *
- * The bundle holds a manifest and a copy of assets/mcpb/server.js, a local
+ * The bundle holds a manifest, assets/mcpb/server.js (entry) and bridge.js, a local
  * stdio-to-HTTP bridge. Claude Desktop runs it on the user's computer, so the
  * site is reached from there instead of from Anthropic's cloud. That avoids
  * hosts (WP Engine) whose edge blocks the cloud connector's sign-in client.
@@ -22,6 +22,7 @@ final class Mcpb {
 	const PREFIX     = 'wp-divi-mcp-';
 	const MAX_NAME   = 64;
 	const SERVER_SRC = 'assets/mcpb/server.js';
+	const BRIDGE_SRC = 'assets/mcpb/bridge.js';
 
 	/**
 	 * Whether bundles can be built on this server.
@@ -85,7 +86,8 @@ final class Mcpb {
 		 */
 		$path   = apply_filters( 'wpdm_mcpb_server_path', WPDM_DIR . self::SERVER_SRC );
 		$server = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local plugin file.
-		if ( false === $server ) {
+		$bridge = file_get_contents( WPDM_DIR . self::BRIDGE_SRC ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local plugin file.
+		if ( false === $server || false === $bridge ) {
 			throw new \RuntimeException( 'Cannot read the Desktop server script.' );
 		}
 		$manifest = wp_json_encode( self::manifest( $url, $label, $connection_id ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
@@ -102,6 +104,7 @@ final class Mcpb {
 			}
 			$zip->addFromString( 'manifest.json', $manifest );
 			$zip->addFromString( 'server/index.js', $server );
+			$zip->addFromString( 'server/bridge.js', $bridge );
 			if ( ! $zip->close() ) {
 				throw new \RuntimeException( 'Cannot write the zip.' );
 			}

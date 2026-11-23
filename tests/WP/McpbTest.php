@@ -36,8 +36,9 @@ class McpbTest extends WP_UnitTestCase {
 		$entries = $this->entries( Mcpb::build( self::URL, 'Immedex Dev', 'a1b2c3' ) );
 		$names   = array_keys( $entries );
 		sort( $names );
-		$this->assertSame( array( 'manifest.json', 'server/index.js' ), $names );
+		$this->assertSame( array( 'manifest.json', 'server/bridge.js', 'server/index.js' ), $names );
 		$this->assertSame( file_get_contents( WPDM_DIR . 'assets/mcpb/server.js' ), $entries['server/index.js'] );
+		$this->assertSame( file_get_contents( WPDM_DIR . 'assets/mcpb/bridge.js' ), $entries['server/bridge.js'] );
 	}
 
 	public function test_manifest_fields() {
