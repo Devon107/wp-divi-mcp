@@ -6,7 +6,8 @@
 	"scripts": {
 		"env:start": "wp-env start",
 		"env:stop": "wp-env stop",
-		"test": "bin/test"
+		"test": "bin/test",
+		"test:node": "node --test tests/node/*.test.mjs"
 	},
 	"devDependencies": {
 		"@wordpress/env": "^10.0.0"

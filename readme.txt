@@ -21,7 +21,7 @@ Connection URLs contain a secret token. Treat them like passwords, revoke them w
 1. Upload the zip under Plugins > Add New Plugin > Upload Plugin and activate it.
 2. Deactivate the "Divi 5 MCP Companion" plugin if it is installed.
 3. Go to Settings > Divi MCP and create a connection.
-4. Add the URL to Claude as a custom connector.
+4. Add the URL to Claude as a custom connector, or use "Download for Claude Desktop" to install a Claude Desktop extension for that connection. The extension runs on your computer, so it also works on hosts that block Anthropic's cloud connector (such as WP Engine).
 
 == Changelog ==
 

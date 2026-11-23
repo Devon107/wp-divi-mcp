@@ -295,6 +295,75 @@ class SettingsPageTest extends WP_UnitTestCase {
 		$this->assertFalse( get_transient( 'wpdm_new_conn_' . $this->admin_id ) );
 	}
 
+	public function test_desktop_download_link_in_new_connection_box() {
+		$this->post( 'wpdm_create', $this->create_post( array( 'label' => 'Desk' ) ) );
+		SettingsPage::handle_create();
+		$connections = array_values( Tokens::all() );
+		$this->assertCount( 1, $connections );
+		$id = $connections[0]['id'];
+
+		$first  = $this->render();
+		$second = $this->render();
+
+		$this->assertStringContainsString( 'download="' . \WPDM\Admin\Mcpb::filename( 'Desk', $id ) . '"', $first );
+		$this->assertSame( 1, preg_match( '/href="data:application\/zip;base64,([A-Za-z0-9+\/=]+)"/', $first, $m ) );
+		$this->assertSame( 1, preg_match( '/id="wpdm-url" value="([^"]+)"/', $first, $u ) );
+		$url = html_entity_decode( $u[1], ENT_QUOTES );
+
+		$file = wp_tempnam( 'mcpb-page' );
+		file_put_contents( $file, base64_decode( $m[1] ) );
+		$zip = new ZipArchive();
+		$this->assertTrue( true === $zip->open( $file ) );
+		$manifest = json_decode( (string) $zip->getFromName( 'manifest.json' ), true );
+		$zip->close();
+		unlink( $file );
+		$this->assertSame( $url, $manifest['server']['mcp_config']['env']['WPDM_URL'] );
+
+		$this->assertStringNotContainsString( 'data:application/zip', $second );
+	}
+
+	public function test_desktop_row_without_ziparchive() {
+		add_filter( 'wpdm_mcpb_available', '__return_false' );
+		$this->post( 'wpdm_create', $this->create_post() );
+		SettingsPage::handle_create();
+		$html = $this->render();
+		remove_filter( 'wpdm_mcpb_available', '__return_false' );
+		$this->assertStringNotContainsString( 'data:application/zip', $html );
+		$this->assertStringContainsString( 'ZipArchive', $html );
+		$this->assertStringContainsString( 'id="wpdm-url"', $html );
+	}
+
+	public function test_desktop_build_error_keeps_the_box() {
+		$break = static function () {
+			return array( 'not a path' ); // file_get_contents( array ) throws a TypeError.
+		};
+		add_filter( 'wpdm_mcpb_server_path', $break );
+		$this->post( 'wpdm_create', $this->create_post() );
+		SettingsPage::handle_create();
+		$html = $this->render();
+		remove_filter( 'wpdm_mcpb_server_path', $break );
+
+		$this->assertStringContainsString( 'id="wpdm-url"', $html );
+		$this->assertStringContainsString( 'id="wpdm-cmd"', $html );
+		$this->assertStringNotContainsString( 'data:application/zip', $html );
+		$this->assertStringContainsString( 'Could not build the Claude Desktop file', $html );
+		$this->assertStringContainsString( '</div>', $html );
+	}
+
+	public function test_desktop_link_without_connection_id_in_transient() {
+		set_transient(
+			'wpdm_new_conn_' . $this->admin_id,
+			array(
+				'url'   => 'https://example.test/?key=abc',
+				'token' => 'abc',
+				'label' => 'Old',
+			),
+			300
+		);
+		$html = $this->render();
+		$this->assertMatchesRegularExpression( '/download="wp-divi-mcp-[a-z0-9-]+\.mcpb"/', $html );
+	}
+
 	public function test_command_uses_wp_divi_mcp_slug_for_unsluggable_label() {
 		set_transient(
 			'wpdm_new_conn_' . $this->admin_id,

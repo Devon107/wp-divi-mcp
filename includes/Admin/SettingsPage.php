@@ -159,6 +159,7 @@ class SettingsPage {
 				'url'   => $created['url'],
 				'token' => $created['token'],
 				'label' => $label,
+				'id'    => $created['id'],
 			),
 			self::NEW_CONN_TTL
 		);
@@ -353,6 +354,37 @@ class SettingsPage {
 	}
 
 	/**
+	 * Claude Desktop row of the shown-once box: a .mcpb built for this
+	 * connection, inlined as a data: URI so the key is never stored again.
+	 *
+	 * @param string $url           Connection URL.
+	 * @param string $label         Connection label.
+	 * @param string $connection_id Connection id ('' for a box stashed before ids were kept).
+	 * @return void
+	 */
+	private static function render_desktop_download( string $url, string $label, string $connection_id ): void {
+		if ( '' === $connection_id ) {
+			$connection_id = substr( hash( 'sha256', $url ), 0, 12 );
+		}
+		echo '<h3>' . esc_html__( 'Claude Desktop', 'wp-divi-mcp' ) . '</h3>';
+		if ( ! Mcpb::available() ) {
+			echo '<p>' . esc_html__( 'Claude Desktop download needs the PHP ZipArchive extension on this server.', 'wp-divi-mcp' ) . '</p>';
+			return;
+		}
+		try {
+			$bytes = Mcpb::build( $url, $label, $connection_id );
+		} catch ( \Throwable $e ) {
+			// Never break the shown-once box: the URL above is the only copy of the key.
+			error_log( 'WP Divi MCP: could not build the Claude Desktop file: ' . get_class( $e ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- admin diagnostics, no secrets.
+			echo '<p>' . esc_html__( 'Could not build the Claude Desktop file on this server. Use the URL or the Claude Code command above.', 'wp-divi-mcp' ) . '</p>';
+			return;
+		}
+		echo '<p>' . esc_html__( 'Download this file and open it to install the connection in Claude Desktop. It works on any host, including WP Engine. The file contains the key: treat it like the URL, and revoke the connection if it leaks.', 'wp-divi-mcp' ) . '</p>';
+		// base64 output is [A-Za-z0-9+/=]; esc_attr leaves it intact.
+		echo '<p><a class="button button-primary" href="' . esc_attr( 'data:application/zip;base64,' . base64_encode( $bytes ) ) . '" download="' . esc_attr( Mcpb::filename( $label, $connection_id ) ) . '">' . esc_html__( 'Download for Claude Desktop', 'wp-divi-mcp' ) . '</a></p>';
+	}
+
+	/**
 	 * The shown-once box.
 	 *
 	 * @param array $fresh {url, token, label}.
@@ -378,6 +410,7 @@ class SettingsPage {
 		echo '<p>' . esc_html__( 'Claude Code:', 'wp-divi-mcp' ) . '</p>';
 		echo '<p class="wpdm-copy"><input type="text" readonly class="large-text code" id="wpdm-cmd" value="' . esc_attr( $command ) . '" /> ';
 		echo '<button type="button" class="button" data-wpdm-copy="wpdm-cmd">' . esc_html__( 'Copy command', 'wp-divi-mcp' ) . '</button></p>';
+		self::render_desktop_download( $url, $label, (string) ( $fresh['id'] ?? '' ) );
 		echo '</div>';
 
 		// Static script, no interpolated data. navigator.clipboard with a select-all fallback.

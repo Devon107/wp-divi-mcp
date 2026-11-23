@@ -23,6 +23,21 @@ jobs:
           find . -name '*.php' -not -path './vendor/*' -not -path './node_modules/*' -print0 \
             | xargs -0 -n1 php -l
 
+  node:
+    name: Desktop proxy tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [ '18', '22' ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Run node tests
+        run: node --test tests/node/*.test.mjs
+
   test:
     name: Tests (wp-env, PHP 8.2)
     runs-on: ubuntu-latest
