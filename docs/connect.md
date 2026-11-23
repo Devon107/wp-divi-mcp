@@ -47,22 +47,23 @@ Trata esta URL como una contraseña: cualquiera que la tenga puede actuar como e
 
 Según tu plan, añadir conectores personalizados puede requerir que un administrador de la organización lo permita.
 
-### Claude Desktop
+### Claude Desktop (recomendado en WP Engine)
 
-Los conectores que añades en claude.ai se sincronizan con Claude Desktop, así que normalmente no tienes que hacer nada más: añádelo en **Settings → Connectors** de la web o de la propia aplicación.
+Al crear la conexión, el recuadro que se muestra una sola vez incluye el botón **Download for Claude Desktop**. Descarga un archivo `.mcpb` preparado para esa conexión.
 
-Si prefieres configurarlo a mano, usa un puente como `mcp-remote` en `claude_desktop_config.json`:
+1. Descarga el archivo. Es un instalador para ese sitio y esa conexión.
+2. Ábrelo con doble clic, o en Claude Desktop ve a **Settings → Extensions** e instálalo desde el archivo.
+3. Confirma la instalación y comprueba que la extensión está activada.
+4. Abre una conversación nueva: las herramientas del sitio aparecen en el menú de herramientas.
 
-```json
-{
-  "mcpServers": {
-    "mi-sitio": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "https://tu-sitio.com/wp-json/wp-divi-mcp/v1/mcp?key=..."]
-    }
-  }
-}
-```
+Cómo funciona: la extensión es un pequeño programa que Claude Desktop ejecuta en tu ordenador. Las peticiones salen de tu equipo y no de los servidores de Anthropic. Por eso funciona en hostings que bloquean el conector de claude.ai, como WP Engine, que responde 403 al cliente con el que claude.ai comprueba el inicio de sesión.
+
+- Cada conexión genera su propio archivo con un nombre distinto, así que puedes tener varios sitios instalados a la vez.
+- El archivo contiene la clave de la conexión: trátalo como la URL. Si se pierde o lo compartes por error, revoca la conexión.
+- Funciona en Claude Desktop para macOS y Windows. En Linux depende de que tu versión de Claude Desktop admita extensiones.
+- Solo sirve en el ordenador donde la instalas. claude.ai en el navegador y la app móvil no la usan.
+
+Los conectores que añades en claude.ai (**Settings → Connectors**) también aparecen en Claude Desktop, pero se conectan desde los servidores de Anthropic. En WP Engine fallan.
 
 ### Claude Code
 
@@ -160,4 +161,5 @@ define( 'WPDM_UNINSTALL_DELETE_BACKUPS', true );
 | Error 503 | Está marcada la casilla **Disable endpoint**. |
 | Error 429 | Demasiados intentos fallidos desde la misma IP; espera un minuto. |
 | No aparecen las herramientas de Divi | El tema Divi 5 no está activo (solo quedan `divi_build_layout`, `divi_validate_layout` y `divi_find_icon`), o el usuario de la conexión no tiene permisos de administrador (faltan las de globales y Theme Builder). |
+| claude.ai muestra 403 o "Couldn't determine how this server signs in" | El hosting (por ejemplo WP Engine) bloquea el cliente de Anthropic. Usa la extensión de Claude Desktop o Claude Code. |
 | No puede modificar una página | La conexión está en modo **Read only**, o la página está publicada y falta la confirmación. |
