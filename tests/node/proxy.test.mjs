@@ -28,7 +28,12 @@ async function fakeServer( handler ) {
 	return {
 		url: `http://127.0.0.1:${ port }/wp-json/wp-divi-mcp/v1/mcp?key=SECRET`,
 		requests,
-		close: () => new Promise( ( r ) => server.close( r ) ),
+		close: () =>
+			new Promise( ( r ) => {
+				server.close( r );
+				// fetch keeps connections alive; drop them so close() returns at once.
+				server.closeAllConnections();
+			} ),
 	};
 }
 
