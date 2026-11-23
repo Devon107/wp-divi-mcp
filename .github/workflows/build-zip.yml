@@ -46,7 +46,7 @@ jobs:
           # GitHub always wraps an artifact in its own zip, so upload the staged
           # folder (not build/wp-divi-mcp.zip): the downloaded artifact is then the
           # installable plugin zip itself.
-          name: wp-divi-mcp-${{ github.ref_name }}-${{ github.sha }}
+          name: wp-divi-mcp-${{ github.sha }}
           path: dist/
           if-no-files-found: error
           retention-days: 30
