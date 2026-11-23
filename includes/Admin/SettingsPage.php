@@ -367,16 +367,16 @@ class SettingsPage {
 			$connection_id = substr( hash( 'sha256', $url ), 0, 12 );
 		}
 		echo '<h3>' . esc_html__( 'Claude Desktop', 'wp-divi-mcp' ) . '</h3>';
-		$bytes = '';
-		if ( Mcpb::available() ) {
-			try {
-				$bytes = Mcpb::build( $url, $label, $connection_id );
-			} catch ( \RuntimeException $e ) {
-				$bytes = '';
-			}
-		}
-		if ( '' === $bytes ) {
+		if ( ! Mcpb::available() ) {
 			echo '<p>' . esc_html__( 'Claude Desktop download needs the PHP ZipArchive extension on this server.', 'wp-divi-mcp' ) . '</p>';
+			return;
+		}
+		try {
+			$bytes = Mcpb::build( $url, $label, $connection_id );
+		} catch ( \Throwable $e ) {
+			// Never break the shown-once box: the URL above is the only copy of the key.
+			error_log( 'WP Divi MCP: could not build the Claude Desktop file: ' . get_class( $e ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- admin diagnostics, no secrets.
+			echo '<p>' . esc_html__( 'Could not build the Claude Desktop file on this server. Use the URL or the Claude Code command above.', 'wp-divi-mcp' ) . '</p>';
 			return;
 		}
 		echo '<p>' . esc_html__( 'Download this file and open it to install the connection in Claude Desktop. It works on any host, including WP Engine. The file contains the key: treat it like the URL, and revoke the connection if it leaks.', 'wp-divi-mcp' ) . '</p>';

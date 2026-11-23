@@ -333,6 +333,23 @@ class SettingsPageTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'id="wpdm-url"', $html );
 	}
 
+	public function test_desktop_build_error_keeps_the_box() {
+		$break = static function () {
+			return array( 'not a path' ); // file_get_contents( array ) throws a TypeError.
+		};
+		add_filter( 'wpdm_mcpb_server_path', $break );
+		$this->post( 'wpdm_create', $this->create_post() );
+		SettingsPage::handle_create();
+		$html = $this->render();
+		remove_filter( 'wpdm_mcpb_server_path', $break );
+
+		$this->assertStringContainsString( 'id="wpdm-url"', $html );
+		$this->assertStringContainsString( 'id="wpdm-cmd"', $html );
+		$this->assertStringNotContainsString( 'data:application/zip', $html );
+		$this->assertStringContainsString( 'Could not build the Claude Desktop file', $html );
+		$this->assertStringContainsString( '</div>', $html );
+	}
+
 	public function test_desktop_link_without_connection_id_in_transient() {
 		set_transient(
 			'wpdm_new_conn_' . $this->admin_id,

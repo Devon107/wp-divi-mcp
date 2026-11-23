@@ -78,7 +78,13 @@ final class Mcpb {
 		if ( ! self::available() || ! class_exists( 'ZipArchive' ) ) {
 			throw new \RuntimeException( 'ZipArchive is not available.' );
 		}
-		$server = file_get_contents( WPDM_DIR . self::SERVER_SRC ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local plugin file.
+		/**
+		 * Path of the Desktop server script copied into the bundle.
+		 *
+		 * @param string $path Absolute path.
+		 */
+		$path   = apply_filters( 'wpdm_mcpb_server_path', WPDM_DIR . self::SERVER_SRC );
+		$server = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local plugin file.
 		if ( false === $server ) {
 			throw new \RuntimeException( 'Cannot read the Desktop server script.' );
 		}

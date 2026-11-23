@@ -16,6 +16,7 @@
 const readline = require( 'node:readline' );
 
 const ERR_PROXY = -32000;
+const DEFAULT_TIMEOUT_MS = 120000;
 
 /**
  * Collect the ids of the requests (not notifications or responses) in a message.
@@ -39,9 +40,11 @@ function requestIds( message ) {
  * @param {object}   opts.input   Readable stream of JSON-RPC lines.
  * @param {object}   opts.output  Writable stream for responses.
  * @param {Function} opts.log     Logger (stderr).
+ * @param {number}   [opts.timeoutMs] Per-request timeout (default 120 s).
  * @return {Promise<void>} Resolves once input ended and shutdown was attempted.
  */
-function start( { url, version, input, output, log } ) {
+function start( { url, version, input, output, log, timeoutMs } ) {
+	const timeout = timeoutMs || DEFAULT_TIMEOUT_MS;
 	const userAgent = 'wp-divi-mcp-desktop/' + ( version || 'dev' );
 	let sessionId = null;
 	let chain = Promise.resolve();
@@ -64,6 +67,16 @@ function start( { url, version, input, output, log } ) {
 		return h;
 	};
 
+	async function post( message ) {
+		const res = await fetch( url, {
+			method: 'POST',
+			headers: headers(),
+			body: JSON.stringify( message ),
+			signal: AbortSignal.timeout( timeout ),
+		} );
+		return { res, text: await res.text() };
+	}
+
 	async function forward( line ) {
 		let message;
 		try {
@@ -77,11 +90,19 @@ function start( { url, version, input, output, log } ) {
 		let res;
 		let text;
 		try {
-			res = await fetch( url, { method: 'POST', headers: headers(), body: JSON.stringify( message ) } );
-			text = await res.text();
+			( { res, text } = await post( message ) );
+			// The server forgets idle sessions (12 h). Drop the stale id and retry once
+			// without it; the server accepts session-less requests.
+			if ( res.status === 404 && sessionId ) {
+				log( 'wp-divi-mcp: session expired, starting a new one' );
+				sessionId = null;
+				( { res, text } = await post( message ) );
+			}
 		} catch ( e ) {
-			log( 'wp-divi-mcp: cannot reach WordPress (' + ( e && e.name ) + ')' );
-			errorFor( ids, ERR_PROXY, 'Cannot reach WordPress: ' + ( e && e.name ) );
+			const timedOut = e && ( e.name === 'TimeoutError' || e.name === 'AbortError' );
+			const why = timedOut ? 'request timed out' : 'cannot reach WordPress (' + ( e && e.name ) + ')';
+			log( 'wp-divi-mcp: ' + why );
+			errorFor( ids, ERR_PROXY, timedOut ? 'WordPress request timed out' : 'Cannot reach WordPress: ' + ( e && e.name ) );
 			return;
 		}
 
@@ -107,8 +128,19 @@ function start( { url, version, input, output, log } ) {
 				}
 				return;
 			}
+			// Write JSON-RPC answers; any request left without one gets an error, so
+			// Claude never waits on an id the server did not answer.
+			const answered = new Set();
 			for ( const item of Array.isArray( body ) ? body : [ body ] ) {
-				write( item );
+				if ( item && typeof item === 'object' && item.jsonrpc === '2.0' && 'id' in item ) {
+					write( item );
+					answered.add( item.id );
+				}
+			}
+			const missing = ids.filter( ( id ) => ! answered.has( id ) );
+			if ( missing.length ) {
+				log( 'wp-divi-mcp: WordPress sent an unexpected response (HTTP ' + res.status + ')' );
+				errorFor( missing, ERR_PROXY, 'Unexpected response from WordPress (HTTP ' + res.status + ')' );
 			}
 			return;
 		}
@@ -133,7 +165,7 @@ function start( { url, version, input, output, log } ) {
 			await chain;
 			if ( sessionId ) {
 				try {
-					await fetch( url, { method: 'DELETE', headers: headers() } );
+					await fetch( url, { method: 'DELETE', headers: headers(), signal: AbortSignal.timeout( 5000 ) } );
 				} catch ( e ) {
 					// Best effort.
 				}

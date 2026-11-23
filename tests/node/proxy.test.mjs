@@ -175,3 +175,53 @@ test( 'url never logged', async () => {
 		assert.ok( ! l.includes( 'SECRET' ), l );
 	}
 } );
+
+test( 'expired session is dropped and the call retried once', async () => {
+	let posts = 0;
+	const srv = await fakeServer( ( r, body, res ) => {
+		if ( r.method === 'DELETE' ) {
+			res.writeHead( 204 );
+			return res.end();
+		}
+		posts++;
+		const msg = JSON.parse( body );
+		if ( r.headers[ 'mcp-session-id' ] === 'old' ) {
+			return json( res, 404, { jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Session not found' } } );
+		}
+		const sid = msg.method === 'initialize' ? 'old' : undefined;
+		json( res, 200, { jsonrpc: '2.0', id: msg.id, result: { ok: msg.id } }, sid ? { 'Mcp-Session-Id': sid } : {} );
+	} );
+	const { lines } = await run( srv.url, [ req( 1, 'initialize' ), req( 2 ), req( 3 ) ] );
+	await srv.close();
+	assert.deepEqual( lines.map( ( l ) => l.id ), [ 1, 2, 3 ] );
+	assert.ok( lines.every( ( l ) => l.result ), JSON.stringify( lines ) );
+	// initialize, 404 for id 2, retry of id 2 without the header, id 3: four POSTs.
+	assert.equal( posts, 4 );
+	assert.equal( srv.requests.filter( ( r ) => r.method === 'DELETE' ).length, 0 );
+} );
+
+test( 'a request that takes too long gets an error', async () => {
+	const srv = await fakeServer( () => {} );
+	const input = new PassThrough();
+	const output = new PassThrough();
+	let out = '';
+	output.on( 'data', ( c ) => ( out += c ) );
+	const done = start( { url: srv.url, version: 't', input, output, log: () => {}, timeoutMs: 200 } );
+	input.end( req( 4 ) + '\n' );
+	await done;
+	await srv.close();
+	const lines = out.split( '\n' ).filter( Boolean ).map( ( l ) => JSON.parse( l ) );
+	assert.equal( lines.length, 1 );
+	assert.equal( lines[ 0 ].id, 4 );
+	assert.equal( lines[ 0 ].error.code, -32000 );
+	assert.match( lines[ 0 ].error.message, /timed out/i );
+} );
+
+test( '2xx json without a json-rpc answer still answers every request', async () => {
+	const srv = await fakeServer( ( r, body, res ) => json( res, 200, { ok: true } ) );
+	const { lines } = await run( srv.url, [ req( 5 ) ] );
+	await srv.close();
+	assert.equal( lines.length, 1 );
+	assert.equal( lines[ 0 ].id, 5 );
+	assert.equal( lines[ 0 ].error.code, -32000 );
+} );
