@@ -43,6 +43,7 @@ final class PostFormatter {
 			'title'    => $post->post_title,
 			'slug'     => $post->post_name,
 			'link'     => $link,
+			'date'     => self::published( $post ),
 			'modified' => self::modified( $post ),
 			'parent'   => (int) $post->post_parent,
 			'divi'     => $divi,
@@ -54,18 +55,39 @@ final class PostFormatter {
 	}
 
 	/**
-	 * Last-modified time in UTC, ISO 8601.
+	 * Publication date in UTC, ISO 8601.
 	 *
-	 * New drafts keep a zeroed post_modified_gmt until they are published, so fall
-	 * back to the local post_modified (interpreted in the site timezone).
+	 * @param \WP_Post $post Post.
+	 * @return string Empty only when the post has no date at all.
+	 */
+	private static function published( \WP_Post $post ): string {
+		return self::utc( $post, 'date' );
+	}
+
+	/**
+	 * Last-modified time in UTC, ISO 8601.
 	 *
 	 * @param \WP_Post $post Post.
 	 * @return string Empty only when the post has no modified date at all.
 	 */
 	private static function modified( \WP_Post $post ): string {
-		$datetime = get_post_datetime( $post, 'modified', 'gmt' );
+		return self::utc( $post, 'modified' );
+	}
+
+	/**
+	 * A post date field in UTC, ISO 8601.
+	 *
+	 * New drafts keep a zeroed GMT date until they are published, so fall back to
+	 * the local date (interpreted in the site timezone).
+	 *
+	 * @param \WP_Post $post  Post.
+	 * @param string   $field 'date' or 'modified'.
+	 * @return string Empty only when the post has no such date at all.
+	 */
+	private static function utc( \WP_Post $post, string $field ): string {
+		$datetime = get_post_datetime( $post, $field, 'gmt' );
 		if ( false === $datetime ) {
-			$datetime = get_post_datetime( $post, 'modified', 'local' );
+			$datetime = get_post_datetime( $post, $field, 'local' );
 		}
 		if ( false === $datetime ) {
 			return '';

@@ -342,8 +342,6 @@ class ContentToolsTest extends WP_UnitTestCase {
 		// future needs a date, and it must be in the future.
 		$this->fails( $this->admin, 'create_post', array( 'title' => 'x', 'status' => 'future' ), 'date' );
 		$this->fails( $this->admin, 'create_post', array( 'title' => 'x', 'status' => 'future', 'date' => '2001-01-01 10:00:00' ), 'future' );
-		// date without future status is refused.
-		$this->fails( $this->admin, 'create_post', array( 'title' => 'x', 'date' => '2090-01-01 10:00:00' ) );
 
 		$data = $this->ok( $this->admin, 'create_post', array( 'title' => 'Scheduled', 'status' => 'future', 'date' => '2090-01-01 10:00:00' ) );
 		$this->assertSame( 'future', $data['status'] );
@@ -691,6 +689,76 @@ class ContentToolsTest extends WP_UnitTestCase {
 		$this->assertArrayHasKey( 'meta', $lean );
 	}
 
+	// ----- publication dates -----------------------------------------------
+
+	public function test_date_backdates_published_post() {
+		$id   = self::factory()->post->create( array( 'post_type' => 'post', 'post_status' => 'publish', 'post_title' => 'Old news', 'post_date' => '2024-03-04 05:06:07' ) );
+		$data = $this->ok( $this->admin, 'update_post', array( 'id' => $id, 'date' => '2020-05-01 10:00:00' ) );
+
+		clean_post_cache( $id );
+		$this->assertSame( '2020-05-01 10:00:00', get_post( $id )->post_date );
+		$this->assertSame( 'publish', get_post( $id )->post_status );
+		$this->assertSame( 'publish', $data['status'] );
+		$this->assertArrayHasKey( 'previous_date', $data );
+		$this->assertNotSame( $data['date'], $data['previous_date'] );
+		$this->assertStringStartsWith( '2020-05-01', $data['date'] );
+	}
+
+	public function test_publish_with_future_date_schedules() {
+		$future = gmdate( 'Y-m-d H:i:s', time() + 2 * DAY_IN_SECONDS );
+		$data   = $this->ok( $this->admin, 'create_post', array( 'post_type' => 'post', 'title' => 'Soon', 'status' => 'publish', 'date' => $future ) );
+		$this->assertSame( 'future', $data['status'] );
+		$this->assertSame( 'future', get_post_status( $data['id'] ) );
+
+		// The same through update_post on a published post.
+		$id = self::factory()->post->create( array( 'post_type' => 'post', 'post_status' => 'publish' ) );
+		$this->assertSame( 'future', $this->ok( $this->admin, 'update_post', array( 'id' => $id, 'date' => $future ) )['status'] );
+	}
+
+	public function test_date_on_draft_is_kept_after_publish() {
+		$data = $this->ok( $this->admin, 'create_post', array( 'post_type' => 'post', 'title' => 'Dated draft', 'date' => '2021-01-02 03:04:05' ) );
+		$this->assertSame( 'draft', $data['status'] );
+		$this->assertStringStartsWith( '2021-01-02', $data['date'] );
+
+		$this->ok( $this->admin, 'update_post', array( 'id' => $data['id'], 'status' => 'publish' ) );
+		clean_post_cache( $data['id'] );
+		$post = get_post( $data['id'] );
+		$this->assertSame( 'publish', $post->post_status );
+		$this->assertSame( '2021-01-02 03:04:05', $post->post_date );
+	}
+
+	public function test_future_with_past_date_fails() {
+		$this->fails( $this->admin, 'create_post', array( 'title' => 'x', 'status' => 'future', 'date' => '2001-01-01 10:00:00' ), 'future' );
+		$this->assertSame( 'invalid_argument', $this->error_code( $this->admin, 'create_post', array( 'title' => 'x', 'status' => 'future', 'date' => '2001-01-01 10:00:00' ) ) );
+	}
+
+	public function test_date_needs_publish_capability() {
+		$this->assertSame( 'forbidden', $this->error_code( $this->contributor, 'create_post', array( 'post_type' => 'post', 'title' => 'Mine', 'date' => '2021-01-02 03:04:05' ) ) );
+
+		$mine = self::factory()->post->create( array( 'post_type' => 'post', 'post_status' => 'draft', 'post_author' => $this->contributor ) );
+		$this->assertSame( 'forbidden', $this->error_code( $this->contributor, 'update_post', array( 'id' => $mine, 'date' => '2021-01-02 03:04:05' ) ) );
+		$this->assertStringContainsString( 'not allowed to set publication dates', $this->fails( $this->contributor, 'update_post', array( 'id' => $mine, 'date' => '2021-01-02 03:04:05' ) ) );
+	}
+
+	public function test_unparseable_date_invalid() {
+		$this->assertSame( 'invalid_argument', $this->error_code( $this->admin, 'create_post', array( 'title' => 'x', 'date' => 'not a date' ) ) );
+	}
+
+	public function test_summary_has_date_for_drafts() {
+		$data = $this->ok( $this->admin, 'create_post', array( 'post_type' => 'post', 'title' => 'Draft with date' ) );
+		$this->assertNotSame( '', $data['date'] );
+		$this->assertStringEndsWith( '+00:00', $data['date'] );
+
+		$listed = $this->ok( $this->admin, 'list_posts', array( 'post_type' => 'post', 'status' => 'draft' ) );
+		$this->assertNotSame( '', $listed['items'][0]['date'] );
+		$this->assertStringEndsWith( '+00:00', $listed['items'][0]['date'] );
+	}
+
+	public function test_previous_date_only_when_changed() {
+		$id = self::factory()->post->create( array( 'post_type' => 'post', 'post_status' => 'publish' ) );
+		$this->assertArrayNotHasKey( 'previous_date', $this->ok( $this->admin, 'update_post', array( 'id' => $id, 'title' => 'Retitled' ) ) );
+	}
+
 	public function test_modified_is_set_for_new_drafts() {
 		$data = $this->ok( $this->admin, 'create_post', array( 'post_type' => 'post', 'title' => 'Draft date' ) );
 		$this->assertSame( 'draft', $data['status'] );
@@ -827,7 +895,7 @@ class ContentToolsTest extends WP_UnitTestCase {
 			}
 		}
 		$this->assertNotNull( $item );
-		foreach ( array( 'id', 'type', 'status', 'title', 'slug', 'link', 'modified', 'parent', 'divi', 'edit_divi' ) as $key ) {
+		foreach ( array( 'id', 'type', 'status', 'title', 'slug', 'link', 'date', 'modified', 'parent', 'divi', 'edit_divi' ) as $key ) {
 			$this->assertArrayHasKey( $key, $item, $key );
 		}
 		$this->assertArrayNotHasKey( 'content_raw', $item );

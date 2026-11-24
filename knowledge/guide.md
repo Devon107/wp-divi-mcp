@@ -34,6 +34,7 @@ WordPress tools: `site_info`, `list_posts` (default post type page), `get_post`,
 `update_post`, `trash_post` / `restore_post` (posts and pages are only trashed), `search`, `list_media` /
 `upload_media` / `update_media`, menus (`list_menus`, `get_menu`, `update_menu_items`), terms,
 comments, options, users. Do not edit a Divi page's content with `update_post`; use the Divi tools.
+`date` sets the publication date with any status: past = backdate, future + publish = scheduled.
 Yoast SEO (when active): `seo_get` / `seo_update` read and set the SEO title and meta description of a post or page; empty resets to Yoast's template; Yoast variables like `%%title%%` work.
 
 | Resource | Content |

@@ -386,7 +386,7 @@ final class PostSupport {
 			),
 			'date'           => array(
 				'type'        => 'string',
-				'description' => 'Publication date for status=future, in the site timezone (e.g. 2030-01-31 09:00:00) or ISO 8601 with an offset. Must be in the future.',
+				'description' => 'Publication date in the site timezone (e.g. 2030-01-31 09:00:00) or ISO 8601 with an offset. Any status: a past date backdates; a future date with status publish (or future) schedules the post; on drafts it is kept for publishing.',
 			),
 			'slug'           => array(
 				'type'        => 'string',
@@ -449,16 +449,20 @@ final class PostSupport {
 			$post['post_status'] = $status;
 		}
 		if ( isset( $args['date'] ) ) {
-			if ( 'future' !== $effective ) {
-				throw new ToolError( 'The date argument is only used with status=future.', 'invalid_argument' );
-			}
 			$date = date_create( $args['date'], wp_timezone() );
 			if ( false === $date ) {
 				throw new ToolError( 'Could not parse date "' . $args['date'] . '".', 'invalid_argument' );
 			}
+			if ( ! current_user_can( $type->cap->publish_posts ) ) {
+				throw new ToolError( 'You are not allowed to set publication dates on ' . $type->name . ' content.', 'forbidden' );
+			}
 			$timestamp = $date->getTimestamp();
-			if ( $timestamp <= time() + MINUTE_IN_SECONDS ) {
+			$is_future = $timestamp > time() + MINUTE_IN_SECONDS;
+			if ( 'future' === $effective && ! $is_future ) {
 				throw new ToolError( 'The date must be in the future for status=future.', 'invalid_argument' );
+			}
+			if ( 'publish' === $effective && $is_future ) {
+				$post['post_status'] = 'future';
 			}
 			$post['post_date']     = wp_date( 'Y-m-d H:i:s', $timestamp );
 			$post['post_date_gmt'] = gmdate( 'Y-m-d H:i:s', $timestamp );

@@ -100,8 +100,9 @@ final class UpdatePost extends Tool {
 			);
 		}
 
-		$type = PostSupport::post_type( $post->post_type );
-		$plan = PostSupport::plan( $type, $args, $post );
+		$type          = PostSupport::post_type( $post->post_type );
+		$plan          = PostSupport::plan( $type, $args, $post );
+		$previous_date = PostFormatter::summary( $post )['date'];
 
 		// Back up only once every check has passed, right before the write.
 		$backup_id = null;
@@ -132,6 +133,9 @@ final class UpdatePost extends Tool {
 		$out = PostFormatter::full( get_post( $post->ID ), true );
 		if ( null !== $backup_id ) {
 			$out['backup_id'] = $backup_id;
+		}
+		if ( $out['date'] !== $previous_date ) {
+			$out['previous_date'] = $previous_date;
 		}
 		return $out;
 	}
