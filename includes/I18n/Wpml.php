@@ -79,7 +79,7 @@ final class Wpml extends Languages {
 	}
 
 	/**
-	 * Translation group of a post, in the order of the configured languages.
+	 * Translation group of a post (every status: drafts are part of it), in the order of the configured languages.
 	 *
 	 * @param int $id Post id.
 	 * @return array<string,int>
@@ -91,7 +91,7 @@ final class Wpml extends Languages {
 			return array();
 		}
 		$group = array();
-		foreach ( (array) apply_filters( 'wpml_get_element_translations', null, $trid, $type ) as $code => $element ) {
+		foreach ( (array) apply_filters( 'wpml_get_element_translations', null, $trid, $type, false, true ) as $code => $element ) {
 			$element_id = is_object( $element ) ? ( $element->element_id ?? 0 ) : ( $element['element_id'] ?? 0 );
 			if ( $element_id ) {
 				$group[ (string) $code ] = (int) $element_id;
@@ -112,12 +112,10 @@ final class Wpml extends Languages {
 	 * @param int    $id   Post id.
 	 * @param string $code Language code.
 	 * @return void
+	 * @throws \InvalidArgumentException When the post does not exist.
 	 */
 	public function set_language( int $id, string $code ): void {
-		$type = $this->element_type( $id );
-		if ( null === $type ) {
-			return;
-		}
+		$type = 'post_' . $this->require_post( $id );
 		$trid = apply_filters( 'wpml_element_trid', null, $id, $type );
 		do_action(
 			'wpml_set_element_language_details',
@@ -138,16 +136,15 @@ final class Wpml extends Languages {
 	 * @param int    $translation_id Translation post id.
 	 * @param string $code           Language code of the translation.
 	 * @return void
+	 * @throws \InvalidArgumentException See Languages::guard_link().
 	 */
 	public function link( int $source_id, int $translation_id, string $code ): void {
+		$this->guard_link( $source_id, $translation_id, $code );
 		$source_type = $this->element_type( $source_id );
 		$type        = $this->element_type( $translation_id );
-		if ( null === $source_type || null === $type ) {
-			return;
-		}
-		$trid = apply_filters( 'wpml_element_trid', null, $source_id, $source_type );
+		$trid        = apply_filters( 'wpml_element_trid', null, $source_id, $source_type );
 		if ( ! $trid ) {
-			return;
+			throw new \InvalidArgumentException( sprintf( 'Source post %d is not in a WPML translation group; set its language first.', $source_id ) );
 		}
 		do_action(
 			'wpml_set_element_language_details',

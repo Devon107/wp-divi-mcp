@@ -75,6 +75,8 @@ abstract class Languages {
 	/**
 	 * Add a post to the translation group of a source post.
 	 *
+	 * Implementations call guard_link() first.
+	 *
 	 * @param int    $source_id      Source post id.
 	 * @param int    $translation_id Translation post id.
 	 * @param string $code           Language code of the translation.
@@ -90,6 +92,51 @@ abstract class Languages {
 	 * @return int|null
 	 */
 	abstract public function translation_of( int $id, string $code ): ?int;
+
+	/**
+	 * Throw unless the post exists.
+	 *
+	 * @param int $id Post id.
+	 * @return string The post type.
+	 * @throws \InvalidArgumentException When the post does not exist.
+	 */
+	protected function require_post( int $id ): string {
+		$post_type = get_post_type( $id );
+		if ( ! $post_type ) {
+			throw new \InvalidArgumentException( sprintf( 'Post %d does not exist.', $id ) );
+		}
+		return $post_type;
+	}
+
+	/**
+	 * Refuse a link() that cannot take effect or would corrupt the translation group.
+	 *
+	 * @param int    $source_id      Source post id.
+	 * @param int    $translation_id Translation post id.
+	 * @param string $code           Language code of the translation.
+	 * @return void
+	 * @throws \InvalidArgumentException When a post is missing, the source has no language, the code is the
+	 *                                   source's language, the post types differ, or the source's group already
+	 *                                   has a different post in that language.
+	 */
+	protected function guard_link( int $source_id, int $translation_id, string $code ): void {
+		$source_type = $this->require_post( $source_id );
+		$type        = $this->require_post( $translation_id );
+		$source_lang = $this->post_language( $source_id );
+		if ( null === $source_lang ) {
+			throw new \InvalidArgumentException( sprintf( 'Source post %d has no language; set it first.', $source_id ) );
+		}
+		if ( $code === $source_lang ) {
+			throw new \InvalidArgumentException( sprintf( 'Cannot link a translation in %s, the language of source post %d.', $code, $source_id ) );
+		}
+		if ( $type !== $source_type ) {
+			throw new \InvalidArgumentException( sprintf( 'Post types differ: source is %s, translation is %s.', $source_type, $type ) );
+		}
+		$existing = $this->translations( $source_id )[ $code ] ?? null;
+		if ( null !== $existing && $existing !== $translation_id ) {
+			throw new \InvalidArgumentException( sprintf( 'Post %d already is the %s translation of post %d.', $existing, $code, $source_id ) );
+		}
+	}
 
 	/**
 	 * Whether Polylang is active.

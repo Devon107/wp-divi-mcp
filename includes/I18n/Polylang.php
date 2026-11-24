@@ -97,8 +97,10 @@ final class Polylang extends Languages {
 	 * @param int    $id   Post id.
 	 * @param string $code Language code.
 	 * @return void
+	 * @throws \InvalidArgumentException When the post does not exist.
 	 */
 	public function set_language( int $id, string $code ): void {
+		$this->require_post( $id );
 		pll_set_post_language( $id, $code );
 	}
 
@@ -110,8 +112,10 @@ final class Polylang extends Languages {
 	 * @param int    $translation_id Translation post id.
 	 * @param string $code           Language code of the translation.
 	 * @return void
+	 * @throws \InvalidArgumentException See Languages::guard_link().
 	 */
 	public function link( int $source_id, int $translation_id, string $code ): void {
+		$this->guard_link( $source_id, $translation_id, $code );
 		if ( $this->post_language( $translation_id ) !== $code ) {
 			$this->set_language( $translation_id, $code );
 		}

@@ -84,7 +84,7 @@ final class WpmlDouble {
 		add_filter( 'wpml_default_language', array( self::class, 'default_language' ), 10, 1 );
 		add_filter( 'wpml_post_language_details', array( self::class, 'post_language_details' ), 10, 2 );
 		add_filter( 'wpml_element_trid', array( self::class, 'element_trid' ), 10, 3 );
-		add_filter( 'wpml_get_element_translations', array( self::class, 'element_translations' ), 10, 3 );
+		add_filter( 'wpml_get_element_translations', array( self::class, 'element_translations' ), 10, 5 );
 		add_filter( 'wpml_object_id', array( self::class, 'object_id' ), 10, 4 );
 		add_filter( 'wpml_is_translated_post_type', array( self::class, 'is_translated_post_type' ), 10, 2 );
 		add_action( self::ACTION, array( self::class, 'set_element_language_details' ), 10, 1 );
@@ -195,27 +195,51 @@ final class WpmlDouble {
 	/**
 	 * Members of a translation group, keyed by language code, as WPML does (objects with element_id).
 	 *
+	 * Like WPML, outside the admin and without $all_statuses it leaves out posts that are not
+	 * publish, private or pending, unless the current user wrote them (so drafts disappear).
+	 *
 	 * @param mixed  $unused       Incoming value.
 	 * @param int    $trid         Group id.
 	 * @param string $element_type Element type.
+	 * @param bool   $skip_empty   Unused.
+	 * @param bool   $all_statuses Include every post status.
 	 * @return array<string,\stdClass>
 	 */
-	public static function element_translations( $unused, $trid = 0, $element_type = 'post_post' ): array {
+	public static function element_translations( $unused, $trid = 0, $element_type = 'post_post', $skip_empty = false, $all_statuses = false ): array {
 		$out = array();
 		foreach ( self::$elements as $element_id => $row ) {
-			if ( (int) $row['trid'] === (int) $trid ) {
-				$out[ $row['language_code'] ] = (object) array(
-					'translation_id'       => $element_id,
-					'language_code'        => $row['language_code'],
-					'element_id'           => (string) $element_id,
-					'source_language_code' => $row['source_language_code'],
-					'element_type'         => $row['element_type'],
-					'original'             => null === $row['source_language_code'] ? '1' : '0',
-					'trid'                 => (string) $trid,
-				);
+			if ( (int) $row['trid'] !== (int) $trid ) {
+				continue;
 			}
+			if ( ! $all_statuses && ! is_admin() && ! self::visible_status( (int) $element_id ) ) {
+				continue;
+			}
+			$out[ $row['language_code'] ] = (object) array(
+				'translation_id'       => $element_id,
+				'language_code'        => $row['language_code'],
+				'element_id'           => (string) $element_id,
+				'source_language_code' => $row['source_language_code'],
+				'element_type'         => $row['element_type'],
+				'original'             => null === $row['source_language_code'] ? '1' : '0',
+				'trid'                 => (string) $trid,
+			);
 		}
 		return $out;
+	}
+
+	/**
+	 * Whether a post shows in a front-end translation list: public statuses, or written by the current user.
+	 *
+	 * @param int $post_id Post id.
+	 * @return bool
+	 */
+	private static function visible_status( int $post_id ): bool {
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return false;
+		}
+		return in_array( $post->post_status, array( 'publish', 'private', 'pending' ), true )
+			|| ( get_current_user_id() && (int) $post->post_author === get_current_user_id() );
 	}
 
 	/**
