@@ -70,19 +70,30 @@ final class SeoUpdate extends Tool {
 			throw new ToolError( 'You are not allowed to edit post ' . $post->ID . '.', 'forbidden' );
 		}
 
-		$title       = array_key_exists( 'title', $args ) ? sanitize_text_field( (string) $args['title'] ) : null;
-		$description = array_key_exists( 'description', $args ) ? sanitize_text_field( (string) $args['description'] ) : null;
+		$title       = array_key_exists( 'title', $args ) ? Yoast::clean( (string) $args['title'] ) : null;
+		$description = array_key_exists( 'description', $args ) ? Yoast::clean( (string) $args['description'] ) : null;
 
 		$previous = Yoast::stored( $post->ID );
 		Yoast::write( $post->ID, $title, $description );
 
 		$warnings = array();
-		if ( ! Yoast::refresh( $post->ID ) ) {
+		$refreshed = Yoast::refresh( $post->ID );
+		if ( ! $refreshed ) {
 			$warnings[] = 'Yoast could not refresh its cache; the change shows on the site after the next page save.';
 		}
 
 		$stored    = Yoast::stored( $post->ID );
 		$effective = Yoast::effective( $post->ID );
+
+		if ( $refreshed && '' === $effective['title'] ) {
+			$warnings[] = 'Yoast returned no SEO title for this post: Yoast does not index this post type, so the values are saved but have no effect on the site.';
+		}
+		foreach ( array( 'title', 'description' ) as $field ) {
+			$requested = array_key_exists( $field, $args ) ? trim( (string) $args[ $field ] ) : '';
+			if ( '' !== $requested && $stored[ $field ] !== $requested ) {
+				$warnings[] = sprintf( 'Yoast cleaned the %s when saving it; stored: "%s".', $field, $stored[ $field ] );
+			}
+		}
 
 		$title_len = mb_strlen( $effective['title'] );
 		if ( $title_len > self::TITLE_MAX ) {

@@ -75,6 +75,20 @@ final class Yoast {
 	}
 
 	/**
+	 * Clean a title or description the way Yoast does: strip tags and line breaks, but keep
+	 * Yoast variables such as %%date%% (WordPress' sanitize_text_field() would eat "%da").
+	 *
+	 * @param string $value Raw value.
+	 * @return string
+	 */
+	public static function clean( string $value ): string {
+		if ( class_exists( '\WPSEO_Utils' ) && method_exists( '\WPSEO_Utils', 'sanitize_text_field' ) ) {
+			return (string) \WPSEO_Utils::sanitize_text_field( $value );
+		}
+		return trim( (string) preg_replace( '`[\r\n\t ]+`', ' ', wp_strip_all_tags( $value, true ) ) );
+	}
+
+	/**
 	 * Rebuild the post's indexable now and drop Yoast's per-request meta cache.
 	 *
 	 * @param int $post_id Post id.

@@ -192,6 +192,33 @@ class SeoToolsTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( '%%', $data['effective_title'] );
 	}
 
+	public function test_seo_update_keeps_hex_looking_variables_and_percent_text() {
+		$id = $this->post();
+		foreach ( array( '%%date%% %%sep%% %%sitename%%', '%%category%% | %%title%%', '%%caption%%' ) as $title ) {
+			$data = $this->ok( $this->admin, 'seo_update', array( 'id' => $id, 'title' => $title ) );
+			$this->assertSame( $title, Yoast::stored( $id )['title'], $title );
+			$this->assertStringNotContainsString( 'cleaned', implode( ' ', $data['warnings'] ), $title );
+		}
+		// Yoast's own sanitizer drops "%Be" (looks like an encoded byte): say so instead of hiding it.
+		$data = $this->ok( $this->admin, 'seo_update', array( 'id' => $id, 'title' => '25%Bed Sale' ) );
+		$this->assertStringContainsString( 'cleaned the title', implode( ' ', $data['warnings'] ) );
+	}
+
+	public function test_seo_update_warns_when_yoast_does_not_index_the_type() {
+		register_post_type(
+			'wpdm_private_cpt',
+			array(
+				'public'  => false,
+				'show_ui' => true,
+				'label'   => 'Private CPT',
+			)
+		);
+		$id   = $this->post( array( 'post_type' => 'wpdm_private_cpt' ) );
+		$data = $this->ok( $this->admin, 'seo_update', array( 'id' => $id, 'title' => 'Not indexed' ) );
+		unregister_post_type( 'wpdm_private_cpt' );
+		$this->assertStringContainsString( 'does not index', implode( ' ', $data['warnings'] ) );
+	}
+
 	public function test_seo_update_strips_html() {
 		$id = $this->post();
 		$this->ok( $this->admin, 'seo_update', array( 'id' => $id, 'title' => "<b>Bold</b>\nTitle" ) );
