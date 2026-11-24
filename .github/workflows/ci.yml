@@ -69,3 +69,5 @@ jobs:
           exit 1
       - name: Run tests (Divi group excluded)
         run: bin/test
+      - name: Run Yoast SEO tests
+        run: WPDM_TEST_YOAST=1 bin/test --group yoast
