@@ -1,6 +1,6 @@
 # Multilingual content (WPML and Polylang) — design
 
-Date: 2026-11-24. Status: approved approach (A); builder check done, calls marked (call); pending the owner's review.
+Date: 2026-11-24. Status: approved by the owner (approach A; builder check done, calls marked (call)).
 
 ## Why
 
@@ -112,7 +112,16 @@ Permissions follow the existing tools. Read tools follow `get_post` visibility. 
   - Skipped: values that are empty, whitespace only, a URL, a number, a color or a Divi global variable reference.
   - Skipped: values of keys that are never prose: `src`, `linkUrl`, `url`, `id`, `width`, `height`, `sizes`, `srcset`, `icon`, `linkTarget`.
   - Extra prose keys seen in real exports are included: `titleText` (image), and `title` / `label` (social network).
-  - **`divi/code` blocks are skipped (call).** They hold CSS, scripts and shortcodes (`[ssjr_service_checker map="yes"]`), are copied unchanged, and each one is listed in a warning ("N code modules were not translated; review them"). Shortcode attributes are never translated.
+  - **Protected parts in every `html` segment, including `divi/code` (owner's decision).** On extract, the plugin replaces these with numbered markers `⟦n⟧`, so Claude sees and translates only the text between tags:
+    - each `<script>…</script>` and `<style>…</style>` block, whole;
+    - shortcodes `[...]` / `[/...]`;
+    - HTML comments;
+    - `<?php … ?>`.
+  - On create, the markers are recomputed from the source, which is guaranteed by the hash. The translation must contain every marker exactly once, and the same sequence of HTML tag names as the source.
+    - If it does, the originals are restored byte for byte.
+    - If not, that segment keeps the source text and a warning names it. Code and structure are never broken.
+  - A code block whose content is only protected parts has no segment and is copied unchanged.
+  - Shortcode attributes are never translated.
   - Responsive variants (`tablet`, `phone`) that equal `desktop` are not separate segments: the desktop translation fills them. Variants that differ are their own segments.
   - `adminLabel` is not translated.
 - **Segment ids are stable paths.** `b<n>` is the index of the block's **opening** tag among `divi/*` opening and self-closing blocks in document order. Closing tags, non-divi blocks and global-layout children are not counted. It is followed by the attr path. `t` is the title, `x` the excerpt, `seo.*` the Yoast fields, and `g<libraryId>.<…>` marks segments of global module library items that have no target version. Re-extracting an unchanged source gives the same ids.
@@ -144,6 +153,7 @@ Permissions follow the existing tools. Read tools follow `get_post` visibility. 
 - **Validation:**
   - `source_hash` (call) covers the post content, title and excerpt, the stored Yoast fields, and the content of every library item that contributed `g<id>.` segments. It must match the current source, otherwise `conflict` ("the source changed since extract; extract again").
   - Every segment id must exist. Unknown ids give `invalid_argument`.
+  - `html` segments must keep their markers and their tag-name sequence (see protected parts). Otherwise they fall back to the source text with a warning.
   - Missing ids keep the source text, and a warning lists them.
   - `html` segments go through `wp_kses_post`. When the user has `unfiltered_html`, they are kept as is, the same as the Divi tools do today.
 - **Global modules.** For each one without a target version, the plugin creates the target library item: it copies the source item, applies its `g<id>.` segments, sets the language and links it. Then it uses the new id in the page.
