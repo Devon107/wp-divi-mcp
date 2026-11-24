@@ -2,8 +2,9 @@
 # Run PHPUnit inside the wp-env tests container.
 # Usage: bin/test [phpunit args]            e.g. bin/test --testsuite unit
 # Divi-dependent tests (group "divi") are excluded unless WPDM_TEST_DIVI=1, Yoast ones (group
-# "yoast") unless WPDM_TEST_YOAST=1. Divi
-# which requires the Divi theme to be mapped via .wp-env.override.json.
+# "yoast") unless WPDM_TEST_YOAST=1, Polylang and WPML-double ones (groups "polylang" and
+# "wpml") unless WPDM_TEST_POLYLANG=1. Divi tests need the Divi theme mapped via
+# .wp-env.override.json.
 # WP_MULTISITE=1 bin/test runs as multisite (multisite-only tests skip otherwise).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -21,6 +22,13 @@ if [ "${WPDM_TEST_YOAST:-}" = "1" ]; then
 	env_args+=(WPDM_TEST_YOAST=1)
 else
 	excluded+=(yoast)
+fi
+# Language adapter tests: Polylang is installed in the tests env by .wp-env.json and only loaded
+# when WPDM_TEST_POLYLANG=1. The WPML test double needs no plugin, so group "wpml" shares the flag.
+if [ "${WPDM_TEST_POLYLANG:-}" = "1" ]; then
+	env_args+=(WPDM_TEST_POLYLANG=1)
+else
+	excluded+=(polylang wpml)
 fi
 group_args=()
 if [ "${#excluded[@]}" -gt 0 ]; then

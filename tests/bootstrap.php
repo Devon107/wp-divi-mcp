@@ -44,6 +44,65 @@ if ( '1' === getenv( 'WPDM_TEST_YOAST' ) ) {
 	);
 }
 
+if ( '1' === getenv( 'WPDM_TEST_POLYLANG' ) ) {
+	// Polylang is installed in the tests env (.wp-env.json) but only loaded here.
+	tests_add_filter(
+		'muplugins_loaded',
+		static function () {
+			$polylang = WP_PLUGIN_DIR . '/polylang/polylang.php';
+			if ( ! file_exists( $polylang ) ) {
+				fwrite( STDERR, "WPDM_TEST_POLYLANG=1 but Polylang is not installed in this wp-env (restart wp-env).\n" );
+				exit( 1 );
+			}
+			require $polylang;
+		}
+	);
+	// Without a language Polylang builds no context object and PLL() does not exist; force a light one
+	// so the languages below can be created (once they exist the context is Polylang's own).
+	tests_add_filter(
+		'pll_context',
+		static function ( $context ) {
+			return empty( $context ) ? 'PLL_REST_Request' : $context;
+		}
+	);
+	/**
+	 * Create the Polylang test languages (English default, French) when they are missing.
+	 *
+	 * Runs at init, and again before each Polylang test class because the WP test suite deletes all
+	 * terms (so the language terms) after every test class.
+	 *
+	 * @return void
+	 */
+	function wpdm_test_polylang_languages() {
+		if ( ! function_exists( 'PLL' ) || ! PLL() ) {
+			fwrite( STDERR, "WPDM_TEST_POLYLANG=1 but Polylang did not initialise.\n" );
+			exit( 1 );
+		}
+		PLL()->model->clean_languages_cache();
+		$languages = array(
+			'en' => array( 'name' => 'English', 'locale' => 'en_US' ),
+			'fr' => array( 'name' => 'Français', 'locale' => 'fr_FR' ),
+		);
+		foreach ( array_keys( $languages ) as $position => $slug ) {
+			if ( PLL()->model->get_language( $slug ) ) {
+				continue;
+			}
+			PLL()->model->add_language(
+				array(
+					'name'       => $languages[ $slug ]['name'],
+					'slug'       => $slug,
+					'locale'     => $languages[ $slug ]['locale'],
+					'rtl'        => 0,
+					'term_group' => $position,
+				)
+			);
+		}
+	}
+
+	// Two languages, English (default) and French; page and post are translatable by default.
+	tests_add_filter( 'init', 'wpdm_test_polylang_languages', 99 );
+}
+
 tests_add_filter(
 	'muplugins_loaded',
 	static function () use ( $wpdm_plugin_dir ) {
