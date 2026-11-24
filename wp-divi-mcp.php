@@ -3,7 +3,7 @@
  * Plugin Name:       WP Divi MCP
  * Plugin URI:        https://github.com/Devon107/wp-divi-mcp
  * Description:       Built-in MCP server so Claude can manage a WordPress site and build Divi 5 pages.
- * Version:           0.1.0
+ * Version:           0.2.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            WP Divi MCP contributors
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'WPDM_VERSION', '0.1.0' );
+define( 'WPDM_VERSION', '0.2.0' );
 define( 'WPDM_FILE', __FILE__ );
 define( 'WPDM_DIR', plugin_dir_path( __FILE__ ) );
 

@@ -2,7 +2,7 @@
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,6 +24,9 @@ Connection URLs contain a secret token. Treat them like passwords, revoke them w
 4. Add the URL to Claude as a custom connector, or use "Download for Claude Desktop" to install a Claude Desktop extension for that connection. The extension runs on your computer, so it also works on hosts that block Anthropic's cloud connector (such as WP Engine).
 
 == Changelog ==
+
+= 0.2.0 =
+* New: "Download for Claude Desktop" in the new-connection box. It installs a Claude Desktop extension (.mcpb) for that connection, which runs on your computer and works on hosts that block Anthropic's cloud connector, such as WP Engine.
 
 = 0.1.0 =
 * First release.
