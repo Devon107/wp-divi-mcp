@@ -56,6 +56,7 @@ final class Plugin {
 		add_filter( 'wpdm_registry', array( Tools\WordPress\Registrar::class, 'add' ) );
 		add_filter( 'wpdm_registry', array( Tools\Divi\Registrar::class, 'add' ) );
 		add_filter( 'wpdm_registry', array( Tools\Seo\Registrar::class, 'add' ) );
+		add_filter( 'wpdm_registry', array( Tools\I18n\Registrar::class, 'add' ) );
 		add_filter( 'wpdm_registry', array( Knowledge\Registrar::class, 'add' ) );
 		add_filter( 'wpdm_instructions', array( Knowledge\Instructions::class, 'filter' ) );
 		Divi\Backups::register();

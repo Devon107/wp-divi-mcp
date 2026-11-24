@@ -175,6 +175,19 @@ abstract class LanguagesContractTest extends WP_UnitTestCase {
 		}
 	}
 
+	public function test_link_post_to_itself_throws() {
+		$en = $this->page( 'Home' );
+		$this->adapter()->set_language( $en, 'en' );
+
+		try {
+			$this->adapter()->link( $en, $en, 'fr' );
+			$this->fail( 'Linking a post to itself must throw.' );
+		} catch ( InvalidArgumentException $e ) {
+			$this->assertSame( array( 'en' => $en ), $this->adapter()->translations( $en ), 'group untouched' );
+			$this->assertSame( 'en', $this->adapter()->post_language( $en ), 'language untouched' );
+		}
+	}
+
 	public function test_link_across_post_types_throws() {
 		$en = $this->page( 'Home' );
 		$fr = self::factory()->post->create( array( 'post_type' => 'post', 'post_status' => 'publish' ) );

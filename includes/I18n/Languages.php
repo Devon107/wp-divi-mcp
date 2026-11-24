@@ -115,13 +115,16 @@ abstract class Languages {
 	 * @param int    $translation_id Translation post id.
 	 * @param string $code           Language code of the translation.
 	 * @return void
-	 * @throws \InvalidArgumentException When a post is missing, the source has no language, the code is the
-	 *                                   source's language, the post types differ, or the source's group already
-	 *                                   has a different post in that language.
+	 * @throws \InvalidArgumentException When a post is missing, both ids are the same post, the source has no
+	 *                                   language, the code is the source's language, the post types differ, or
+	 *                                   the source's group already has a different post in that language.
 	 */
 	protected function guard_link( int $source_id, int $translation_id, string $code ): void {
 		$source_type = $this->require_post( $source_id );
 		$type        = $this->require_post( $translation_id );
+		if ( $source_id === $translation_id ) {
+			throw new \InvalidArgumentException( sprintf( 'Cannot link post %d to itself.', $source_id ) );
+		}
 		$source_lang = $this->post_language( $source_id );
 		if ( null === $source_lang ) {
 			throw new \InvalidArgumentException( sprintf( 'Source post %d has no language; set it first.', $source_id ) );
