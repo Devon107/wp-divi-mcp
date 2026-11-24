@@ -1,7 +1,9 @@
 {
-	"core": "WordPress/WordPress#6.8",
+	"core": "WordPress/WordPress#7.1.5",
 	"phpVersion": "8.2",
-	"plugins": [ "." ],
+	"plugins": [
+		"."
+	],
 	"config": {
 		"WP_DEBUG": true,
 		"SCRIPT_DEBUG": true
@@ -11,6 +13,12 @@
 			"config": {
 				"WP_DIVI_MCP_ALLOW_HTTP": true
 			}
+		},
+		"tests": {
+			"plugins": [
+				".",
+				"https://downloads.wordpress.org/plugin/wordpress-seo.28.9.zip"
+			]
 		}
 	}
 }

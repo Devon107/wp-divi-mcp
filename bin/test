@@ -1,18 +1,30 @@
 #!/usr/bin/env bash
 # Run PHPUnit inside the wp-env tests container.
 # Usage: bin/test [phpunit args]            e.g. bin/test --testsuite unit
-# Divi-dependent tests (group "divi") are excluded unless WPDM_TEST_DIVI=1,
+# Divi-dependent tests (group "divi") are excluded unless WPDM_TEST_DIVI=1, Yoast ones (group
+# "yoast") unless WPDM_TEST_YOAST=1. Divi
 # which requires the Divi theme to be mapped via .wp-env.override.json.
 # WP_MULTISITE=1 bin/test runs as multisite (multisite-only tests skip otherwise).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 env_args=(env)
-group_args=()
+excluded=()
 if [ "${WPDM_TEST_DIVI:-}" = "1" ]; then
 	env_args+=(WPDM_TEST_DIVI=1)
 else
-	group_args=(--exclude-group divi)
+	excluded+=(divi)
+fi
+# Yoast SEO tests (group "yoast") need WPDM_TEST_YOAST=1; Yoast is installed in the
+# tests env by .wp-env.json and only loaded when this is set.
+if [ "${WPDM_TEST_YOAST:-}" = "1" ]; then
+	env_args+=(WPDM_TEST_YOAST=1)
+else
+	excluded+=(yoast)
+fi
+group_args=()
+if [ "${#excluded[@]}" -gt 0 ]; then
+	group_args=(--exclude-group "$(IFS=,; echo "${excluded[*]}")")
 fi
 # WP_MULTISITE=1 runs the suite as multisite (the WP test bootstrap reads it).
 if [ "${WP_MULTISITE:-}" = "1" ]; then

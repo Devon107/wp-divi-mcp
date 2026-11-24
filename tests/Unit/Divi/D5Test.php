@@ -28,7 +28,13 @@ class D5Test extends TestCase {
 			'title'  => self::SPECIAL,
 			'nested' => array( 'list' => array( 1, -2, 'x' ), 'flag' => true, 'none' => null ),
 		);
-		$this->assertSame( serialize_block_attributes( $a ), D5::encode_attrs( $a ) );
+		// WordPress 7.x escapes a backslash as \ where 6.x (and Divi/the Python
+		// library, see tests/golden) write \\; both decode to the same value. Compare
+		// the decoded value always, and the exact bytes once the backslash is out.
+		$this->assertSame( json_decode( serialize_block_attributes( $a ), true ), json_decode( D5::encode_attrs( $a ), true ) );
+		$no_backslash          = $a;
+		$no_backslash['title'] = str_replace( '\\', '', self::SPECIAL );
+		$this->assertSame( serialize_block_attributes( $no_backslash ), D5::encode_attrs( $no_backslash ) );
 
 		$b      = D5::block( 'divi/text', $a, null, false );
 		$parsed = parse_blocks( D5::serialize( $b ) );

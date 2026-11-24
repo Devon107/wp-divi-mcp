@@ -29,6 +29,21 @@ if ( ! defined( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH' ) ) {
 
 require_once $_tests_dir . '/includes/functions.php';
 
+if ( '1' === getenv( 'WPDM_TEST_YOAST' ) ) {
+	// Yoast SEO is installed in the tests env (.wp-env.json) but only loaded here.
+	tests_add_filter(
+		'muplugins_loaded',
+		static function () {
+			$yoast = WP_PLUGIN_DIR . '/wordpress-seo/wp-seo.php';
+			if ( ! file_exists( $yoast ) ) {
+				fwrite( STDERR, "WPDM_TEST_YOAST=1 but Yoast SEO is not installed in this wp-env (restart wp-env).\n" );
+				exit( 1 );
+			}
+			require $yoast;
+		}
+	);
+}
+
 tests_add_filter(
 	'muplugins_loaded',
 	static function () use ( $wpdm_plugin_dir ) {
