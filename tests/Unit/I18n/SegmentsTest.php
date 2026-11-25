@@ -410,6 +410,84 @@ class SegmentsTest extends TestCase {
 		$this->assertFalse( Segments::extract( '<p>Hi</p>' )['legacy'] );
 	}
 
+	public function test_custom_attribute_alt_title_extracted() {
+		$ids = self::by_id( Segments::extract( self::fixture( 'image-attrs.html' ) ) );
+
+		$alt = $ids['b0.attr.0fca467f-6dd0-4a8c-9d4b-7f402e453a35'];
+		$this->assertSame( 'text', $alt['kind'] );
+		$this->assertSame( 'Mechanic repairing a bicycle wheel', $alt['text'] );
+		$this->assertStringContainsString( 'divi/image', $alt['context'] );
+		$this->assertStringContainsString( 'custom attribute alt', $alt['context'] );
+		$this->assertSame( 'shop-front-photo', $ids['b0.attr.e6s5i73h29']['text'] );
+		$this->assertStringContainsString( 'custom attribute title', $ids['b0.attr.e6s5i73h29']['context'] );
+
+		// Tablet: equal title is filled by desktop, the different alt is its own segment.
+		$this->assertArrayNotHasKey( 'b0.attr.e6s5i73h29.tablet', $ids );
+		$this->assertSame( 'Mechanic at work', $ids['b0.attr.0fca467f-6dd0-4a8c-9d4b-7f402e453a35.tablet']['text'] );
+
+		// Entry without an id uses its index; a URL value is skipped like any other value.
+		$this->assertSame( 'Workshop plan', $ids['b1.attr.2']['text'] );
+		$this->assertStringContainsString( 'custom attribute aria-label', $ids['b1.attr.2']['context'] );
+		$this->assertArrayNotHasKey( 'b1.attr.u1', $ids );
+
+		$this->assertSame(
+			array(
+				'b0.image.titleText',
+				'b0.attr.e6s5i73h29',
+				'b0.attr.0fca467f-6dd0-4a8c-9d4b-7f402e453a35',
+				'b0.attr.0fca467f-6dd0-4a8c-9d4b-7f402e453a35.tablet',
+				'b1.image.titleText',
+				'b1.attr.7jynqlletf',
+				'b1.attr.9baebda1-e174-4328-828f-b06cd181b257',
+				'b1.attr.2',
+				'b1.attr.7jynqlletf.legacy',
+			),
+			array_keys( $ids )
+		);
+	}
+
+	public function test_custom_attribute_legacy_copy_filled() {
+		$source = self::fixture( 'image-attrs.html' );
+		$ids    = self::by_id( Segments::extract( $source ) );
+		$this->assertArrayNotHasKey( 'b0.attr.0fca467f-6dd0-4a8c-9d4b-7f402e453a35.legacy', $ids, 'Equal legacy copy is not a segment.' );
+		$this->assertSame( 'Old plan title', $ids['b1.attr.7jynqlletf.legacy']['text'], 'Different legacy copy is its own segment.' );
+
+		$out = Segments::apply(
+			$source,
+			array(
+				'b0.attr.0fca467f-6dd0-4a8c-9d4b-7f402e453a35' => 'Mécanicien réparant une roue',
+				'b1.attr.7jynqlletf'                           => 'Plan de l\'atelier',
+			)
+		);
+		$this->assertSame( array(), $out['fallbacks'] );
+		$a = self::attrs_of( $out['content'], 0 )['module']['decoration']['attributes'];
+		$this->assertSame( 'Mécanicien réparant une roue', $a['desktop']['value']['attributes'][1]['value'] );
+		$this->assertSame( 'Mécanicien réparant une roue', $a['attributes'][1]['value'], 'Legacy copy filled by desktop.' );
+		$this->assertSame( 'Mechanic at work', $a['tablet']['value']['attributes'][1]['value'], 'Different tablet value untouched.' );
+		$b = self::attrs_of( $out['content'], 1 )['module']['decoration']['attributes'];
+		$this->assertSame( 'Plan de l\'atelier', $b['desktop']['value']['attributes'][0]['value'] );
+		$this->assertSame( 'Old plan title', $b['attributes'][0]['value'], 'Different legacy copy is not filled.' );
+	}
+
+	public function test_custom_attribute_non_prose_names_ignored() {
+		$ex = Segments::extract( self::fixture( 'image-attrs.html' ) );
+		foreach ( $ex['segments'] as $seg ) {
+			$this->assertNotSame( 'hero-img', $seg['text'] );
+			$this->assertNotSame( 'hero-photo', $seg['text'] );
+			$this->assertStringNotContainsString( 'vy8tqoegre', $seg['id'] );
+			$this->assertStringNotContainsString( 'k2l9x0', $seg['id'] );
+		}
+	}
+
+	public function test_custom_attribute_apply_in_place() {
+		$source = self::fixture( 'image-attrs.html' );
+		$out    = Segments::apply( $source, array( 'b1.attr.9baebda1-e174-4328-828f-b06cd181b257' => 'Plan avec établis' ) );
+		$this->assertSame( str_replace( '"value":"Floor plan with labeled work benches"', '"value":"Plan avec établis"', $source ), $out['content'] );
+
+		$out = Segments::apply( $source, array( 'b0.attr.e6s5i73h29' => 'photo-devanture' ) );
+		$this->assertSame( str_replace( '"value":"shop-front-photo"', '"value":"photo-devanture"', $source ), $out['content'], 'Desktop, tablet and legacy copies of the title, and nothing else.' );
+	}
+
 	public function test_protect_markers_match_extract() {
 		$ids = self::by_id( Segments::extract( self::fixture( 'page.html' ) ) );
 		$this->assertSame( array( 'div', 'p', '/p', 'a', '/a', '/div' ), Protect::tags( $ids['b8.content']['text'] ) );

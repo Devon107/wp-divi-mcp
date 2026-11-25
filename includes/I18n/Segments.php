@@ -47,6 +47,11 @@ final class Segments {
 	const NEVER_PROSE = array( 'src', 'linkUrl', 'url', 'id', 'width', 'height', 'sizes', 'srcset', 'icon', 'linkTarget' );
 
 	/**
+	 * Names of custom HTML attributes (module.decoration.attributes) that hold prose.
+	 */
+	const PROSE_ATTRIBUTES = array( 'alt', 'title', 'aria-label', 'placeholder' );
+
+	/**
 	 * Attr keys holding links that $link_map / $post_map rewrite.
 	 */
 	const LINK_KEYS = array( 'linkUrl', 'url' );
@@ -258,6 +263,7 @@ final class Segments {
 							$where                 = $b['name'] . ( is_string( $label ) && '' !== $label ? " '" . $label . "'" : '' );
 							$where                .= $section > 0 ? ' in section ' . $section : '';
 							self::walk_attrs( $st, $i, $idx, $where, $attrs, array() );
+							self::custom_attributes( $st, $i, $idx, $where, $attrs );
 						}
 					}
 				} else {
@@ -386,6 +392,81 @@ final class Segments {
 						$path[] = $key;
 						self::value( $st, $i, $idx, $where, $element, (string) $key, $bp, $text, $path, $values, $desktop );
 					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Segments of custom HTML attributes whose name is prose (alt, title, aria-label,
+	 * placeholder), stored as module.decoration.attributes.<bp>.value.attributes[] and as a
+	 * legacy top-level copy module.decoration.attributes.attributes[]. Ids are
+	 * `b<n>.attr.<entry id>` (the entry index when it has no id), plus `.<bp>` for other
+	 * breakpoints and `.legacy` for the legacy copy when they differ from desktop; equal
+	 * values are filled by the desktop translation.
+	 *
+	 * @param array     $st    State.
+	 * @param int       $i     Scan index.
+	 * @param int       $idx   Block index.
+	 * @param string    $where Context.
+	 * @param \stdClass $attrs Block attrs.
+	 * @return void
+	 */
+	private static function custom_attributes( array &$st, $i, $idx, $where, $attrs ) {
+		$node = $attrs->module->decoration->attributes ?? null;
+		if ( ! is_object( $node ) ) {
+			return;
+		}
+		$base  = array( 'module', 'decoration', 'attributes' );
+		$lists = array(); // suffix => [path to the list, list].
+		foreach ( $node as $bp => $state ) {
+			if ( 'attributes' !== $bp && is_object( $state ) && isset( $state->value->attributes ) && is_array( $state->value->attributes ) ) {
+				$lists[ (string) $bp ] = array( array_merge( $base, array( $bp, 'value', 'attributes' ) ), $state->value->attributes );
+			}
+		}
+		if ( isset( $lists['desktop'] ) ) {
+			$lists = array( 'desktop' => $lists['desktop'] ) + $lists;
+		}
+		if ( isset( $node->attributes ) && is_array( $node->attributes ) ) {
+			$lists['legacy'] = array( array_merge( $base, array( 'attributes' ) ), $node->attributes );
+		}
+		$desktop = array(); // entry key => [segment index, desktop value].
+		foreach ( $lists as $suffix => $list ) {
+			foreach ( $list[1] as $k => $entry ) {
+				if ( ! is_object( $entry ) || ! isset( $entry->name, $entry->value ) || ! is_string( $entry->name ) || ! is_string( $entry->value ) ) {
+					continue;
+				}
+				$name = strtolower( $entry->name );
+				if ( ! in_array( $name, self::PROSE_ATTRIBUTES, true ) ) {
+					continue;
+				}
+				$key  = isset( $entry->id ) && is_scalar( $entry->id ) && '' !== (string) $entry->id ? (string) $entry->id : (string) $k;
+				$path = array_merge( $list[0], array( $k, 'value' ) );
+				if ( 'desktop' !== $suffix && isset( $desktop[ $key ] ) && $desktop[ $key ][1] === $entry->value ) {
+					$st['segments'][ $desktop[ $key ][0] ]['fills'][] = $path;
+					continue;
+				}
+				if ( self::skip( $entry->value ) ) {
+					continue;
+				}
+				$id = 'b' . $idx . '.attr.' . $key . ( 'desktop' === $suffix ? '' : '.' . $suffix );
+				if ( isset( $st['ids'][ $id ] ) ) {
+					$id = 'b' . $idx . '.' . implode( '.', $path );
+				}
+				$st['ids'][ $id ] = true;
+				$st['segments'][] = array(
+					'id'      => $id,
+					'kind'    => 'text',
+					'context' => $where . ' custom attribute ' . $name . ( 'desktop' === $suffix ? '' : ' (' . $suffix . ')' ),
+					'text'    => $entry->value,
+					'source'  => $entry->value,
+					'parts'   => array(),
+					'block'   => $i,
+					'path'    => $path,
+					'fills'   => array(),
+				);
+				if ( 'desktop' === $suffix ) {
+					$desktop[ $key ] = array( count( $st['segments'] ) - 1, $entry->value );
 				}
 			}
 		}
