@@ -84,7 +84,8 @@ final class Polylang extends Languages {
 		$group = (array) pll_get_post_translations( $id );
 		$out   = array();
 		foreach ( $this->languages() as $language ) {
-			if ( ! empty( $group[ $language['code'] ] ) ) {
+			// Polylang may keep a deleted post in the group (its cleanup hook does not run in every context).
+			if ( ! empty( $group[ $language['code'] ] ) && get_post_status( (int) $group[ $language['code'] ] ) ) {
 				$out[ $language['code'] ] = (int) $group[ $language['code'] ];
 			}
 		}

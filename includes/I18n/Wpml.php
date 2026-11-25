@@ -93,7 +93,7 @@ final class Wpml extends Languages {
 		$group = array();
 		foreach ( (array) apply_filters( 'wpml_get_element_translations', null, $trid, $type, false, true ) as $code => $element ) {
 			$element_id = is_object( $element ) ? ( $element->element_id ?? 0 ) : ( $element['element_id'] ?? 0 );
-			if ( $element_id ) {
+			if ( $element_id && get_post_status( (int) $element_id ) ) {
 				$group[ (string) $code ] = (int) $element_id;
 			}
 		}
@@ -171,7 +171,7 @@ final class Wpml extends Languages {
 			return null;
 		}
 		$found = apply_filters( 'wpml_object_id', $id, $post_type, false, $code );
-		return $found ? (int) $found : null;
+		return $found && get_post_status( (int) $found ) ? (int) $found : null;
 	}
 
 	/**

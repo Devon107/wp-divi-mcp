@@ -93,8 +93,9 @@ final class Segments {
 	 *                                    segments and linkUrl / url attrs (null keeps the original).
 	 * @param callable|null $post_map     fn(int $id): ?int, for the post_id of `$variable(...)$`
 	 *                                    post links (null keeps the original).
-	 * @param callable|null $html_filter  fn(string $html): string, run on each translated html
-	 *                                    segment after its protected parts are restored (kses).
+	 * @param callable|null $html_filter  fn(string $value, string $kind): string, run on every
+	 *                                    translated segment (kind html or text) after its
+	 *                                    protected parts are restored (kses).
 	 * @return array{content: string, fallbacks: string[], unknown: string[]}
 	 *         fallbacks: ids whose translation was rejected (source kept); unknown: ids that are
 	 *         not segments of $content.
@@ -176,6 +177,91 @@ final class Segments {
 			'fallbacks' => $fallbacks,
 			'unknown'   => $unknown,
 		);
+	}
+
+	/**
+	 * Run $filter (kses) over every string of every block's attributes and over the HTML between
+	 * block comments, in place: only the attribute JSON of blocks whose strings change, and the
+	 * HTML runs that change, are rewritten (with D5::encode_attrs, as apply() does). Core's
+	 * content kses cannot be used on Divi markup: it escapes block comments whose attributes hold
+	 * HTML.
+	 *
+	 * @param string   $content Content.
+	 * @param callable $filter  fn(string): string.
+	 * @return string
+	 */
+	public static function sanitize( string $content, callable $filter ): string {
+		$edits = array();
+		$prev  = 0;
+		foreach ( BlockScanner::scan( $content ) as $b ) {
+			self::sanitize_run( $content, $prev, $b['start'], $filter, $edits );
+			$prev = $b['end'];
+			if ( $b['closer'] ) {
+				continue;
+			}
+			$attrs = self::decode( $b['raw'] );
+			if ( null === $attrs ) {
+				continue;
+			}
+			$dirty = false;
+			$attrs = self::filter_strings( $attrs, $filter, $dirty );
+			if ( $dirty ) {
+				$edits[] = self::attrs_edit( $content, $b, $attrs );
+			}
+		}
+		self::sanitize_run( $content, $prev, strlen( $content ), $filter, $edits );
+		return self::splice( $content, $edits );
+	}
+
+	/**
+	 * Filter the HTML between two block comments (surrounding whitespace kept).
+	 *
+	 * @param string   $content Content.
+	 * @param int      $start   Start offset.
+	 * @param int      $end     End offset.
+	 * @param callable $filter  Filter.
+	 * @param array    $edits   Edits (appended to).
+	 * @return void
+	 */
+	private static function sanitize_run( $content, $start, $end, $filter, array &$edits ) {
+		$raw  = substr( $content, $start, $end - $start );
+		$lead = strspn( $raw, " \t\r\n" );
+		$html = trim( $raw, " \t\r\n" );
+		if ( '' === $html ) {
+			return;
+		}
+		$clean = (string) $filter( $html );
+		if ( $clean !== $html ) {
+			$edits[] = array( $start + $lead, $start + $lead + strlen( $html ), $clean );
+		}
+	}
+
+	/**
+	 * Filter every string of an attr tree.
+	 *
+	 * @param mixed    $node   Node.
+	 * @param callable $filter Filter.
+	 * @param bool     $dirty  Set when something changed.
+	 * @return mixed
+	 */
+	private static function filter_strings( $node, $filter, &$dirty ) {
+		if ( is_string( $node ) ) {
+			$clean = (string) $filter( $node );
+			if ( $clean !== $node ) {
+				$dirty = true;
+			}
+			return $clean;
+		}
+		if ( is_object( $node ) ) {
+			foreach ( $node as $key => $value ) {
+				$node->{$key} = self::filter_strings( $value, $filter, $dirty );
+			}
+		} elseif ( is_array( $node ) ) {
+			foreach ( $node as $key => $value ) {
+				$node[ $key ] = self::filter_strings( $value, $filter, $dirty );
+			}
+		}
+		return $node;
 	}
 
 	// ------------------------------------------------------------------ //
@@ -605,7 +691,7 @@ final class Segments {
 	 * @param mixed         $tr       Translation.
 	 * @param callable|null $link_map Link map.
 	 * @param callable|null $post_map Post map.
-	 * @param callable|null $filter   HTML filter, run after unmasking (html segments only).
+	 * @param callable|null $filter   Value filter fn(string, string $kind), run after unmasking.
 	 * @return string|null
 	 */
 	private static function resolve( array $seg, $tr, $link_map, $post_map, $filter = null ) {
@@ -621,8 +707,8 @@ final class Segments {
 			$tr = self::map_posts( $tr, $post_map );
 		}
 		$out = Protect::unmask( $tr, $seg['parts'] );
-		if ( null !== $out && null !== $filter && 'html' === $seg['kind'] ) {
-			$out = (string) $filter( $out );
+		if ( null !== $out && null !== $filter ) {
+			$out = (string) $filter( $out, $seg['kind'] );
 		}
 		return $out;
 	}

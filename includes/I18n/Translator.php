@@ -185,11 +185,12 @@ final class Translator {
 		$untranslated = array();
 		$link_map     = self::link_map( $l, $target, $untranslated );
 		$post_map     = self::post_map( $l, $target, $untranslated );
-		$filter       = current_user_can( 'unfiltered_html' ) ? null : 'wp_kses_post';
+		$filter       = self::segment_filter();
 
 		$by_scope = self::split( $segments );
 		$created  = array();
-		$new_ids  = array();
+		$new_libs = array();
+		$new_id   = 0;
 		try {
 			$global_map = array();
 			foreach ( $prep['globals'] as $g ) {
@@ -203,18 +204,18 @@ final class Translator {
 					$warnings[] = self::fallback_warning( 'g' . $g['id'] . '.' . $id );
 				}
 				$count     = self::pages_using( $g['id'], $l, $target );
-				$new_id    = self::insert_library_item( $g['post'], $result['content'] );
-				$new_ids[] = $new_id;
-				self::link( $l, $g['id'], $new_id, $target );
+				$new_lib    = self::insert_library_item( $g['post'], $result['content'] );
+				$new_libs[] = $new_lib;
+				self::link( $l, $g['id'], $new_lib, $target );
 
-				$global_map[ (string) $g['id'] ] = array( (string) $new_id, $result['content'] );
+				$global_map[ (string) $g['id'] ] = array( (string) $new_lib, $result['content'] );
 				$created[]                       = array(
 					'source_id'            => $g['id'],
-					'new_id'               => $new_id,
+					'new_id'               => $new_lib,
 					'title'                => $g['title'],
 					'used_in_pages_count'  => $count,
 				);
-				$warnings[] = sprintf( "Created %s version of global module '%s' (#%d). %d other %s pages still use the original; update them when you are ready.", $target, $g['title'], $new_id, $count, $target );
+				$warnings[] = sprintf( "Created %s version of global module '%s' (#%d). %d other %s pages still use the original; update them when you are ready.", $target, $g['title'], $new_lib, $count, $target );
 			}
 
 			$result = Segments::apply( (string) $src->post_content, $by_scope['page'], $global_map, $link_map, $post_map, $filter );
@@ -228,7 +229,7 @@ final class Translator {
 				if ( ! array_key_exists( $seg['id'], $by_scope['own'] ) ) {
 					continue;
 				}
-				$value = self::resolve_own( $seg, $by_scope['own'][ $seg['id'] ], $filter );
+				$value = self::resolve_own( $seg, $by_scope['own'][ $seg['id'] ], 'html' === $seg['kind'] ? $filter : null );
 				if ( null === $value ) {
 					$warnings[] = self::fallback_warning( $seg['id'] );
 				} else {
@@ -236,12 +237,16 @@ final class Translator {
 				}
 			}
 
-			$new_id    = self::insert_translation( $src, $l, $target, $result['content'], $own, $slug, $warnings );
-			$new_ids[] = $new_id;
+			$new_id = self::insert_translation( $src, $l, $target, $result['content'], $own, $slug, $warnings );
 			self::link( $l, $src->ID, $new_id, $target );
 		} catch ( \Throwable $e ) {
-			foreach ( $new_ids as $id ) {
-				PostSupport::discard_created( $id );
+			if ( $new_id > 0 ) {
+				PostSupport::discard_created( $new_id );
+			}
+			// A library item left in the trash would stay linked as the target version (Polylang keeps
+			// trashed posts in the group) and be reused by the next attempt: delete it for good.
+			foreach ( $new_libs as $id ) {
+				wp_delete_post( $id, true );
 			}
 			throw $e instanceof ToolError ? $e : new ToolError( 'Could not create the translation: ' . $e->getMessage(), 'create_failed' );
 		}
@@ -366,8 +371,8 @@ final class Translator {
 			return $g;
 		}
 		$translation = $l->translation_of( $id, $target );
-		if ( null !== $translation ) {
-			$g['translation'] = $translation;
+		if ( null !== $translation && ! in_array( get_post_status( $translation ), array( false, 'trash' ), true ) ) {
+			$g['translation'] = $translation; // A trashed or missing version counts as none.
 			return $g;
 		}
 		if ( null === $language ) {
@@ -461,7 +466,7 @@ final class Translator {
 	 *
 	 * @param array         $seg    Own segment.
 	 * @param string        $tr     Translation.
-	 * @param callable|null $filter HTML filter.
+	 * @param callable|null $filter Value filter (html segments; title and excerpt keep WordPress' own filters).
 	 * @return string|null
 	 */
 	private static function resolve_own( array $seg, string $tr, ?callable $filter ): ?string {
@@ -472,7 +477,7 @@ final class Translator {
 			return $tr;
 		}
 		$out = Protect::unmask( $tr, $seg['parts'] );
-		return null !== $out && null !== $filter ? (string) $filter( $out ) : $out;
+		return null !== $out && null !== $filter ? (string) $filter( $out, 'html' ) : $out;
 	}
 
 	/**
@@ -625,9 +630,29 @@ final class Translator {
 	}
 
 	/**
-	 * Insert a post with exact content: the content was built from the stored source plus
-	 * segments already filtered (kses) for users without unfiltered_html, so content kses is
-	 * not run again over the block markup. Title and excerpt keep WordPress' own filters.
+	 * Filter for translated segment values of users without unfiltered_html (null for the others):
+	 * html segments through wp_kses_post, text segments stripped of every tag (an unclosed one
+	 * included, up to the end of the value), so no markup can enter a plain-text value.
+	 *
+	 * @return callable|null fn(string $value, string $kind): string.
+	 */
+	private static function segment_filter(): ?callable {
+		if ( current_user_can( 'unfiltered_html' ) ) {
+			return null;
+		}
+		return static function ( $value, $kind ) {
+			return 'html' === $kind ? wp_kses_post( $value ) : wp_strip_all_tags( $value );
+		};
+	}
+
+	/**
+	 * Insert a post. For users without unfiltered_html, core's content kses is replaced by
+	 * Segments::sanitize() with wp_kses_post: core kses does sanitize block attribute strings,
+	 * but on Divi markup it also escapes whole block comments whose attributes hold HTML
+	 * (`&lt;!-- wp:divi/text {&quot;…`), which would destroy the page. sanitize() runs
+	 * wp_kses_post on every attribute string of every block and on the HTML between blocks, so
+	 * every stored string gets the same kses as core would apply, the source's copied parts
+	 * included. Title and excerpt keep WordPress' own filters.
 	 *
 	 * @param array $postarr Unslashed post array.
 	 * @return int
@@ -635,6 +660,9 @@ final class Translator {
 	 */
 	private static function insert( array $postarr ): int {
 		$kses = false !== has_filter( 'content_save_pre', 'wp_filter_post_kses' );
+		if ( ! current_user_can( 'unfiltered_html' ) ) {
+			$postarr['post_content'] = Segments::sanitize( (string) ( $postarr['post_content'] ?? '' ), 'wp_kses_post' );
+		}
 		if ( $kses ) {
 			remove_filter( 'content_save_pre', 'wp_filter_post_kses' );
 		}

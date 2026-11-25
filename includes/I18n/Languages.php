@@ -128,7 +128,8 @@ abstract class Languages {
 	 * @return void
 	 * @throws \InvalidArgumentException When a post is missing, both ids are the same post, the source has no
 	 *                                   language, the code is the source's language, the post types differ, or
-	 *                                   the source's group already has a different post in that language.
+	 *                                   the source's group already has a different post (not in the
+	 *                                   trash) in that language.
 	 */
 	protected function guard_link( int $source_id, int $translation_id, string $code ): void {
 		$source_type = $this->require_post( $source_id );
@@ -147,7 +148,7 @@ abstract class Languages {
 			throw new \InvalidArgumentException( sprintf( 'Post types differ: source is %s, translation is %s.', $source_type, $type ) );
 		}
 		$existing = $this->translations( $source_id )[ $code ] ?? null;
-		if ( null !== $existing && $existing !== $translation_id ) {
+		if ( null !== $existing && $existing !== $translation_id && 'trash' !== get_post_status( $existing ) ) {
 			throw new \InvalidArgumentException( sprintf( 'Post %d already is the %s translation of post %d.', $existing, $code, $source_id ) );
 		}
 	}

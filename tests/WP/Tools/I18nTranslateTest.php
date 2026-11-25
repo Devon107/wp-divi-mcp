@@ -777,4 +777,79 @@ class I18nTranslateTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( '<p>Bonjour</p>', $value );
 		$this->assertStringNotContainsString( '<script>', $value, 'kses ran on the translated segment' );
 	}
+
+	public function test_text_and_html_segments_sanitized_without_unfiltered_html() {
+		$this->assertFalse( user_can( $this->author, 'unfiltered_html' ) );
+		$content = '<!-- wp:divi/text {"content":{"innerContent":{"desktop":{"value":"\u003cp\u003eHello\u003c/p\u003e"}}},"builderVersion":"5.11.0"} /-->' . "\n"
+			. '<!-- wp:divi/button {"button":{"innerContent":{"desktop":{"value":{"text":"Welcome","linkUrl":"/x/"}}}},"builderVersion":"5.11.0"} /-->';
+		$id = $this->insert( array( 'post_type' => 'post', 'post_title' => 'Hello', 'post_author' => $this->author, 'post_content' => $content ) );
+		$this->languages()->set_language( $id, 'en' );
+
+		$ex  = $this->extract( $id, $this->author );
+		$out = $this->create(
+			$id,
+			$ex,
+			array(
+				'b0.content'     => '<p>ok</p><script>alert(1)</script>',
+				'b1.button.text' => 'Hi<img src=x onerror=alert(1) ',
+			),
+			$this->author
+		);
+		$stored  = get_post_field( 'post_content', $out['id'], 'raw' );
+		$decoded = str_replace( array( '\u003c', '\u003e', '\u0022' ), array( '<', '>', '"' ), $stored );
+		$this->assertStringNotContainsString( '<img', $decoded );
+		$this->assertStringNotContainsString( 'onerror', $decoded );
+		$this->assertStringNotContainsString( '<script', $decoded );
+		$this->assertStringStartsWith( 'Hi', self::attrs_of( $stored, 1 )['button']['innerContent']['desktop']['value']['text'] );
+	}
+
+	public function test_failed_create_removes_created_library_items() {
+		$l     = $this->languages();
+		$id    = $this->source();
+		$ex    = $this->extract( $id );
+		$fail  = static function ( $maybe_empty, $postarr ) {
+			return 'page' === ( $postarr['post_type'] ?? '' ) ? true : $maybe_empty;
+		};
+		$count = count( get_posts( array( 'post_type' => 'et_pb_layout', 'post_status' => 'any', 'numberposts' => -1, 'lang' => '' ) ) );
+		add_filter( 'wp_insert_post_empty_content', $fail, 10, 2 );
+		try {
+			$e = $this->error(
+				$this->admin,
+				'i18n_create_translation',
+				array( 'source_id' => $id, 'target_language' => 'fr', 'source_hash' => $ex['source_hash'], 'segments' => self::translate_all( $ex ) )
+			);
+		} finally {
+			remove_filter( 'wp_insert_post_empty_content', $fail, 10 );
+		}
+		$this->assertSame( 'create_failed', $e->error_code() );
+		$this->assertNull( $l->translation_of( $this->library, 'fr' ), 'library item unlinked' );
+		$this->assertSame( $count, count( get_posts( array( 'post_type' => 'et_pb_layout', 'post_status' => array( 'any', 'trash' ), 'numberposts' => -1, 'lang' => '' ) ) ), 'no created library post left, not even in the trash' );
+		$this->assertNull( $this->extract( $id )['global_modules'][0]['translation'] );
+
+		$out = $this->create( $id, $this->extract( $id ) );
+		$this->assertCount( 1, $out['created_global_modules'] );
+		$this->assertSame( 'publish', get_post_status( $out['created_global_modules'][0]['new_id'] ) );
+	}
+
+	public function test_trashed_global_translation_is_treated_as_missing() {
+		$l      = $this->languages();
+		$lib_fr = $this->insert(
+			array(
+				'post_type'    => 'et_pb_layout',
+				'post_title'   => 'Pied de page',
+				'post_content' => self::fixture( 'global-91-fr.html' ),
+			)
+		);
+		$l->link( $this->library, $lib_fr, 'fr' );
+		wp_trash_post( $lib_fr );
+
+		$id = $this->source();
+		$ex = $this->extract( $id );
+		$this->assertNull( $ex['global_modules'][0]['translation'] );
+		$out    = $this->create( $id, $ex );
+		$new_id = $out['created_global_modules'][0]['new_id'];
+		$this->assertNotSame( $lib_fr, $new_id );
+		$this->assertSame( (string) $new_id, $this->global_layouts( get_post_field( 'post_content', $out['id'], 'raw' ) )[0]['globalModule'] );
+		$this->assertSame( $new_id, $l->translation_of( $this->library, 'fr' ) );
+	}
 }
