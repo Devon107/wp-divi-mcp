@@ -38,8 +38,10 @@ comments, options, users. Do not edit a Divi page's content with `update_post`; 
 Yoast SEO (when active): `seo_get` / `seo_update` read and set the SEO title and meta description of a post or page; empty resets to Yoast's template; Yoast variables like `%%title%%` work.
 Translating (Polylang or WPML active): `i18n_status` (language codes) → `i18n_extract {id, target_language}` →
 translate every segment, keeping its HTML tags and every `⟦n⟧` marker exactly once (they protect code) →
-`i18n_create_translation` with the same `source_hash` and `{segment id: translation}` → review the draft
-it returns (same design, linked to the source; read `warnings` and `created_global_modules`).
+ONE `i18n_create_translation` call with the same `source_hash` and every `{segment id: translation}` → review
+the draft it returns (same design, linked to the source; read `warnings` and `created_global_modules`).
+Very large pages (roughly over 250 segments) may exceed the client's tool-output limit: translate smaller
+pages, or split the work later (paging is planned).
 
 | Resource | Content |
 |---|---|

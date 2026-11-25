@@ -49,6 +49,17 @@ final class Translator {
 	const SKIPPED_META_PREFIXES = array( '_wpdm_', '_icl_', '_wpml_', '_pll_', '_et_dynamic_cached_', '_et_builder_module_features_cache' );
 
 	/**
+	 * Meta key prefix of Yoast's primary term per taxonomy (a term id, mapped to its translation).
+	 */
+	const YOAST_PRIMARY_PREFIX = '_yoast_wpseo_primary_';
+
+	/**
+	 * Why a user without unfiltered_html cannot translate a page with scripts, styles or SVG:
+	 * kses would strip them from the copy.
+	 */
+	const UNSAFE_MARKUP_MESSAGE = 'This page contains scripts, styles or SVG that your account cannot save (unfiltered_html). Ask an administrator to create the translation.';
+
+	/**
 	 * Translatable segments of a source post, as i18n_extract returns them.
 	 *
 	 * @param \WP_Post  $src    Source post (readable, translatable type).
@@ -64,6 +75,9 @@ final class Translator {
 		$existing = $l->translation_of( $src->ID, $target );
 		if ( null !== $existing ) {
 			$warnings[] = sprintf( 'Post %d already is the %s translation of this post: i18n_create_translation will refuse.', $existing, $target );
+		}
+		if ( self::has_unsaveable_markup( $src, $prep ) ) {
+			$warnings[] = self::UNSAFE_MARKUP_MESSAGE . ' i18n_create_translation will refuse.';
 		}
 		if ( $prep['page']['code_blocks'] > 0 ) {
 			$warnings[] = sprintf( '%d code module(s): only the text between tags is translatable; scripts, styles, comments and shortcodes are shown as ⟦n⟧ markers and must be kept.', $prep['page']['code_blocks'] );
@@ -176,6 +190,10 @@ final class Translator {
 			}
 		}
 
+		if ( self::has_unsaveable_markup( $src, $prep ) ) {
+			throw new ToolError( self::UNSAFE_MARKUP_MESSAGE, 'forbidden' );
+		}
+
 		$warnings = $prep['notes'];
 		$missing  = array_keys( array_diff_key( $known, $segments ) );
 		if ( $missing ) {
@@ -183,8 +201,9 @@ final class Translator {
 		}
 
 		$untranslated = array();
-		$link_map     = self::link_map( $l, $target, $untranslated );
-		$post_map     = self::post_map( $l, $target, $untranslated );
+		$unpublished  = array();
+		$link_map     = self::link_map( $l, $target, $untranslated, $unpublished );
+		$post_map     = self::post_map( $l, $target, $untranslated, $unpublished );
 		$filter       = self::segment_filter();
 
 		$by_scope = self::split( $segments );
@@ -253,6 +272,9 @@ final class Translator {
 
 		if ( $untranslated ) {
 			$warnings[] = 'Links kept to content with no ' . $target . ' translation: ' . implode( ', ', array_unique( $untranslated ) ) . '.';
+		}
+		if ( $unpublished ) {
+			$warnings[] = 'Links point to ' . $target . ' translations that are not published yet (they work once those are published): ' . implode( ', ', $unpublished ) . '.';
 		}
 
 		return array_merge(
@@ -523,12 +545,13 @@ final class Translator {
 	 * @param Languages $l            Language adapter.
 	 * @param string    $target       Target language code.
 	 * @param string[]  $untranslated Collected untranslated targets.
+	 * @param string[]  $unpublished  Collected targets whose translation is not published.
 	 * @return callable
 	 */
-	private static function link_map( Languages $l, string $target, array &$untranslated ): callable {
+	private static function link_map( Languages $l, string $target, array &$untranslated, array &$unpublished ): callable {
 		$home  = strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
 		$cache = array();
-		return static function ( $url ) use ( $l, $target, $home, &$cache, &$untranslated ) {
+		return static function ( $url ) use ( $l, $target, $home, &$cache, &$untranslated, &$unpublished ) {
 			$url = (string) $url;
 			if ( array_key_exists( $url, $cache ) ) {
 				return $cache[ $url ];
@@ -571,10 +594,11 @@ final class Translator {
 			if ( $translation === $id ) {
 				return null;
 			}
-			$link = (string) get_permalink( $translation );
+			$link = self::eventual_permalink( $translation );
 			if ( '' === $link ) {
 				return null;
 			}
+			self::note_unpublished( $translation, $link, $unpublished );
 			if ( isset( $parts['fragment'] ) && '' !== $parts['fragment'] ) {
 				$link .= '#' . $parts['fragment'];
 			}
@@ -589,10 +613,11 @@ final class Translator {
 	 * @param Languages $l            Language adapter.
 	 * @param string    $target       Target language code.
 	 * @param string[]  $untranslated Collected untranslated targets.
+	 * @param string[]  $unpublished  Collected targets whose translation is not published.
 	 * @return callable
 	 */
-	private static function post_map( Languages $l, string $target, array &$untranslated ): callable {
-		return static function ( $id ) use ( $l, $target, &$untranslated ) {
+	private static function post_map( Languages $l, string $target, array &$untranslated, array &$unpublished ): callable {
+		return static function ( $id ) use ( $l, $target, &$untranslated, &$unpublished ) {
 			$id   = (int) $id;
 			$type = get_post_type( $id );
 			if ( ! $type ) {
@@ -605,8 +630,49 @@ final class Translator {
 				}
 				return null;
 			}
-			return $translation === $id ? null : $translation;
+			if ( $translation === $id ) {
+				return null;
+			}
+			self::note_unpublished( $translation, self::eventual_permalink( $translation ), $unpublished );
+			return $translation;
 		};
+	}
+
+	/**
+	 * The permalink a post will have once published: its pretty sample permalink while it is not
+	 * published (get_permalink() gives ?page_id=N then, which 404s for visitors after publishing),
+	 * else get_permalink().
+	 *
+	 * @param int $id Post id.
+	 * @return string
+	 */
+	private static function eventual_permalink( int $id ): string {
+		$status = get_post_status( $id );
+		if ( false !== $status && 'publish' !== $status ) {
+			if ( ! function_exists( 'get_sample_permalink' ) ) {
+				require_once ABSPATH . 'wp-admin/includes/post.php';
+			}
+			$sample = get_sample_permalink( $id );
+			if ( '' !== (string) $sample[1] && preg_match( '/%(?:postname|pagename)%/', (string) $sample[0] ) ) {
+				return str_replace( array( '%pagename%', '%postname%' ), (string) $sample[1], (string) $sample[0] );
+			}
+		}
+		return (string) get_permalink( $id );
+	}
+
+	/**
+	 * Record a link target whose translation is not published yet.
+	 *
+	 * @param int      $id          Translation id.
+	 * @param string   $link        Its (eventual) permalink.
+	 * @param string[] $unpublished Collected targets (appended to, keyed by id).
+	 * @return void
+	 */
+	private static function note_unpublished( int $id, string $link, array &$unpublished ): void {
+		$status = get_post_status( $id );
+		if ( false !== $status && 'publish' !== $status ) {
+			$unpublished[ $id ] = $link . ' (#' . $id . ', ' . $status . ')';
+		}
 	}
 
 	// ----- writes ------------------------------------------------------------
@@ -661,6 +727,9 @@ final class Translator {
 	private static function insert( array $postarr ): int {
 		$kses = false !== has_filter( 'content_save_pre', 'wp_filter_post_kses' );
 		if ( ! current_user_can( 'unfiltered_html' ) ) {
+			if ( Segments::has_unsafe_markup( (string) ( $postarr['post_content'] ?? '' ), 'wp_kses_post' ) ) {
+				throw new ToolError( self::UNSAFE_MARKUP_MESSAGE, 'forbidden' ); // Never store a silently stripped copy.
+			}
 			$postarr['post_content'] = Segments::sanitize( (string) ( $postarr['post_content'] ?? '' ), 'wp_kses_post' );
 		}
 		if ( $kses ) {
@@ -802,6 +871,7 @@ final class Translator {
 		try {
 			PostSupport::apply( $id, $plan, true );
 			self::copy_meta( $src->ID, $id, Yoast::active() );
+			self::map_primary_terms( $id, $l, $target, $warnings );
 			if ( Yoast::active() ) {
 				$stored = Yoast::stored( $src->ID );
 				Yoast::write(
@@ -847,6 +917,71 @@ final class Translator {
 				add_post_meta( $to, $key, wp_slash( maybe_unserialize( $value ) ) );
 			}
 		}
+	}
+
+	/**
+	 * Map the copied Yoast primary terms (_yoast_wpseo_primary_<taxonomy>, a term id) to their
+	 * target translation; drop one with no translation, with a warning.
+	 *
+	 * @param int       $id       Translation id.
+	 * @param Languages $l        Language adapter.
+	 * @param string    $target   Target language code.
+	 * @param string[]  $warnings Warnings (appended to).
+	 * @return void
+	 */
+	private static function map_primary_terms( int $id, Languages $l, string $target, array &$warnings ): void {
+		foreach ( (array) get_post_meta( $id ) as $key => $values ) {
+			$key = (string) $key;
+			if ( 0 !== strpos( $key, self::YOAST_PRIMARY_PREFIX ) ) {
+				continue;
+			}
+			$taxonomy = substr( $key, strlen( self::YOAST_PRIMARY_PREFIX ) );
+			$term_id  = (int) ( $values[0] ?? 0 );
+			if ( ! taxonomy_exists( $taxonomy ) || $term_id <= 0 ) {
+				continue;
+			}
+			$mapped = $l->term_translation_of( $term_id, $taxonomy, $target );
+			if ( null === $mapped ) {
+				$term = get_term( $term_id, $taxonomy );
+				delete_post_meta( $id, $key );
+				$warnings[] = sprintf(
+					"The Yoast primary %s '%s' has no %s translation and was removed from the translation.",
+					'category' === $taxonomy ? 'category' : $taxonomy . ' term',
+					$term instanceof \WP_Term ? $term->name : '#' . $term_id,
+					$target
+				);
+			} elseif ( $mapped !== $term_id ) {
+				update_post_meta( $id, $key, (string) $mapped );
+			}
+		}
+	}
+
+	/**
+	 * Whether the user lacks unfiltered_html and the source (page content, contributing library
+	 * items, existing global module versions it embeds) has markup kses would strip or change.
+	 *
+	 * @param \WP_Post $src  Source post.
+	 * @param array    $prep From prepare().
+	 * @return bool
+	 */
+	private static function has_unsaveable_markup( \WP_Post $src, array $prep ): bool {
+		if ( current_user_can( 'unfiltered_html' ) ) {
+			return false;
+		}
+		$contents = array( (string) $src->post_content );
+		foreach ( $prep['globals'] as $g ) {
+			if ( null !== $g['extract'] ) {
+				$contents[] = (string) $g['post']->post_content;
+			} elseif ( null !== $g['translation'] && $g['translation'] !== $g['id'] ) {
+				$contents[] = (string) get_post_field( 'post_content', $g['translation'], 'raw' );
+			}
+		}
+		foreach ( $contents as $content ) {
+			if ( Segments::has_unsafe_markup( $content, 'wp_kses_post' ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

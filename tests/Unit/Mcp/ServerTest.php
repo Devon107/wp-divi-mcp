@@ -221,6 +221,16 @@ class ServerTest extends WP_UnitTestCase {
 		$this->assertSame( '{"written":true}', $res['result']['content'][0]['text'] );
 	}
 
+	public function test_tools_call_text_keeps_unicode_and_slashes_unescaped() {
+		$res  = $this->server->handle(
+			$this->rpc( 'tools/call', array( 'name' => 'test_read', 'arguments' => array( 's' => 'Café ⟦1⟧ /fr/' ) ) ),
+			$this->admin_ctx()
+		);
+		$text = $res['result']['content'][0]['text'];
+		$this->assertSame( '{"echo":{"s":"Café ⟦1⟧ /fr/"}}', $text );
+		$this->assertSame( array( 'echo' => array( 's' => 'Café ⟦1⟧ /fr/' ) ), json_decode( $text, true ), 'still valid JSON' );
+	}
+
 	public function test_tools_call_unknown_tool_is_32602() {
 		$res = $this->server->handle(
 			$this->rpc( 'tools/call', array( 'name' => 'missing' ) ),

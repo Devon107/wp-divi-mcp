@@ -214,6 +214,50 @@ final class Segments {
 	}
 
 	/**
+	 * Whether sanitize() with this filter would damage the content's markup: a <script>, <style>
+	 * or <svg> tag in any block attribute string or in the HTML between blocks, or a divi/code
+	 * block with a string the filter changes (an iframe, a form...).
+	 *
+	 * @param string   $content Content.
+	 * @param callable $filter  fn(string): string, the filter sanitize() would run.
+	 * @return bool
+	 */
+	public static function has_unsafe_markup( string $content, callable $filter ): bool {
+		$tag  = '/<\s*(?:script|style|svg)\b/i';
+		$prev = 0;
+		foreach ( BlockScanner::scan( $content ) as $b ) {
+			if ( preg_match( $tag, substr( $content, $prev, $b['start'] - $prev ) ) ) {
+				return true;
+			}
+			$prev = $b['end'];
+			if ( $b['closer'] ) {
+				continue;
+			}
+			$attrs = self::decode( $b['raw'] );
+			if ( null === $attrs ) {
+				continue;
+			}
+			$code      = 'divi/code' === $b['name'];
+			$found     = false;
+			$unchanged = false;
+			self::filter_strings(
+				$attrs,
+				static function ( $s ) use ( $tag, $code, $filter, &$found ) {
+					if ( ! $found && ( preg_match( $tag, $s ) || ( $code && (string) $filter( $s ) !== $s ) ) ) {
+						$found = true;
+					}
+					return $s;
+				},
+				$unchanged
+			);
+			if ( $found ) {
+				return true;
+			}
+		}
+		return (bool) preg_match( $tag, substr( $content, $prev ) );
+	}
+
+	/**
 	 * Filter the HTML between two block comments (surrounding whitespace kept).
 	 *
 	 * @param string   $content Content.

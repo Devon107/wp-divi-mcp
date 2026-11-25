@@ -386,7 +386,7 @@ final class PostSupport {
 			),
 			'date'           => array(
 				'type'        => 'string',
-				'description' => 'Publication date in the site timezone (e.g. 2030-01-31 09:00:00) or ISO 8601 with an offset. Any status: a past date backdates; a future date with status publish (or future) schedules the post; on drafts it is kept for publishing.',
+				'description' => 'Publication date in the site timezone (e.g. 2030-01-31 09:00:00) or ISO 8601 with an offset. Any status: a past date backdates; a future date with status publish (or future) schedules the post, and on a post that is already published it takes the post offline (scheduled) until that date; on drafts it is kept for publishing.',
 			),
 			'slug'           => array(
 				'type'        => 'string',

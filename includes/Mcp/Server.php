@@ -276,7 +276,8 @@ class Server {
 		// Log hook: ( $name, $args, $ok, $ms, $ctx ).
 		do_action( 'wpdm_tool_called', $name, $args, true, $ms, $ctx );
 
-		$text = wp_json_encode( $result );
+		// Unescaped: non-ASCII text (translations, ⟦n⟧ markers) as \uXXXX would inflate the payload.
+		$text = wp_json_encode( $result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
 		return $this->ok(
 			$id,
 			array(

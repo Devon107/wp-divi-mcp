@@ -25,7 +25,7 @@ final class I18nExtract extends Tool {
 	}
 
 	public function description(): string {
-		return 'Step 1 of translating a post or Divi page into another language (codes from i18n_status). Returns source_hash and the numbered segments to translate: {id, kind, context, text}. t = title, x = excerpt, seo.* = Yoast fields, b<n>... = Divi module texts, g<id>... = texts of a global module with no target version yet. kind html: keep the same HTML tags and every ⟦n⟧ marker exactly once (protected code). Also global_modules (translation null = it will be created) and warnings. Then call i18n_create_translation. Changes nothing.';
+		return 'Step 1 of translating a post or Divi page into another language (codes from i18n_status). Returns source_hash and the numbered segments to translate: {id, kind, context, text}. t = title, x = excerpt, seo.* = Yoast fields, b<n>... = Divi module texts, g<id>... = texts of a global module with no target version yet. kind html: keep the same HTML tags and every ⟦n⟧ marker exactly once (protected code). Also global_modules (translation null = it will be created) and warnings. Then send ALL translations back in ONE i18n_create_translation call. Very large pages (roughly over 250 segments) may exceed the client\'s tool-output limit: translate smaller pages (paging is planned). Changes nothing.';
 	}
 
 	public function input_schema(): array {

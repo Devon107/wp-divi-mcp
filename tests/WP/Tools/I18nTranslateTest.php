@@ -372,6 +372,17 @@ class I18nTranslateTest extends WP_UnitTestCase {
 		return implode( "\n", $result['warnings'] );
 	}
 
+	/**
+	 * A divi/code block holding $html, its attrs escaped the way Divi stores them (<, >, &, " as \u00XX).
+	 */
+	private static function code_block( string $html ): string {
+		$attrs = array(
+			'content'        => array( 'innerContent' => array( 'desktop' => array( 'value' => $html ) ) ),
+			'builderVersion' => '5.11.0',
+		);
+		return '<!-- wp:divi/code ' . json_encode( $attrs, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . ' /-->';
+	}
+
 	// ----- registration ----------------------------------------------------
 
 	public function test_tools_registered_with_annotations() {
@@ -764,18 +775,83 @@ class I18nTranslateTest extends WP_UnitTestCase {
 		$this->assertArrayNotHasKey( 'isError', $read, 'extract works on a read-only connection' );
 	}
 
-	public function test_html_segments_filtered_without_unfiltered_html() {
+	public function test_scripts_styles_svg_refused_without_unfiltered_html() {
 		$this->assertFalse( user_can( $this->author, 'unfiltered_html' ) );
-		$code = '<!-- wp:divi/code {"content":{"innerContent":{"desktop":{"value":"\u003cp\u003eHello\u003c/p\u003e\u003cscript\u003ealert(1)\u003c/script\u003e"}}},"builderVersion":"5.11.0"} /-->';
+		$code = self::code_block( '<style>.a{color:red}</style><p>Hello</p><svg viewBox="0 0 1 1"><path d="M0 0"/></svg>' );
 		$id   = $this->insert( array( 'post_type' => 'post', 'post_title' => 'Widget', 'post_author' => $this->author, 'post_content' => $code ) );
 		$this->languages()->set_language( $id, 'en' );
 
 		$ex = $this->extract( $id, $this->author );
-		$this->assertSame( '<p>Hello</p>⟦1⟧', array_column( $ex['segments'], 'text', 'id' )['b0.content'] );
-		$out   = $this->create( $id, $ex, array( 'b0.content' => '<p>Bonjour</p>⟦1⟧' ), $this->author );
+		$this->assertStringContainsString( 'cannot save (unfiltered_html)', self::warnings_text( $ex ) );
+
+		$count = self::post_count();
+		$e     = $this->error( $this->author, 'i18n_create_translation', array( 'source_id' => $id, 'target_language' => 'fr', 'source_hash' => $ex['source_hash'], 'segments' => self::translate_all( $ex ) ) );
+		$this->assertSame( 'forbidden', $e->error_code() );
+		$this->assertSame( 'This page contains scripts, styles or SVG that your account cannot save (unfiltered_html). Ask an administrator to create the translation.', $e->getMessage() );
+		$this->assertSame( $count, self::post_count(), 'nothing created' );
+
+		// A code module whose markup kses would change (an iframe) is refused the same way.
+		wp_set_current_user( $this->admin ); // The fixture is stored by an administrator.
+		$iframe = self::code_block( '<p>Map</p><iframe src="https://maps.example.com/"></iframe>' );
+		$map    = $this->insert( array( 'post_type' => 'post', 'post_title' => 'Map', 'post_author' => $this->author, 'post_content' => $iframe ) );
+		$this->languages()->set_language( $map, 'en' );
+		$ex2 = $this->extract( $map, $this->author );
+		$this->assertStringContainsString( 'cannot save (unfiltered_html)', self::warnings_text( $ex2 ) );
+		$e2 = $this->error( $this->author, 'i18n_create_translation', array( 'source_id' => $map, 'target_language' => 'fr', 'source_hash' => $ex2['source_hash'], 'segments' => array() ) );
+		$this->assertSame( 'forbidden', $e2->error_code() );
+
+		// An administrator translates the same page, markup intact.
+		$admin_ex = $this->extract( $id );
+		$this->assertStringNotContainsString( 'unfiltered_html', self::warnings_text( $admin_ex ) );
+		$out   = $this->create( $id, $admin_ex );
 		$value = self::attrs_of( get_post_field( 'post_content', $out['id'], 'raw' ), 0 )['content']['innerContent']['desktop']['value'];
-		$this->assertStringContainsString( '<p>Bonjour</p>', $value );
-		$this->assertStringNotContainsString( '<script>', $value, 'kses ran on the translated segment' );
+		$this->assertStringContainsString( '<style>.a{color:red}</style>', $value );
+		$this->assertStringContainsString( '<svg viewBox="0 0 1 1"><path d="M0 0"/></svg>', $value );
+	}
+
+	public function test_link_to_draft_translation_uses_pretty_permalink_and_warns() {
+		$this->set_permalink_structure( '/%postname%/' );
+		$l       = $this->languages();
+		$team_en = $this->page( 'Team' );
+		$team_fr = $this->page( 'Équipe', array( 'post_status' => 'draft' ) );
+		$l->set_language( $team_en, 'en' );
+		$l->link( $team_en, $team_fr, 'fr' );
+		$this->assertStringContainsString( 'page_id=', get_permalink( $team_fr ), 'a draft has no pretty permalink yet' );
+
+		$content = '<!-- wp:divi/button {"button":{"innerContent":{"desktop":{"value":{"text":"Our team","linkUrl":"' . get_permalink( $team_en ) . '"}}}},"builderVersion":"5.11.0"} /-->';
+		$id      = $this->page( 'Contact', array( 'post_content' => $content ) );
+		$l->set_language( $id, 'en' );
+
+		$out  = $this->create( $id, $this->extract( $id ) );
+		$link = self::attrs_of( get_post_field( 'post_content', $out['id'], 'raw' ), 0 )['button']['innerContent']['desktop']['value']['linkUrl'];
+		$this->assertStringNotContainsString( 'page_id=', $link );
+		$this->assertStringContainsString( '/equipe/', $link );
+		$this->assertStringContainsString( 'not published', self::warnings_text( $out ) );
+		$this->assertStringContainsString( '#' . $team_fr, self::warnings_text( $out ) );
+	}
+
+	public function test_yoast_primary_category_mapped_or_dropped() {
+		$news_en = self::factory()->category->create( array( 'name' => 'News' ) );
+		$news_fr = self::factory()->category->create( array( 'name' => 'Actualités' ) );
+		pll_set_term_language( $news_en, 'en' );
+		pll_set_term_language( $news_fr, 'fr' );
+		pll_save_term_translations( array( 'en' => $news_en, 'fr' => $news_fr ) );
+		$events = self::factory()->category->create( array( 'name' => 'Events' ) );
+		pll_set_term_language( $events, 'en' );
+
+		$post = $this->insert( array( 'post_type' => 'post', 'post_title' => 'Open day', 'post_content' => '<p>Come in</p>' ) );
+		$this->languages()->set_language( $post, 'en' );
+		update_post_meta( $post, '_yoast_wpseo_primary_category', (string) $news_en );
+		$out = $this->create( $post, $this->extract( $post ), array( 't' => 'Portes ouvertes' ) );
+		$this->assertSame( (string) $news_fr, get_post_meta( $out['id'], '_yoast_wpseo_primary_category', true ) );
+
+		$other = $this->insert( array( 'post_type' => 'post', 'post_title' => 'Ride', 'post_content' => '<p>Ride</p>' ) );
+		$this->languages()->set_language( $other, 'en' );
+		update_post_meta( $other, '_yoast_wpseo_primary_category', (string) $events );
+		$out2 = $this->create( $other, $this->extract( $other ), array( 't' => 'Balade' ) );
+		$this->assertFalse( metadata_exists( 'post', $out2['id'], '_yoast_wpseo_primary_category' ) );
+		$this->assertStringContainsString( "primary category 'Events'", self::warnings_text( $out2 ) );
+		$this->assertSame( (string) $events, get_post_meta( $other, '_yoast_wpseo_primary_category', true ), 'source untouched' );
 	}
 
 	public function test_text_and_html_segments_sanitized_without_unfiltered_html() {
