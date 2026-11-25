@@ -29,6 +29,8 @@ final class Registrar {
 			$registry->add_tool( new I18nGetTranslations() );
 			$registry->add_tool( new I18nSetLanguage() );
 			$registry->add_tool( new I18nLinkTranslation() );
+			$registry->add_tool( new I18nExtract() );
+			$registry->add_tool( new I18nCreateTranslation() );
 		}
 		return $registry;
 	}

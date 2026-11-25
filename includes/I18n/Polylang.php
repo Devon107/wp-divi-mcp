@@ -134,4 +134,20 @@ final class Polylang extends Languages {
 	public function translation_of( int $id, string $code ): ?int {
 		return $this->translations( $id )[ $code ] ?? null;
 	}
+
+	/**
+	 * Translation of a term in a language (the term itself when Polylang does not translate the taxonomy).
+	 *
+	 * @param int    $term_id  Term id.
+	 * @param string $taxonomy Taxonomy name.
+	 * @param string $code     Language code.
+	 * @return int|null
+	 */
+	public function term_translation_of( int $term_id, string $taxonomy, string $code ): ?int {
+		if ( ! pll_is_translated_taxonomy( $taxonomy ) ) {
+			return $term_id;
+		}
+		$found = pll_get_term( $term_id, $code );
+		return $found ? (int) $found : null;
+	}
 }

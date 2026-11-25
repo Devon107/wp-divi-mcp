@@ -85,3 +85,6 @@ jobs:
       - name: Run language adapter tests (Polylang and WPML double)
         if: matrix.wp == '7.1.5'
         run: WPDM_TEST_POLYLANG=1 bin/test --group polylang,wpml
+      - name: Run translation tests with Yoast SEO (Polylang and Yoast together)
+        if: matrix.wp == '7.1.5'
+        run: WPDM_TEST_POLYLANG=1 WPDM_TEST_YOAST=1 bin/test --filter I18nTranslateTest

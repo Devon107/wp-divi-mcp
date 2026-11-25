@@ -94,6 +94,17 @@ abstract class Languages {
 	abstract public function translation_of( int $id, string $code ): ?int;
 
 	/**
+	 * Id of the translation of a term in a language, or null. A term of a taxonomy the language
+	 * plugin does not translate is shared by every language, so it is its own translation.
+	 *
+	 * @param int    $term_id  Term id.
+	 * @param string $taxonomy Taxonomy name.
+	 * @param string $code     Language code.
+	 * @return int|null
+	 */
+	abstract public function term_translation_of( int $term_id, string $taxonomy, string $code ): ?int;
+
+	/**
 	 * Throw unless the post exists.
 	 *
 	 * @param int $id Post id.

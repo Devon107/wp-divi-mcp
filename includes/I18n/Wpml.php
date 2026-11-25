@@ -175,6 +175,22 @@ final class Wpml extends Languages {
 	}
 
 	/**
+	 * Translation of a term in a language (the term itself when WPML does not translate the taxonomy).
+	 *
+	 * @param int    $term_id  Term id.
+	 * @param string $taxonomy Taxonomy name.
+	 * @param string $code     Language code.
+	 * @return int|null
+	 */
+	public function term_translation_of( int $term_id, string $taxonomy, string $code ): ?int {
+		if ( ! apply_filters( 'wpml_is_translated_taxonomy', false, $taxonomy ) ) {
+			return $term_id;
+		}
+		$found = apply_filters( 'wpml_object_id', $term_id, $taxonomy, false, $code );
+		return $found ? (int) $found : null;
+	}
+
+	/**
 	 * WPML element type of a post (post_<post type>), or null when the post does not exist.
 	 *
 	 * @param int $id Post id.

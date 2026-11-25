@@ -93,11 +93,13 @@ final class Segments {
 	 *                                    segments and linkUrl / url attrs (null keeps the original).
 	 * @param callable|null $post_map     fn(int $id): ?int, for the post_id of `$variable(...)$`
 	 *                                    post links (null keeps the original).
+	 * @param callable|null $html_filter  fn(string $html): string, run on each translated html
+	 *                                    segment after its protected parts are restored (kses).
 	 * @return array{content: string, fallbacks: string[], unknown: string[]}
 	 *         fallbacks: ids whose translation was rejected (source kept); unknown: ids that are
 	 *         not segments of $content.
 	 */
-	public static function apply( string $content, array $translations, array $global_map = array(), ?callable $link_map = null, ?callable $post_map = null ): array {
+	public static function apply( string $content, array $translations, array $global_map = array(), ?callable $link_map = null, ?callable $post_map = null, ?callable $html_filter = null ): array {
 		$a         = self::analyze( $content );
 		$blocks    = $a['blocks'];
 		$attrs     = $a['attrs'];
@@ -111,7 +113,7 @@ final class Segments {
 			if ( ! array_key_exists( $seg['id'], $translations ) ) {
 				continue;
 			}
-			$value = self::resolve( $seg, $translations[ $seg['id'] ], $link_map, $post_map );
+			$value = self::resolve( $seg, $translations[ $seg['id'] ], $link_map, $post_map, $html_filter );
 			if ( null === $value ) {
 				$fallbacks[] = $seg['id'];
 				continue;
@@ -603,9 +605,10 @@ final class Segments {
 	 * @param mixed         $tr       Translation.
 	 * @param callable|null $link_map Link map.
 	 * @param callable|null $post_map Post map.
+	 * @param callable|null $filter   HTML filter, run after unmasking (html segments only).
 	 * @return string|null
 	 */
-	private static function resolve( array $seg, $tr, $link_map, $post_map ) {
+	private static function resolve( array $seg, $tr, $link_map, $post_map, $filter = null ) {
 		if ( ! is_string( $tr ) && ! is_int( $tr ) && ! is_float( $tr ) ) {
 			return null;
 		}
@@ -617,7 +620,11 @@ final class Segments {
 			$tr = self::map_hrefs( $tr, $link_map );
 			$tr = self::map_posts( $tr, $post_map );
 		}
-		return Protect::unmask( $tr, $seg['parts'] );
+		$out = Protect::unmask( $tr, $seg['parts'] );
+		if ( null !== $out && null !== $filter && 'html' === $seg['kind'] ) {
+			$out = (string) $filter( $out );
+		}
+		return $out;
 	}
 
 	/**
