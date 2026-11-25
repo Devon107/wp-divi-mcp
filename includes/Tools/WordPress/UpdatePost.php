@@ -27,7 +27,7 @@ final class UpdatePost extends Tool {
 	}
 
 	public function description(): string {
-		return 'Update a post or page by ID. Only the fields you pass change; terms listed per taxonomy replace that taxonomy\'s terms, meta null deletes a key. Overwrites existing values. Whenever content is passed, the current content is backed up first and backup_id is returned (divi_restore_backup restores it when Divi is active). Changing the content of a published, scheduled or private post needs confirm_published=true (with or without force). Content of a Divi post is protected: use the Divi layout tools, or pass force=true to replace it anyway.';
+		return 'Update a post or page by ID. Only the fields you pass change; terms listed per taxonomy replace that taxonomy\'s terms, meta null deletes a key. Overwrites existing values. Whenever content is passed, the current content is backed up first and backup_id is returned (divi_restore_backup restores it when Divi is active). The response leaves out content_raw unless include_content=true. To change a small part of the content, use edit_post_content instead of resending all of it. Changing the content of a published, scheduled or private post needs confirm_published=true (with or without force). Content of a Divi post is protected: use the Divi layout tools, or pass force=true to replace it anyway.';
 	}
 
 	public function input_schema(): array {
@@ -55,6 +55,7 @@ final class UpdatePost extends Tool {
 						'type'        => 'boolean',
 						'description' => 'Required (true) to change the content of a published, scheduled or private post: the change is visible at once.',
 					),
+					'include_content'   => PostFormatter::include_content_property(),
 				)
 			),
 			'required'             => array( 'id' ),
@@ -130,7 +131,7 @@ final class UpdatePost extends Tool {
 		}
 		PostSupport::apply( $post->ID, $plan, false );
 
-		$out = PostFormatter::full( get_post( $post->ID ), true );
+		$out = PostFormatter::written( get_post( $post->ID ), $args );
 		if ( null !== $backup_id ) {
 			$out['backup_id'] = $backup_id;
 		}

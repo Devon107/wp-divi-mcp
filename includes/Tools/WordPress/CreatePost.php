@@ -23,7 +23,7 @@ final class CreatePost extends Tool {
 	}
 
 	public function description(): string {
-		return 'Create a post or page of any post type. New content is a draft unless you pass a status. Supports parent, terms, featured image and custom fields. To design a Divi page, create the page here and then apply a layout with the Divi tools.';
+		return 'Create a post or page of any post type. New content is a draft unless you pass a status. Supports parent, terms, featured image and custom fields. To design a Divi page, create the page here and then apply a layout with the Divi tools. The response leaves out content_raw unless include_content=true.';
 	}
 
 	public function input_schema(): array {
@@ -36,7 +36,10 @@ final class CreatePost extends Tool {
 						'description' => 'Post type. Default: page.',
 					),
 				),
-				PostSupport::write_properties()
+				PostSupport::write_properties(),
+				array(
+					'include_content' => PostFormatter::include_content_property(),
+				)
 			),
 			'required'             => array(),
 			'additionalProperties' => false,
@@ -80,6 +83,6 @@ final class CreatePost extends Tool {
 			throw $e;
 		}
 
-		return PostFormatter::full( get_post( $id ), true );
+		return PostFormatter::written( get_post( $id ), $args );
 	}
 }

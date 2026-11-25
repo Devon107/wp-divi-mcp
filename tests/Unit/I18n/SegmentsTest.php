@@ -492,4 +492,96 @@ class SegmentsTest extends TestCase {
 		$ids = self::by_id( Segments::extract( self::fixture( 'page.html' ) ) );
 		$this->assertSame( array( 'div', 'p', '/p', 'a', '/a', '/div' ), Protect::tags( $ids['b8.content']['text'] ) );
 	}
+
+	// ----- JSON-LD -----------------------------------------------------------
+
+	/**
+	 * A page with a code block mixing prose and JSON-LD (b0) and one holding only JSON-LD (b1).
+	 *
+	 * @return string
+	 */
+	private static function ld_page() {
+		$article = '{"@context":"https://schema.org","@type":"Article","headline":"Medical exam","inLanguage":"en-CA","url":"https://example.com/exam/","mainEntityOfPage":{"@type":"WebPage","@id":"https://example.com/exam/#webpage"},"author":{"@type":"Organization","name":"IMMEDEX","logo":"https://example.com/logo.png"},"keywords":["exam","immigration"]}';
+		$faq     = "{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"FAQPage\",\n  \"inLanguage\": \"en-CA\",\n  \"mainEntity\": [{\"@type\": \"Question\", \"name\": \"How long?\", \"acceptedAnswer\": {\"@type\": \"Answer\", \"text\": \"About an hour.\"}}]\n}";
+		$code    = function ( $html ) {
+			return '<!-- wp:divi/code ' . \WPDM\Divi\D5::encode_attrs( array( 'content' => array( 'innerContent' => array( 'desktop' => array( 'value' => $html ) ) ) ) ) . ' /-->';
+		};
+		return $code( '<div><p>Hello</p></div><script type="application/ld+json">' . $article . '</script>' ) . "\n" . $code( '<script type="application/ld+json">' . $faq . '</script>' );
+	}
+
+	/**
+	 * @param string $content Content.
+	 * @param int    $n       Block index.
+	 * @return array Decoded JSON-LD scripts of block $n.
+	 */
+	private static function ld_of( $content, $n ) {
+		preg_match_all( '/<script type="application\/ld\+json">(.*?)<\/script>/s', self::attrs_of( $content, $n )['content']['innerContent']['desktop']['value'], $m );
+		return array_map(
+			static function ( $j ) {
+				return json_decode( $j, true );
+			},
+			$m[1]
+		);
+	}
+
+	public function test_json_ld_prose_extracted() {
+		$ids = self::by_id( Segments::extract( self::ld_page() ) );
+		$this->assertSame( 'Medical exam', $ids['b0.ld1.headline']['text'] );
+		$this->assertSame( 'text', $ids['b0.ld1.headline']['kind'] );
+		$this->assertStringContainsString( 'JSON-LD Article headline', $ids['b0.ld1.headline']['context'] );
+		$this->assertSame( 'IMMEDEX', $ids['b0.ld1.author.name']['text'] );
+		$this->assertSame( 'exam', $ids['b0.ld1.keywords.0']['text'] );
+		$this->assertSame( 'How long?', $ids['b1.ld1.mainEntity.0.name']['text'], 'A code block with only JSON-LD still has segments.' );
+		$this->assertSame( 'About an hour.', $ids['b1.ld1.mainEntity.0.acceptedAnswer.text']['text'] );
+		$this->assertArrayNotHasKey( 'b0.ld1.url', $ids );
+		$this->assertArrayNotHasKey( 'b0.ld1.inLanguage', $ids );
+		$this->assertArrayHasKey( 'b0.content', $ids, 'The HTML around the script is still a segment.' );
+		$this->assertStringNotContainsString( 'Medical exam', $ids['b0.content']['text'], 'The script stays masked in the html segment.' );
+	}
+
+	public function test_json_ld_translated_with_language_and_links() {
+		$page  = self::ld_page();
+		$links = static function ( $url ) {
+			return 'https://example.com/exam/' === $url ? 'https://example.com/fr/examen/' : null;
+		};
+		$out   = Segments::apply(
+			$page,
+			array(
+				'b0.content'                            => '<div><p>Bonjour</p></div>⟦1⟧',
+				'b0.ld1.headline'                       => 'Examen médical </script><b>',
+				'b1.ld1.mainEntity.0.acceptedAnswer.text' => 'Environ une heure.',
+			),
+			array(),
+			$links,
+			null,
+			null,
+			'fr-CA'
+		);
+		$this->assertSame( array(), $out['fallbacks'] );
+		$this->assertSame( array(), $out['unknown'] );
+
+		$article = self::ld_of( $out['content'], 0 )[0];
+		$this->assertSame( 'Examen médical </script><b>', $article['headline'] );
+		$this->assertSame( 'fr-CA', $article['inLanguage'] );
+		$this->assertSame( 'https://example.com/fr/examen/', $article['url'] );
+		$this->assertSame( 'https://example.com/fr/examen/#webpage', $article['mainEntityOfPage']['@id'], 'The #fragment is kept.' );
+		$this->assertSame( 'IMMEDEX', $article['author']['name'], 'Untranslated values stay.' );
+		$this->assertSame( 'https://example.com/logo.png', $article['author']['logo'] );
+		$value = self::attrs_of( $out['content'], 0 )['content']['innerContent']['desktop']['value'];
+		$this->assertStringContainsString( '<p>Bonjour</p>', $value );
+		$this->assertSame( 1, substr_count( $value, '</script>' ), 'A translation cannot close the script.' );
+
+		$faq = self::ld_of( $out['content'], 1 )[0];
+		$this->assertSame( 'Environ une heure.', $faq['mainEntity'][0]['acceptedAnswer']['text'] );
+		$this->assertSame( 'fr-CA', $faq['inLanguage'] );
+		$this->assertStringContainsString( "\n", self::attrs_of( $out['content'], 1 )['content']['innerContent']['desktop']['value'], 'Pretty JSON stays pretty.' );
+	}
+
+	public function test_json_ld_untouched_without_changes() {
+		$page = self::ld_page();
+		$this->assertSame( $page, Segments::apply( $page, array() )['content'] );
+		$out = Segments::apply( $page, array( 'b0.ld1.headline' => '  ' ) );
+		$this->assertSame( array( 'b0.ld1.headline' ), $out['fallbacks'] );
+		$this->assertSame( $page, $out['content'] );
+	}
 }

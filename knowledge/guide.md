@@ -34,12 +34,18 @@ WordPress tools: `site_info`, `list_posts` (default post type page), `get_post`,
 `update_post`, `trash_post` / `restore_post` (posts and pages are only trashed), `search`, `list_media` /
 `upload_media` / `update_media`, menus (`list_menus`, `get_menu`, `update_menu_items`), terms,
 comments, options, users. Do not edit a Divi page's content with `update_post`; use the Divi tools.
+Small fixes to any content, Divi pages included (a typo, a URL, a JSON-LD value): `edit_post_content`
+with exact `old_string` → `new_string` edits copied from `get_post` `content_raw`; never resend the whole
+page for a small change. `create_post` / `update_post` leave `content_raw` out of their result unless you
+pass `include_content: true`; use `get_post` with `include_content: false` when you only need the fields.
 `date` sets the publication date with any status: past = backdate, future + publish = scheduled.
 Yoast SEO (when active): `seo_get` / `seo_update` read and set the SEO title and meta description of a post or page; empty resets to Yoast's template; Yoast variables like `%%title%%` work.
 Translating (Polylang or WPML active): `i18n_status` (language codes) → `i18n_extract {id, target_language}` →
 translate every segment, keeping its HTML tags and every `⟦n⟧` marker exactly once (they protect code) →
 ONE `i18n_create_translation` call with the same `source_hash` and every `{segment id: translation}` → review
 the draft it returns (same design, linked to the source; read `warnings` and `created_global_modules`).
+JSON-LD scripts in code modules give `b<n>.ld<k>.<path>` text segments (headline, description, name...);
+`inLanguage` and the site's own URLs in them are set for the target language automatically.
 Very large pages (roughly over 250 segments) may exceed the client's tool-output limit: translate smaller
 pages, or split the work later (paging is planned).
 
@@ -573,8 +579,8 @@ The pattern defaults are generic. To match a site:
 - **New designs go into a new draft page** (`divi_create_page`). Change an existing page only
   when the user asks.
 - **`confirm_published: true`** is required to change a published, scheduled or private page
-  (`divi_apply_layout`, `divi_set_page_css`, `divi_restore_backup`, and `update_post` when it
-  changes `content`, with or without `force`). Ask the user before you set it: the change is
+  (`divi_apply_layout`, `divi_set_page_css`, `divi_restore_backup`, `edit_post_content`, and
+  `update_post` when it changes `content`, with or without `force`). Ask the user before you set it: the change is
   visible at once.
 - **`confirm_default_template: true`** is required to change the Default Website Template
   (`divi_set_theme_builder_layout`, `divi_restore_backup`): it changes the header/footer of the
@@ -585,8 +591,8 @@ The pattern defaults are generic. To match a site:
 - **Theme Builder**: only `header` and `footer` layouts can be set; deleting a template backs up
   its layouts, and the Default Website Template cannot be deleted.
 - **Backups**: page content, page CSS, globals and Theme Builder layouts are backed up before
-  every change; so is the current content whenever `update_post` gets `content` (Divi or not),
-  and its result has `backup_id`. `divi_list_backups` lists them; `divi_restore_backup` with `backup_id` restores
+  every change; so is the current content whenever `update_post` gets `content` (Divi or not)
+  or `edit_post_content` changes it, and the result has `backup_id`. `divi_list_backups` lists them; `divi_restore_backup` with `backup_id` restores
   one (after backing up the current state). Tell the user the `backup_id` when you change an
   existing page.
 - **Posts and pages are trash-only**: `trash_post` moves to the trash, `restore_post` brings it back.

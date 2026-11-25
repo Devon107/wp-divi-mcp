@@ -205,6 +205,7 @@ final class Translator {
 		$link_map     = self::link_map( $l, $target, $untranslated, $unpublished );
 		$post_map     = self::post_map( $l, $target, $untranslated, $unpublished );
 		$filter       = self::segment_filter();
+		$bcp47        = self::bcp47( $l, $target );
 
 		$by_scope = self::split( $segments );
 		$created  = array();
@@ -218,7 +219,7 @@ final class Translator {
 				}
 			}
 			foreach ( $contributing as $g ) {
-				$result = Segments::apply( (string) $g['post']->post_content, $by_scope['globals'][ $g['id'] ] ?? array(), array(), $link_map, $post_map, $filter );
+				$result = Segments::apply( (string) $g['post']->post_content, $by_scope['globals'][ $g['id'] ] ?? array(), array(), $link_map, $post_map, $filter, $bcp47 );
 				foreach ( $result['fallbacks'] as $id ) {
 					$warnings[] = self::fallback_warning( 'g' . $g['id'] . '.' . $id );
 				}
@@ -237,7 +238,7 @@ final class Translator {
 				$warnings[] = sprintf( "Created %s version of global module '%s' (#%d). %d other %s pages still use the original; update them when you are ready.", $target, $g['title'], $new_lib, $count, $target );
 			}
 
-			$result = Segments::apply( (string) $src->post_content, $by_scope['page'], $global_map, $link_map, $post_map, $filter );
+			$result = Segments::apply( (string) $src->post_content, $by_scope['page'], $global_map, $link_map, $post_map, $filter, $bcp47 );
 			foreach ( $result['fallbacks'] as $id ) {
 				$warnings[] = self::fallback_warning( $id );
 			}
@@ -537,6 +538,23 @@ final class Translator {
 	}
 
 	// ----- links -------------------------------------------------------------
+
+	/**
+	 * BCP 47 tag of a language (fr_CA gives fr-CA), for JSON-LD inLanguage.
+	 *
+	 * @param Languages $l      Language adapter.
+	 * @param string    $target Language code.
+	 * @return string|null Null when the language is unknown.
+	 */
+	private static function bcp47( Languages $l, string $target ): ?string {
+		foreach ( $l->languages() as $lang ) {
+			if ( $lang['code'] === $target ) {
+				$locale = '' !== (string) $lang['locale'] ? (string) $lang['locale'] : $target;
+				return str_replace( '_', '-', $locale );
+			}
+		}
+		return null;
+	}
 
 	/**
 	 * Map an on-site URL to the permalink of its target translation; null keeps it (mailto:,

@@ -16,6 +16,10 @@
  * - `gb<n>` for the HTML of a core (non-divi) block, n counting non-divi opening and void
  *   blocks from 0; `gb<n>.<k>` for its k-th HTML run when it also has inner blocks.
  * - `c` for classic (non-block) content, `c.<k>` for loose HTML between top-level blocks.
+ * - `b<n>.ld<k>.<path>` for a prose value of the k-th `<script type="application/ld+json">` (k
+ *   from 1, counted over the strings of block n's attrs in order), path being the dot path in
+ *   the JSON (`@graph.0.headline`). The rest of the script stays protected; apply() also sets
+ *   `inLanguage` to the target language and maps the site's own URLs with $link_map.
  *
  * `html` segments are masked with Protect (⟦n⟧ markers). A translation of a segment is used
  * only when it keeps every marker exactly once and the same tag-name sequence as the source;
@@ -50,6 +54,21 @@ final class Segments {
 	 * Names of custom HTML attributes (module.decoration.attributes) that hold prose.
 	 */
 	const PROSE_ATTRIBUTES = array( 'alt', 'title', 'aria-label', 'placeholder' );
+
+	/**
+	 * JSON-LD keys whose string values are prose.
+	 */
+	const LD_PROSE_KEYS = array( 'headline', 'alternativeHeadline', 'name', 'description', 'abstract', 'caption', 'text', 'articleBody', 'reviewBody', 'disambiguatingDescription', 'keywords' );
+
+	/**
+	 * JSON-LD keys whose string values are links $link_map rewrites.
+	 */
+	const LD_LINK_KEYS = array( 'url', '@id', 'item', 'mainEntityOfPage' );
+
+	/**
+	 * A JSON-LD script tag: opening tag, body, closing tag.
+	 */
+	const LD_RE = '/(<script\b[^>]*?\btype\s*=\s*["\']?application\/ld\+json["\']?[^>]*>)(.*?)(<\/script\s*>)/is';
 
 	/**
 	 * Attr keys holding links that $link_map / $post_map rewrite.
@@ -96,11 +115,13 @@ final class Segments {
 	 * @param callable|null $html_filter  fn(string $value, string $kind): string, run on every
 	 *                                    translated segment (kind html or text) after its
 	 *                                    protected parts are restored (kses).
+	 * @param string|null   $language     BCP 47 tag (fr-CA) written to every JSON-LD inLanguage
+	 *                                    (null keeps the original).
 	 * @return array{content: string, fallbacks: string[], unknown: string[]}
 	 *         fallbacks: ids whose translation was rejected (source kept); unknown: ids that are
 	 *         not segments of $content.
 	 */
-	public static function apply( string $content, array $translations, array $global_map = array(), ?callable $link_map = null, ?callable $post_map = null, ?callable $html_filter = null ): array {
+	public static function apply( string $content, array $translations, array $global_map = array(), ?callable $link_map = null, ?callable $post_map = null, ?callable $html_filter = null, ?string $language = null ): array {
 		$a         = self::analyze( $content );
 		$blocks    = $a['blocks'];
 		$attrs     = $a['attrs'];
@@ -108,10 +129,20 @@ final class Segments {
 		$edits     = array();
 		$fallbacks = array();
 		$known     = array();
+		$ld        = array(); // Scan index => k => dot path => translated value.
 
 		foreach ( $a['segments'] as $seg ) {
 			$known[ $seg['id'] ] = true;
 			if ( ! array_key_exists( $seg['id'], $translations ) ) {
+				continue;
+			}
+			if ( isset( $seg['ld'] ) ) {
+				$tr = $translations[ $seg['id'] ];
+				if ( ! is_string( $tr ) || '' === self::trim_ws( $tr ) ) {
+					$fallbacks[] = $seg['id'];
+					continue;
+				}
+				$ld[ $seg['block'] ][ $seg['ld'][0] ][ $seg['ld'][1] ] = null === $html_filter ? $tr : (string) $html_filter( $tr, 'text' );
 				continue;
 			}
 			$value = self::resolve( $seg, $translations[ $seg['id'] ], $link_map, $post_map, $html_filter );
@@ -134,6 +165,22 @@ final class Segments {
 		foreach ( array_keys( $translations ) as $id ) {
 			if ( ! isset( $known[ (string) $id ] ) ) {
 				$unknown[] = (string) $id;
+			}
+		}
+
+		foreach ( $a['ld_blocks'] as $i ) {
+			$k           = 0;
+			$dirty       = false;
+			$block_ld    = $ld[ $i ] ?? array();
+			$attrs[ $i ] = self::filter_strings(
+				$attrs[ $i ],
+				static function ( $s ) use ( &$k, $block_ld, $language, $link_map ) {
+					return self::rewrite_ld( $s, $k, $block_ld, $language, $link_map );
+				},
+				$dirty
+			);
+			if ( $dirty ) {
+				$changed[ $i ] = true;
 			}
 		}
 
@@ -327,6 +374,7 @@ final class Segments {
 			'globals'        => array(),
 			'global_layouts' => array(),
 			'link_blocks'    => array(),
+			'ld_blocks'      => array(),
 			'code_blocks'    => 0,
 		);
 
@@ -396,6 +444,7 @@ final class Segments {
 							$where                .= $section > 0 ? ' in section ' . $section : '';
 							self::walk_attrs( $st, $i, $idx, $where, $attrs, array() );
 							self::custom_attributes( $st, $i, $idx, $where, $attrs );
+							self::json_ld( $st, $i, $idx, $where, $attrs );
 						}
 					}
 				} else {
@@ -527,6 +576,194 @@ final class Segments {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Prose segments of the JSON-LD scripts in a block's attr strings.
+	 *
+	 * @param array     $st    State.
+	 * @param int       $i     Scan index.
+	 * @param int       $idx   Block index.
+	 * @param string    $where Context.
+	 * @param \stdClass $attrs Block attrs.
+	 * @return void
+	 */
+	private static function json_ld( array &$st, $i, $idx, $where, $attrs ) {
+		$k     = 0;
+		$found = array(); // [k, data].
+		$dirty = false;
+		self::filter_strings(
+			$attrs,
+			static function ( $s ) use ( &$k, &$found ) {
+				if ( false === stripos( $s, 'ld+json' ) || ! preg_match_all( self::LD_RE, $s, $m ) ) {
+					return $s;
+				}
+				foreach ( $m[2] as $body ) {
+					++$k;
+					$data = json_decode( $body );
+					if ( null !== $data ) {
+						$found[] = array( $k, $data );
+					}
+				}
+				return $s;
+			},
+			$dirty
+		);
+		if ( ! $k ) {
+			return;
+		}
+		$st['ld_blocks'][] = $i;
+		foreach ( $found as list( $n, $data ) ) {
+			self::ld_walk(
+				$data,
+				array(),
+				'',
+				static function ( $path, $key, $value, $type ) use ( &$st, $i, $idx, $where, $n ) {
+					if ( ! in_array( $key, self::LD_PROSE_KEYS, true ) || ! self::has_text( $value ) || preg_match( '#^\s*https?://\S*\s*$#i', $value ) ) {
+						return null;
+					}
+					$dot                = implode( '.', $path );
+					$id                 = 'b' . $idx . '.ld' . $n . '.' . $dot;
+					$st['ids'][ $id ]   = true;
+					$st['segments'][]   = array(
+						'id'      => $id,
+						'kind'    => 'text',
+						'context' => $where . ': JSON-LD ' . ( '' !== $type ? $type . ' ' : '' ) . $key,
+						'text'    => $value,
+						'source'  => $value,
+						'parts'   => array(),
+						'block'   => $i,
+						'ld'      => array( $n, $dot ),
+					);
+					return null;
+				}
+			);
+		}
+	}
+
+	/**
+	 * Visit every string of a decoded JSON-LD value; $visit may return a replacement.
+	 *
+	 * @param mixed    $node  Node (objects are changed in place).
+	 * @param array    $path  Path to $node.
+	 * @param string   $type  Nearest @type.
+	 * @param callable $visit fn(array $path, string $key, string $value, string $type): ?string.
+	 * @param bool     $dirty Set when something changed.
+	 * @return mixed
+	 */
+	private static function ld_walk( $node, array $path, $type, callable $visit, &$dirty = false ) {
+		if ( is_object( $node ) ) {
+			if ( isset( $node->{'@type'} ) ) {
+				$type = is_array( $node->{'@type'} ) ? implode( ',', array_filter( $node->{'@type'}, 'is_string' ) ) : ( is_string( $node->{'@type'} ) ? $node->{'@type'} : $type );
+			}
+			foreach ( $node as $key => $value ) {
+				$key = (string) $key;
+				if ( is_string( $value ) ) {
+					$new = $visit( array_merge( $path, array( $key ) ), $key, $value, $type );
+					if ( is_string( $new ) && $new !== $value ) {
+						$node->{$key} = $new;
+						$dirty        = true;
+					}
+				} else {
+					$node->{$key} = self::ld_walk( $value, array_merge( $path, array( $key ) ), $type, $visit, $dirty );
+				}
+			}
+		} elseif ( is_array( $node ) ) {
+			$key = (string) ( $path ? end( $path ) : '' );
+			foreach ( $node as $n => $value ) {
+				if ( is_string( $value ) ) {
+					$new = $visit( array_merge( $path, array( (string) $n ) ), $key, $value, $type );
+					if ( is_string( $new ) && $new !== $value ) {
+						$node[ $n ] = $new;
+						$dirty      = true;
+					}
+				} else {
+					$node[ $n ] = self::ld_walk( $value, array_merge( $path, array( (string) $n ) ), $type, $visit, $dirty );
+				}
+			}
+		}
+		return $node;
+	}
+
+	/**
+	 * Rewrite the JSON-LD scripts of one attr string: translations, inLanguage, links. Scripts
+	 * that do not change keep their bytes.
+	 *
+	 * @param string        $s        Attr string.
+	 * @param int           $k        Scripts seen so far in this block (advanced).
+	 * @param array         $tr       k => dot path => translation.
+	 * @param string|null   $language BCP 47 tag.
+	 * @param callable|null $link_map Link map.
+	 * @return string
+	 */
+	private static function rewrite_ld( $s, &$k, array $tr, $language, $link_map ) {
+		if ( false === stripos( $s, 'ld+json' ) ) {
+			return $s;
+		}
+		$out = preg_replace_callback(
+			self::LD_RE,
+			static function ( $m ) use ( &$k, $tr, $language, $link_map ) {
+				++$k;
+				$data = json_decode( $m[2] );
+				if ( null === $data ) {
+					return $m[0];
+				}
+				$mine  = $tr[ $k ] ?? array();
+				$dirty = false;
+				$data  = self::ld_walk(
+					$data,
+					array(),
+					'',
+					static function ( $path, $key, $value ) use ( $mine, $language, $link_map ) {
+						$dot = implode( '.', $path );
+						if ( isset( $mine[ $dot ] ) ) {
+							return $mine[ $dot ];
+						}
+						if ( 'inLanguage' === $key && null !== $language && '' !== $language ) {
+							return $language;
+						}
+						if ( null !== $link_map && in_array( $key, self::LD_LINK_KEYS, true ) ) {
+							return self::map_ld_url( $value, $link_map );
+						}
+						return null;
+					},
+					$dirty
+				);
+				if ( ! $dirty ) {
+					return $m[0];
+				}
+				$flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG;
+				if ( false !== strpos( $m[2], "\n" ) ) {
+					$flags |= JSON_PRETTY_PRINT;
+				}
+				$json = json_encode( $data, $flags );
+				if ( false === $json ) {
+					return $m[0];
+				}
+				$lead  = substr( $m[2], 0, strspn( $m[2], " \t\r\n" ) );
+				$trail = substr( $m[2], strlen( rtrim( $m[2], " \t\r\n" ) ) );
+				return $m[1] . $lead . $json . $trail . $m[3];
+			},
+			$s
+		);
+		return null === $out ? $s : $out;
+	}
+
+	/**
+	 * Map a JSON-LD link, keeping its #fragment (schema @id values often carry one).
+	 *
+	 * @param string   $url      URL.
+	 * @param callable $link_map Link map.
+	 * @return string|null
+	 */
+	private static function map_ld_url( $url, $link_map ) {
+		$hash = strpos( $url, '#' );
+		$base = false === $hash ? $url : substr( $url, 0, $hash );
+		if ( '' === $base ) {
+			return null;
+		}
+		$new = $link_map( $base );
+		return is_string( $new ) ? $new . ( false === $hash ? '' : substr( $url, $hash ) ) : null;
 	}
 
 	/**

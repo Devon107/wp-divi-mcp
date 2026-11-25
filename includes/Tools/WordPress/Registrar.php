@@ -30,6 +30,7 @@ final class Registrar {
 		$registry->add_tool( new GetPost() );
 		$registry->add_tool( new CreatePost() );
 		$registry->add_tool( new UpdatePost() );
+		$registry->add_tool( new EditPostContent() );
 		$registry->add_tool( new TrashPost() );
 		$registry->add_tool( new RestorePost() );
 		$registry->add_tool( new Search() );

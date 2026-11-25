@@ -25,6 +25,7 @@ class ContentToolsTest extends WP_UnitTestCase {
 		'get_post',
 		'create_post',
 		'update_post',
+		'edit_post_content',
 		'trash_post',
 		'restore_post',
 		'search',
@@ -205,7 +206,7 @@ class ContentToolsTest extends WP_UnitTestCase {
 	public function test_annotations_and_schemas() {
 		$registry = Registrar::add( new Registry() );
 		$read     = array( 'site_info', 'list_post_types', 'list_taxonomies', 'list_posts', 'get_post', 'search' );
-		$destruct = array( 'trash_post', 'update_post' );
+		$destruct = array( 'trash_post', 'update_post', 'edit_post_content' );
 		foreach ( self::EXPECTED_TOOLS as $name ) {
 			$tool = $registry->tool( $name );
 			$this->assertSame( in_array( $name, $read, true ), $tool->read_only(), "$name read_only" );
@@ -238,8 +239,8 @@ class ContentToolsTest extends WP_UnitTestCase {
 		foreach ( $response['result']['tools'] as $t ) {
 			$tools[ $t['name'] ] = $t;
 		}
-		// 10 content tools + 14 site tools, minus the 5 an editor lacks capabilities for (3 menu, 2 option tools).
-		$this->assertCount( 19, $tools );
+		// 11 content tools + 14 site tools, minus the 5 an editor lacks capabilities for (3 menu, 2 option tools).
+		$this->assertCount( 20, $tools );
 		$this->assertTrue( $tools['get_post']['annotations']['readOnlyHint'] );
 		$this->assertTrue( $tools['trash_post']['annotations']['destructiveHint'] );
 		$this->assertFalse( $tools['create_post']['annotations']['destructiveHint'] );
@@ -265,7 +266,8 @@ class ContentToolsTest extends WP_UnitTestCase {
 		$this->assertSame( 'draft', $data['status'] );
 		$this->assertSame( 'post', $data['type'] );
 		$this->assertSame( 'Hello', $data['title'] );
-		$this->assertSame( '<p>Body</p>', $data['content_raw'] );
+		$this->assertArrayNotHasKey( 'content_raw', $data, 'Write tools leave the content out by default.' );
+		$this->assertSame( strlen( '<p>Body</p>' ), $data['content_length'] );
 		$this->assertFalse( $data['divi'] );
 
 		$post = get_post( $data['id'] );
@@ -1100,5 +1102,107 @@ class ContentToolsTest extends WP_UnitTestCase {
 		$this->assertTrue( $result['isError'] );
 		$result = $this->call( $this->subscriber, 'create_post', array( 'title' => 'x' ) );
 		$this->assertTrue( $result['isError'] );
+	}
+
+	// ----- lean write responses ----------------------------------------------
+
+	public function test_write_tools_return_content_only_when_asked() {
+		$created = $this->ok( $this->editor, 'create_post', array( 'title' => 'X', 'content' => '<p>Body</p>', 'include_content' => true ) );
+		$this->assertSame( '<p>Body</p>', $created['content_raw'] );
+
+		$updated = $this->ok( $this->editor, 'update_post', array( 'id' => $created['id'], 'title' => 'Y' ) );
+		$this->assertArrayNotHasKey( 'content_raw', $updated );
+		$this->assertSame( strlen( '<p>Body</p>' ), $updated['content_length'] );
+		$this->assertSame( 'Y', $updated['title'] );
+
+		$full = $this->ok( $this->editor, 'update_post', array( 'id' => $created['id'], 'title' => 'Z', 'include_content' => true ) );
+		$this->assertSame( '<p>Body</p>', $full['content_raw'] );
+	}
+
+	// ----- edit_post_content -------------------------------------------------
+
+	private function divi_post( string $status = 'draft' ): int {
+		$content = '<!-- wp:divi/placeholder --><!-- wp:divi/text {"content":{"innerContent":{"desktop":{"value":"<p>Helo world</p>"}}}} /--><!-- wp:divi/code {"content":{"innerContent":{"desktop":{"value":"<script type=\\"application/ld+json\\">{\\"inLanguage\\":\\"en-CA\\"}</script>"}}}} /--><!-- /wp:divi/placeholder -->';
+		kses_remove_filters(); // Store the fixture as is (no user is logged in yet).
+		$id = self::factory()->post->create( array( 'post_type' => 'page', 'post_status' => $status, 'post_author' => $this->editor, 'post_content' => wp_slash( $content ) ) );
+		kses_init_filters();
+		$this->assertSame( $content, get_post( $id )->post_content );
+		return $id;
+	}
+
+	public function test_edit_post_content_replaces_snippets_and_backs_up() {
+		$id     = $this->divi_post();
+		$before = get_post( $id )->post_content;
+		$data   = $this->ok(
+			$this->admin,
+			'edit_post_content',
+			array(
+				'id'    => $id,
+				'edits' => array(
+					array( 'old_string' => 'Helo world', 'new_string' => 'Hello world' ),
+					array( 'old_string' => 'en-CA', 'new_string' => 'fr-CA' ),
+				),
+			)
+		);
+		$after = get_post( $id )->post_content;
+		$this->assertSame( str_replace( array( 'Helo world', 'en-CA' ), array( 'Hello world', 'fr-CA' ), $before ), $after, 'Only the snippets change, the script survives.' );
+		$this->assertSame( 2, $data['replacements'] );
+		$this->assertArrayNotHasKey( 'content_raw', $data );
+		$this->assertSame( strlen( $after ), $data['content_length'] );
+		$this->assertStringContainsString( 'Hello world', $data['changes'][0]['context'] );
+		$this->assertSame( $before, \WPDM\Divi\Backups::get( $data['backup_id'] )['content'] );
+	}
+
+	public function test_edit_post_content_rejects_missing_ambiguous_and_structure_changes() {
+		$id     = $this->divi_post();
+		$before = get_post( $id )->post_content;
+		$edit   = function ( array $edits ) use ( $id ) {
+			return $this->error_code( $this->admin, 'edit_post_content', array( 'id' => $id, 'edits' => $edits ) );
+		};
+		$this->assertSame( 'not_found', $edit( array( array( 'old_string' => 'nope', 'new_string' => 'x' ) ) ) );
+		$this->assertSame( 'ambiguous', $edit( array( array( 'old_string' => 'desktop', 'new_string' => 'x' ) ) ) );
+		$this->assertSame( 'structure_changed', $edit( array( array( 'old_string' => 'wp:divi/text', 'new_string' => 'wp:divi/heading' ) ) ) );
+		// All or nothing: the first edit is fine, the second fails.
+		$this->assertSame( 'not_found', $edit( array( array( 'old_string' => 'Helo', 'new_string' => 'Hello' ), array( 'old_string' => 'nope', 'new_string' => 'x' ) ) ) );
+		$this->assertSame( 'invalid_argument', $edit( array( array( 'old_string' => '', 'new_string' => 'x' ) ) ) );
+		$this->assertSame( $before, get_post( $id )->post_content );
+
+		$data = $this->ok( $this->admin, 'edit_post_content', array( 'id' => $id, 'edits' => array( array( 'old_string' => 'desktop', 'new_string' => 'desktop', 'replace_all' => true ) ) ) );
+		$this->assertSame( 0, $data['replacements'], 'An edit that changes nothing writes nothing.' );
+	}
+
+	public function test_edit_post_content_needs_confirmation_and_permission() {
+		$id = $this->divi_post( 'publish' );
+		$args = array( 'id' => $id, 'edits' => array( array( 'old_string' => 'Helo', 'new_string' => 'Hello' ) ) );
+		$this->assertSame( 'confirmation_required', $this->error_code( $this->admin, 'edit_post_content', $args ) );
+		$this->assertSame( 'forbidden', $this->error_code( $this->author, 'edit_post_content', array_merge( $args, array( 'confirm_published' => true ) ) ) );
+		$this->ok( $this->admin, 'edit_post_content', array_merge( $args, array( 'confirm_published' => true ) ) );
+		$this->assertStringContainsString( 'Hello world', get_post( $id )->post_content );
+	}
+
+	public function test_edit_post_content_refuses_scripts_without_unfiltered_html() {
+		if ( is_multisite() ) {
+			$this->markTestSkipped( 'Editors lack unfiltered_html on multisite anyway.' );
+		}
+		$editor = $this->editor;
+		$deny   = static function ( $caps, $cap, $user_id ) use ( $editor ) {
+			return 'unfiltered_html' === $cap && $user_id === $editor ? array( 'do_not_allow' ) : $caps;
+		};
+		add_filter( 'map_meta_cap', $deny, 10, 3 );
+		try {
+			$id = $this->divi_post();
+			$this->assertSame( 'forbidden', $this->error_code( $editor, 'edit_post_content', array( 'id' => $id, 'edits' => array( array( 'old_string' => 'Helo', 'new_string' => 'Hello' ) ) ) ) );
+
+			kses_remove_filters();
+			$plain = self::factory()->post->create( array( 'post_status' => 'draft', 'post_author' => $editor, 'post_content' => '<!-- wp:divi/text {"content":{"innerContent":{"desktop":{"value":"<p>Hi</p>"}}}} /-->' ) );
+			kses_init_filters();
+			$this->ok( $editor, 'edit_post_content', array( 'id' => $plain, 'edits' => array( array( 'old_string' => '<p>Hi</p>', 'new_string' => '<p onclick=\\"x()\\">Hi there</p>' ) ) ) );
+			$content = get_post( $plain )->post_content;
+			$this->assertStringContainsString( 'Hi there', $content );
+			$this->assertStringNotContainsString( 'onclick', $content );
+			$this->assertStringStartsWith( '<!-- wp:divi/text', $content, 'The block comment is not escaped.' );
+		} finally {
+			remove_filter( 'map_meta_cap', $deny, 10 );
+		}
 	}
 }

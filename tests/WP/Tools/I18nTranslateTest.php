@@ -928,4 +928,27 @@ class I18nTranslateTest extends WP_UnitTestCase {
 		$this->assertSame( (string) $new_id, $this->global_layouts( get_post_field( 'post_content', $out['id'], 'raw' ) )[0]['globalModule'] );
 		$this->assertSame( $new_id, $l->translation_of( $this->library, 'fr' ) );
 	}
+
+	// ----- JSON-LD ---------------------------------------------------------
+
+	public function test_json_ld_is_translated_with_language_and_links() {
+		$about = get_permalink( $this->about_en );
+		$ld    = '<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Bike repair","inLanguage":"en-US","url":"' . $about . '","author":{"@type":"Organization","name":"Shop"}}</script>';
+		$id    = $this->insert( array( 'post_title' => 'Schema', 'post_content' => self::code_block( $ld ) ) );
+		$this->languages()->set_language( $id, 'en' );
+
+		$extract = $this->extract( $id );
+		$ids     = array_column( $extract['segments'], 'text', 'id' );
+		$this->assertSame( 'Bike repair', $ids['b0.ld1.headline'] );
+
+		$result  = $this->create( $id, $extract, array( 'b0.ld1.headline' => 'Réparation de vélos' ) );
+		$content = get_post_field( 'post_content', $result['id'], 'raw' );
+		$value   = self::attrs_of( $content, 0 )['content']['innerContent']['desktop']['value'];
+		$this->assertSame( 1, preg_match( '/<script type="application\/ld\+json">(.*)<\/script>/s', $value, $m ) );
+		$json = json_decode( $m[1], true );
+		$this->assertSame( 'Réparation de vélos', $json['headline'] );
+		$this->assertSame( 'fr-FR', $json['inLanguage'] );
+		$this->assertSame( get_permalink( $this->about_fr ), $json['url'] );
+		$this->assertSame( 'Shop', $json['author']['name'] );
+	}
 }

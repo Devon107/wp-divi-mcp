@@ -96,6 +96,33 @@ final class PostFormatter {
 	}
 
 	/**
+	 * Schema property for write tools that may echo the content back.
+	 *
+	 * @return array
+	 */
+	public static function include_content_property(): array {
+		return array(
+			'type'        => 'boolean',
+			'description' => 'Return content_raw in the response. Default false: Divi content is large and you already know what you wrote (content_length is always returned).',
+		);
+	}
+
+	/**
+	 * Full representation for a write tool: content_raw only when asked for.
+	 *
+	 * @param \WP_Post $post Post.
+	 * @param array    $args Tool arguments (include_content).
+	 * @return array
+	 */
+	public static function written( \WP_Post $post, array $args ): array {
+		$out = self::full( $post, true );
+		if ( empty( $args['include_content'] ) ) {
+			unset( $out['content_raw'] );
+		}
+		return $out;
+	}
+
+	/**
 	 * Full representation. Only for posts the caller may read.
 	 *
 	 * @param \WP_Post $post     Post.
