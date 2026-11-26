@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 final class Registrar {
 
 	/** Tools that need no Divi theme. */
-	const ALWAYS = array( 'divi_build_layout', 'divi_validate_layout', 'divi_find_icon' );
+	const ALWAYS = array( 'divi_build_layout', 'divi_validate_layout', 'divi_find_icon', 'divi_get_reference' );
 
 	/**
 	 * Every Divi tool, regardless of the environment.
@@ -42,6 +42,7 @@ final class Registrar {
 			new RestoreBackup(),
 			new SetPageCss(),
 			new FindIcon(),
+			new GetReference(),
 			new ListThemeBuilderTemplates(),
 			new CreateThemeBuilderTemplate(),
 			new DeleteThemeBuilderTemplate(),

@@ -49,6 +49,9 @@ JSON-LD scripts in code modules give `b<n>.ld<k>.<path>` text segments (headline
 Very large pages (roughly over 250 segments) may exceed the client's tool-output limit: translate smaller
 pages, or split the work later (paging is planned).
 
+If you cannot read resources, read any of these with `divi_get_reference {"uri": ...}`. Read
+`divi://schema/layout` once before writing a layout tree: the tools only describe `layout` briefly.
+
 | Resource | Content |
 |---|---|
 | `divi://guide` | This guide |

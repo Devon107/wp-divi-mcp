@@ -34,13 +34,14 @@ class DiviToolsTest extends WP_UnitTestCase {
 		'divi_restore_backup',
 		'divi_set_page_css',
 		'divi_find_icon',
+		'divi_get_reference',
 		'divi_list_theme_builder_templates',
 		'divi_create_theme_builder_template',
 		'divi_delete_theme_builder_template',
 		'divi_set_theme_builder_layout',
 	);
 
-	const ALWAYS = array( 'divi_build_layout', 'divi_validate_layout', 'divi_find_icon' );
+	const ALWAYS = array( 'divi_build_layout', 'divi_validate_layout', 'divi_find_icon', 'divi_get_reference' );
 
 	/** 1x1 transparent PNG. */
 	const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
@@ -164,22 +165,6 @@ class DiviToolsTest extends WP_UnitTestCase {
 		);
 	}
 
-	/**
-	 * Every "$ref" in a schema, with its JSON path.
-	 */
-	private static function refs( $node, string $path, array &$out ): void {
-		if ( ! is_array( $node ) ) {
-			return;
-		}
-		foreach ( $node as $key => $value ) {
-			if ( '$ref' === $key && is_string( $value ) ) {
-				$out[ $path ] = $value;
-			} else {
-				self::refs( $value, $path . '/' . $key, $out );
-			}
-		}
-	}
-
 	// ----- registration ----------------------------------------------------
 
 	public function test_divi_tools_hidden_without_divi() {
@@ -206,7 +191,7 @@ class DiviToolsTest extends WP_UnitTestCase {
 		sort( $expected );
 		$this->assertSame( $expected, $names );
 
-		$read_only   = array( 'divi_status', 'divi_get_globals', 'divi_build_layout', 'divi_validate_layout', 'divi_export_page', 'divi_inspect_page', 'divi_list_backups', 'divi_find_icon', 'divi_list_theme_builder_templates' );
+		$read_only   = array( 'divi_status', 'divi_get_globals', 'divi_build_layout', 'divi_validate_layout', 'divi_export_page', 'divi_inspect_page', 'divi_list_backups', 'divi_find_icon', 'divi_get_reference', 'divi_list_theme_builder_templates' );
 		$destructive = array( 'divi_apply_layout', 'divi_restore_backup', 'divi_merge_globals', 'divi_set_page_css', 'divi_delete_theme_builder_template', 'divi_set_theme_builder_layout' );
 		foreach ( $tools as $name => $tool ) {
 			$this->assertSame( in_array( $name, $read_only, true ), $tool->read_only(), $name . ' read_only' );
@@ -217,32 +202,33 @@ class DiviToolsTest extends WP_UnitTestCase {
 		$this->assertSame( 'edit_posts', $tools['divi_status']->capability() );
 	}
 
-	public function test_schema_refs_resolve() {
-		$checked = 0;
+	public function test_tool_schemas_stay_small() {
+		$total = 0;
 		foreach ( Registrar::tools() as $tool ) {
-			// Wire format, as tools/list sends it.
-			$schema = json_decode( wp_json_encode( $tool->input_schema() ), true );
+			// Wire format, as tools/list sends it: clients resend every definition with every message.
+			$json = (string) wp_json_encode( $tool->input_schema() );
+			$this->assertLessThan( 4000, strlen( $json ), $tool->name() . ' input schema is too large' );
+			$this->assertStringNotContainsString( '$ref', $json, $tool->name() );
+			$total += strlen( $json );
+			$schema = json_decode( $json, true );
 			$this->assertSame( 'object', $schema['type'], $tool->name() );
-			$refs = array();
-			self::refs( $schema, '#', $refs );
-			foreach ( $refs as $where => $ref ) {
-				$this->assertStringStartsWith( '#/', $ref, $tool->name() . ' ' . $where );
-				$node = $schema;
-				foreach ( explode( '/', substr( $ref, 2 ) ) as $part ) {
-					$part = str_replace( array( '~1', '~0' ), array( '/', '~' ), $part );
-					$this->assertIsArray( $node, $tool->name() . ': ' . $ref );
-					$this->assertArrayHasKey( $part, $node, $tool->name() . ': ' . $ref . ' (at ' . $where . ') does not resolve' );
-					$node = $node[ $part ];
-				}
-				++$checked;
-			}
 			if ( isset( $schema['properties']['layout'] ) ) {
-				$this->assertArrayNotHasKey( '$defs', $schema['properties']['layout'], $tool->name() );
-				$this->assertArrayNotHasKey( '$id', $schema['properties']['layout'], $tool->name() );
-				$this->assertArrayHasKey( 'node', $schema['$defs'], $tool->name() );
+				$this->assertSame( 'object', $schema['properties']['layout']['type'], $tool->name() );
+				$this->assertStringContainsString( 'divi://schema/layout', $schema['properties']['layout']['description'], $tool->name() );
 			}
 		}
-		$this->assertGreaterThan( 100, $checked );
+		$this->assertLessThan( 30000, $total );
+	}
+
+	public function test_get_reference_reads_resources() {
+		$schema = $this->ok( $this->author, 'divi_get_reference', array( 'uri' => 'divi://schema/layout' ) );
+		$this->assertSame( 'application/json', $schema['mimeType'] );
+		$this->assertSame( \WPDM\Divi\LayoutTree::schema(), json_decode( $schema['text'], true ) );
+		$guide = $this->ok( $this->author, 'divi_get_reference', array( 'uri' => 'divi://guide' ) );
+		$this->assertStringContainsString( 'layout tree', $guide['text'] );
+		$this->assertStringContainsString( 'group', $this->ok( $this->author, 'divi_get_reference', array( 'uri' => 'divi://modules/index' ) )['text'] );
+		$this->fails( $this->author, 'divi_get_reference', array( 'uri' => 'divi://nope' ), 'not_found' );
+		$this->fails( $this->author, 'divi_get_reference', array( 'uri' => 'divi://modules/../guide' ), 'not_found' );
 	}
 
 	// ----- build / validate ------------------------------------------------

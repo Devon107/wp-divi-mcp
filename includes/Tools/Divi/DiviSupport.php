@@ -11,7 +11,6 @@ use WPDM\Divi\Backups;
 use WPDM\Divi\DiviRest;
 use WPDM\Divi\Globals;
 use WPDM\Divi\LayoutInput;
-use WPDM\Divi\LayoutTree;
 use WPDM\Mcp\Context;
 use WPDM\Mcp\ToolError;
 use WPDM\Support\Media;
@@ -49,22 +48,31 @@ final class DiviSupport {
 			'additionalProperties' => false,
 		);
 		if ( $layout ) {
-			$tree = LayoutTree::schema();
-			$defs = $tree['$defs'] ?? array();
-			unset( $tree['$defs'], $tree['$schema'], $tree['$id'] );
-			$tree['description'] = 'Layout tree (preferred input): {"blocks": [{"section": {...}}], "global_colors"?, "global_variables"?, "custom_css"?, "theme"?, "builder_version"?}. Use instead of markup/portability.';
-
+			// The full layout tree JSON Schema is about 54 KB; clients send every tool definition
+			// with every message, so it is served on demand (divi_get_reference, or the resource)
+			// and LayoutTree::build() checks the tree on the server either way.
 			$schema['properties'] = array_merge(
-				array( 'layout' => $tree ),
+				array( 'layout' => self::layout_property() ),
 				LayoutInput::markup_properties(),
 				$props
 			);
-			$schema['$defs'] = array_merge( $defs, $schema['$defs'] ?? array() );
 		}
 		if ( $required ) {
 			$schema['required'] = $required;
 		}
 		return $schema;
+	}
+
+	/**
+	 * Compact schema of the layout argument (the full schema: divi://schema/layout).
+	 *
+	 * @return array
+	 */
+	public static function layout_property(): array {
+		return array(
+			'type'        => 'object',
+			'description' => 'Layout tree (preferred input): {"blocks": [{"section": {...}}], "global_colors"?, "global_variables"?, "custom_css"?, "theme"?, "builder_version"?}. Use instead of markup/portability. Before writing a tree, read its full JSON Schema once with divi_get_reference {"uri": "divi://schema/layout"} (and divi://guide for examples); the server checks the tree and fails with invalid_layout (data.path) on mistakes.',
+		);
 	}
 
 	/**
